@@ -1,10 +1,11 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDatabase } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
   authDomain: "pacman-game-e602a.firebaseapp.com",
+  databaseURL: "https://pacman-game-e602a-default-rtdb.firebaseio.com",
   projectId: "pacman-game-e602a",
   storageBucket: "pacman-game-e602a.firebasestorage.app",
   messagingSenderId: "316960307396",
@@ -14,6 +15,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-const db = getFirestore(app);
+const db = getDatabase(app);
 
 export { db };
