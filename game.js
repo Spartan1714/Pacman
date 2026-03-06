@@ -1,4 +1,5 @@
 import { db } from "./firebase.js";
+console.log("game.js cargado");
 
 import { collection, addDoc } from
 "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
