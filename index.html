@@ -1,42 +1,44 @@
 <!DOCTYPE html>
-<script type="module" src="game.js"></script>   
 <html lang="es">
+
 <head>
 <meta charset="UTF-8">
 <title>Pacman</title>
 
+<script type="module" src="game.js"></script>
+
 <style>
-    body{
-        margin:0;
-        height:100vh;
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        background: linear-gradient(135deg,#ff5f9e,#ffc371);
-        font-family: Arial, Helvetica, sans-serif;
-    }
+body{
+    margin:0;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background: linear-gradient(135deg,#ff5f9e,#ffc371);
+    font-family: Arial, Helvetica, sans-serif;
+}
 
-    .mensaje{
-        text-align:center;
-        font-size:80px;
-        font-weight:bold;
-        color:white;
-        text-shadow:
-            0 0 10px rgba(255,255,255,0.9),
-            0 0 20px rgba(255,0,128,0.8),
-            0 0 40px rgba(255,0,128,0.6);
-        padding:40px 60px;
-        border-radius:20px;
-        background: rgba(0,0,0,0.25);
-        backdrop-filter: blur(5px);
-        animation: latido 1.5s infinite;
-    }
+.mensaje{
+    text-align:center;
+    font-size:80px;
+    font-weight:bold;
+    color:white;
+    text-shadow:
+        0 0 10px rgba(255,255,255,0.9),
+        0 0 20px rgba(255,0,128,0.8),
+        0 0 40px rgba(255,0,128,0.6);
+    padding:40px 60px;
+    border-radius:20px;
+    background: rgba(0,0,0,0.25);
+    backdrop-filter: blur(5px);
+    animation: latido 1.5s infinite;
+}
 
-    @keyframes latido{
-        0%{ transform: scale(1); }
-        50%{ transform: scale(1.05); }
-        100%{ transform: scale(1); }
-    }
+@keyframes latido{
+    0%{ transform: scale(1); }
+    50%{ transform: scale(1.05); }
+    100%{ transform: scale(1); }
+}
 </style>
 
 </head>
@@ -44,7 +46,7 @@
 <body>
 
 <div class="mensaje">
-    Osi la Craazy
+Osi la Craazy
 </div>
 
 </body>
