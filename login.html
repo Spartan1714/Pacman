@@ -2,33 +2,38 @@
 <html>
 
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <meta charset="UTF-8">
 <title>Pacman Login</title>
-
+<link rel="stylesheet" href="login.css">
 <script type="module" src="login.js"></script>
-
 </head>
 
 <body>
 
-<h1>Login</h1>
+<div class="login-container">
+
+<h1 class="title">PAC-MAN</h1>
+
+<div class="login-box">
 
 <input id="email" type="email" placeholder="Email">
 
-<br><br>
-
 <input id="password" type="password" placeholder="Password">
 
-<br><br>
+<button id="login" class="btn-primary">Login</button>
 
-<button id="register">Register</button>
+<button id="register" class="btn-secondary">Register</button>
 
-<button id="login">Login</button>
+<div class="divider">OR</div>
 
-<br><br>
+<button id="google" class="btn-google">
+Login with Google
+</button>
 
-<button id="google">Login with Google</button>
+</div>
+
+</div>
 
 </body>
-
 </html>
