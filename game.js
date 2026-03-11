@@ -1,5 +1,5 @@
-import { map, TILE_SIZE } from "./map.js";
-import { updatePlayer, drawPlayer, setDirection } from "./player.js";
+import { map, TILE_SIZE } from "map.js";
+import { updatePlayer, drawPlayer, setDirection } from "player.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
