@@ -1,7 +1,6 @@
 import { map } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 import { updateGhosts, drawGhosts } from "./ghosts.js";
-
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -37,8 +36,7 @@ let moveDelay = 120;
 
 let score = { value: 0 };
 let level = 1;
-let lives = 3;
-
+let lives = { value: 3 };
 function drawMap(){
 
 for(let y=0;y<map.length;y++){
@@ -87,8 +85,7 @@ ctx.font="16px Arial";
 
 ctx.fillText("Score: " + score.value,10,20);
 ctx.fillText("Level: " + level,10,40);
-ctx.fillText("Lives: " + lives,10,60);
-
+ctx.fillText("Lives: " + lives.value,10,60);
 }
 
 function generateMaze(){
@@ -186,7 +183,8 @@ generateMaze();
 }
 
 function update(){
-  updateGhosts();
+  updatePlayer(score);
+  updateGhosts(lives);
 
 let now = Date.now();
 
