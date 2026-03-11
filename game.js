@@ -3,7 +3,11 @@ import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
+//Funcion para centrar el mapa
 let TILE_SIZE;
+let offsetX = 0;
+let offsetY = 0;
 
 function resizeGame(){
 
@@ -17,10 +21,17 @@ canvas.height / map.length
 )
 );
 
-}
-resizeGame();
+let mapWidth = map[0].length * TILE_SIZE;
+let mapHeight = map.length * TILE_SIZE;
 
+offsetX = Math.floor((canvas.width - mapWidth) / 2);
+offsetY = Math.floor((canvas.height - mapHeight) / 2);
+
+}
+
+resizeGame();
 window.addEventListener("resize", resizeGame);
+
 
 let lastMoveTime = 0;
 let moveDelay = 120;
