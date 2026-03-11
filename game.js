@@ -67,8 +67,8 @@ ctx.fillText("Lives: " + lives, 10, 60);
 
 function generateMaze(){
 
-for(let y = 0; y < map.length; y++){
-for(let x = 0; x < map[y].length; x++){
+for(let y=0;y<map.length;y++){
+for(let x=0;x<map[y].length;x++){
 
 if(
 x === 0 ||
@@ -89,6 +89,64 @@ else{
 map[y][x] = 2;
 }
 
+}
+
+}
+}
+
+fixUnreachablePellets();
+
+}
+
+function fixUnreachablePellets(){
+
+let visited = [];
+
+for(let y=0;y<map.length;y++){
+visited[y] = [];
+for(let x=0;x<map[y].length;x++){
+visited[y][x] = false;
+}
+}
+
+let queue = [];
+queue.push({x:1,y:1});
+visited[1][1] = true;
+
+while(queue.length > 0){
+
+let cell = queue.shift();
+
+let directions = [
+{x:1,y:0},
+{x:-1,y:0},
+{x:0,y:1},
+{x:0,y:-1}
+];
+
+for(let d of directions){
+
+let nx = cell.x + d.x;
+let ny = cell.y + d.y;
+
+if(
+map[ny] &&
+map[ny][nx] !== 1 &&
+!visited[ny][nx]
+){
+visited[ny][nx] = true;
+queue.push({x:nx,y:ny});
+}
+
+}
+
+}
+
+for(let y=0;y<map.length;y++){
+for(let x=0;x<map[y].length;x++){
+
+if(map[y][x] === 2 && !visited[y][x]){
+map[y][x] = 0;
 }
 
 }
