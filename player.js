@@ -8,7 +8,7 @@ export let pacman = {
 };
 
 let lastMoveTime = 0;
-const MOVE_DELAY = 200;
+const MOVE_DELAY = 120;
 export function setDirection(dx, dy){
     pacman.dx = dx;
     pacman.dy = dy;
