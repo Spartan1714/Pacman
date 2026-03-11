@@ -10,3 +10,13 @@ canvas{
     background:#000;
     border:2px solid yellow;
 }
+html, body{
+margin:0;
+padding:0;
+overflow:hidden;
+background:black;
+}
+
+canvas{
+display:block;
+}

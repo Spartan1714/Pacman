@@ -3,6 +3,24 @@ import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+let TILE_SIZE;
+
+function resizeGame(){
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+TILE_SIZE = Math.floor(
+Math.min(
+canvas.width / map[0].length,
+canvas.height / map.length
+)
+);
+
+}
+resizeGame();
+
+window.addEventListener("resize", resizeGame);
 
 let lastMoveTime = 0;
 let moveDelay = 120;
