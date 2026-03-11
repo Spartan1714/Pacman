@@ -1,5 +1,6 @@
 import { map } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection } from "./player.js";
+import { updateGhosts, drawGhosts } from "./ghosts.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -185,6 +186,7 @@ generateMaze();
 }
 
 function update(){
+  updateGhosts();
 
 let now = Date.now();
 
@@ -203,10 +205,12 @@ lastMoveTime = now;
 }
 
 function draw(){
+  
 
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
 drawMap();
+drawGhosts(ctx,tileSize,offsetX,offsetY);
 drawPlayer(ctx,tileSize,offsetX,offsetY);
 drawScore();
 
