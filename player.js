@@ -1,91 +1,87 @@
 import { map, TILE_SIZE } from "./map.js";
 
 export let pacman = {
-    x: 1,
-    y: 1,
+    x: TILE_SIZE * 1.5,
+    y: TILE_SIZE * 1.5,
     dx: 0,
-    dy: 0
+    dy: 0,
+    speed: 120
 };
 
-let lastMoveTime = 0;
-const MOVE_DELAY = 120;
+let mouthAngle = 0.2;
+let mouthDir = 1;
+
 export function setDirection(dx, dy){
     pacman.dx = dx;
     pacman.dy = dy;
 }
 
-export function updatePlayer(scoreRef){
+export function updatePlayer(scoreRef, deltaTime){
 
-    let now = Date.now();
+    let move = pacman.speed * deltaTime / 1000;
 
-    if(now - lastMoveTime < MOVE_DELAY) return;
+    let nextX = pacman.x + pacman.dx * move;
+    let nextY = pacman.y + pacman.dy * move;
 
-    let nextX = pacman.x + pacman.dx;
-    let nextY = pacman.y + pacman.dy;
+    let tileX = Math.floor(nextX / TILE_SIZE);
+    let tileY = Math.floor(nextY / TILE_SIZE);
 
-    if(map[nextY] && map[nextY][nextX] !== 1){
+    if(map[tileY] && map[tileY][tileX] !== 1){
 
         pacman.x = nextX;
         pacman.y = nextY;
 
-        if(map[nextY][nextX] === 2){
+        if(map[tileY][tileX] === 2){
 
-            map[nextY][nextX] = 0;
+            map[tileY][tileX] = 0;
             scoreRef.value += 10;
 
         }
 
     }
 
-    lastMoveTime = now;
+    mouthAngle += 0.02 * mouthDir;
+
+    if(mouthAngle > 0.35 || mouthAngle < 0.05){
+        mouthDir *= -1;
+    }
 
 }
 
 export function drawPlayer(ctx){
 
-    ctx.fillStyle = "yellow";
+    let startAngle = mouthAngle * Math.PI;
+    let endAngle = (2 - mouthAngle) * Math.PI;
 
-    let startAngle = 0.2 * Math.PI;
-    let endAngle = 1.8 * Math.PI;
-
-    // derecha
-    if(pacman.dx === 1){
-        startAngle = 0.2 * Math.PI;
-        endAngle = 1.8 * Math.PI;
-    }
-
-    // izquierda
     if(pacman.dx === -1){
-        startAngle = 1.2 * Math.PI;
-        endAngle = 0.8 * Math.PI;
+        startAngle = (1 + mouthAngle) * Math.PI;
+        endAngle = (1 - mouthAngle) * Math.PI;
     }
 
-    // arriba
     if(pacman.dy === -1){
-        startAngle = 1.7 * Math.PI;
-        endAngle = 1.3 * Math.PI;
+        startAngle = (1.5 + mouthAngle) * Math.PI;
+        endAngle = (1.5 - mouthAngle) * Math.PI;
     }
 
-    // abajo
     if(pacman.dy === 1){
-        startAngle = 0.7 * Math.PI;
-        endAngle = 0.3 * Math.PI;
+        startAngle = (0.5 + mouthAngle) * Math.PI;
+        endAngle = (0.5 - mouthAngle) * Math.PI;
     }
+
+    ctx.fillStyle = "yellow";
 
     ctx.beginPath();
 
     ctx.arc(
-        pacman.x * TILE_SIZE + TILE_SIZE/2,
-        pacman.y * TILE_SIZE + TILE_SIZE/2,
+        pacman.x,
+        pacman.y,
         TILE_SIZE/2 - 2,
         startAngle,
         endAngle
     );
 
-    ctx.lineTo(
-        pacman.x * TILE_SIZE + TILE_SIZE/2,
-        pacman.y * TILE_SIZE + TILE_SIZE/2
-    );
+    ctx.lineTo(pacman.x, pacman.y);
 
     ctx.fill();
+
 }
