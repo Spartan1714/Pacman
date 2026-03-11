@@ -253,3 +253,14 @@ if(e.key === "ArrowRight") setDirection(1,0);
 });
 
 gameLoop();
+document.getElementById("restartBtn").addEventListener("click", () => {
+
+location.reload();
+
+});
+
+document.getElementById("exitBtn").addEventListener("click", () => {
+
+window.location.href = "login.html";
+
+});
