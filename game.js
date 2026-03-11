@@ -3,10 +3,13 @@ import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
 let lastMoveTime = 0;
-let moveDelay = 120; 
+let moveDelay = 120;
 
 let score = { value: 0 };
+let level = 1;
+let lives = 3;
 
 function drawMap(){
 
@@ -55,7 +58,67 @@ function drawScore(){
 
 ctx.fillStyle = "white";
 ctx.font = "16px Arial";
+
 ctx.fillText("Score: " + score.value, 10, 20);
+ctx.fillText("Level: " + level, 10, 40);
+ctx.fillText("Lives: " + lives, 10, 60);
+
+}
+
+function generateMaze(){
+
+for(let y = 0; y < map.length; y++){
+for(let x = 0; x < map[y].length; x++){
+
+if(
+x === 0 ||
+y === 0 ||
+x === map[y].length-1 ||
+y === map.length-1
+){
+map[y][x] = 1;
+}
+else{
+
+let r = Math.random();
+
+if(r < 0.2){
+map[y][x] = 1;
+}
+else{
+map[y][x] = 2;
+}
+
+}
+
+}
+}
+
+}
+
+function pelletsRemaining(){
+
+let count = 0;
+
+for(let y = 0; y < map.length; y++){
+for(let x = 0; x < map[y].length; x++){
+
+if(map[y][x] === 2){
+count++;
+}
+
+}
+}
+
+return count;
+
+}
+
+function nextLevel(){
+
+level++;
+
+generateMaze();
 
 }
 
@@ -66,8 +129,17 @@ let now = Date.now();
 if(now - lastMoveTime > moveDelay){
 
 updatePlayer(score);
-lastMoveTime = now;
+
+if(pelletsRemaining() === 0){
+
+nextLevel();
+
 }
+
+lastMoveTime = now;
+
+}
+
 }
 
 function draw(){
