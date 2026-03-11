@@ -1,93 +1,196 @@
-body{
-    background:black;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
+/* =========================
+   BASE LAYOUT
+========================= */
 
-canvas{
-    background:#000;
-    border:2px solid yellow;
-}
 html, body{
 margin:0;
 padding:0;
 overflow:hidden;
 background:black;
+
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 }
 
+/* =========================
+   GAME CANVAS
+========================= */
+
 canvas{
+background:#000;
+border:3px solid #ffe600;
+
+box-shadow:
+0 0 10px #ffe600,
+0 0 20px #ffe600,
+0 0 40px #ffcc00;
+
 display:block;
 }
+
+/* =========================
+   GAME OVER SCREEN
+========================= */
+
 .game-over{
 position:absolute;
 top:0;
 left:0;
+
 width:100%;
 height:100%;
+
 display:flex;
 flex-direction:column;
 justify-content:center;
 align-items:center;
-background:rgba(0,0,0,0.9);
+
+background:rgba(0,0,0,0.92);
+
+z-index:10;
 }
 
 .hidden{
 display:none;
 }
 
+/* =========================
+   GAME OVER TITLE
+========================= */
+
 .arcade-title{
 
 font-family:'Press Start 2P', cursive;
-font-size:80px;
-color:#ffff00;
+
+font-size:clamp(60px,8vw,110px);
+
+color:#ffe600;
+
+letter-spacing:6px;
+
+/* borde tipo arcade */
+
+-webkit-text-stroke:4px #000;
+
+/* glow retro */
 
 text-shadow:
-0 0 10px #ffff00,
-0 0 20px #ffff00,
-0 0 40px #ffff00,
-0 0 80px #ffff00;
+4px 4px 0 #000,
+0 0 10px #ffe600,
+0 0 20px #ffe600,
+0 0 40px #ffd000,
+0 0 80px #ffae00;
 
 animation: blink 1s infinite;
 
 }
 
+/* =========================
+   SCORE TEXT
+========================= */
+
 .score-text{
+
 font-family:'Press Start 2P';
+
+font-size:clamp(14px,2vw,24px);
+
 color:#00ffff;
-margin-top:30px;
+
+margin-top:35px;
+
+text-shadow:
+2px 2px 0 #000,
+0 0 10px #00ffff,
+0 0 20px #00ffff;
+
 }
 
+/* =========================
+   BUTTON CONTAINER
+========================= */
+
 .buttons{
-margin-top:50px;
+
+margin-top:60px;
+
 display:flex;
 gap:40px;
+
 }
+
+/* =========================
+   BUTTON STYLE
+========================= */
 
 .buttons button{
 
 font-family:'Press Start 2P';
-padding:20px 40px;
-border:none;
+
+font-size:14px;
+
+padding:18px 40px;
+
+border:3px solid black;
+
 cursor:pointer;
-font-size:16px;
+
+transition:all .1s ease;
+
+box-shadow:
+0 5px 0 #000,
+0 0 10px rgba(255,255,255,0.25);
 
 }
 
+/* =========================
+   BUTTON COLORS
+========================= */
+
 #restartBtn{
+
 background:#00ff00;
+
+text-shadow:
+0 0 10px #00ff00,
+0 0 20px #00ff00;
+
 }
 
 #exitBtn{
+
 background:#ff4444;
 color:white;
+
+text-shadow:
+0 0 10px #ff4444,
+0 0 20px #ff4444;
+
 }
+
+/* =========================
+   BUTTON PRESS EFFECT
+========================= */
+
+.buttons button:active{
+
+transform:translateY(5px);
+
+box-shadow:
+0 0 0 #000;
+
+}
+
+/* =========================
+   BLINK ANIMATION
+========================= */
 
 @keyframes blink{
 
 0%{opacity:1;}
-50%{opacity:0.6;}
+50%{opacity:.65;}
 100%{opacity:1;}
 
 }
