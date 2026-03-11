@@ -231,34 +231,7 @@ draw();
 
 requestAnimationFrame(gameLoop);
 if(gameOver){
-
-ctx.fillStyle = "rgba(0,0,0,0.7)";
-ctx.fillRect(0,0,canvas.width,canvas.height);
-
-ctx.fillStyle="red";
-ctx.font="60px Ari  al";
-ctx.textAlign="center";
-
-ctx.fillText(
-"GAME OVER",
-canvas.width/2,
-canvas.height/2 - 40
-);
-
-ctx.fillStyle="white";
-ctx.font="30px Arial";
-
-ctx.fillText(
-"Press R to Restart",
-canvas.width/2,
-canvas.height/2 + 20
-);
-
-ctx.fillText(
-"Press ESC to Exit",
-canvas.width/2,
-canvas.height/2 + 60
-);
+drawGameOver();
 
 }
 
@@ -324,17 +297,6 @@ if(e.key === "ArrowLeft") setDirection(-1,0);
 if(e.key === "ArrowRight") setDirection(1,0);
 document.addEventListener("keydown", e=>{
 
-if(gameOver){
-
-if(e.key === "r" || e.key === "R"){
-location.reload();
-}
-
-if(e.key === "Escape"){
-window.close();
-}
-
-}
 
 });
 
