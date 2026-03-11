@@ -239,52 +239,65 @@ drawGameOver();
 
 function drawGameOver(){
 
-ctx.fillStyle = "rgba(0,0,0,0.8)";
+ctx.fillStyle = "rgba(0,0,0,0.85)";
 ctx.fillRect(0,0,canvas.width,canvas.height);
 
 ctx.textAlign = "center";
 
-ctx.fillStyle = "red";
-ctx.font = "80px Arial";
+let blink = Math.floor(Date.now()/400)%2;
+
+ctx.font = "70px 'Press Start 2P'";
+
+ctx.fillStyle = blink ? "#ff0044" : "#ffcc00";
 
 ctx.fillText(
 "GAME OVER",
 canvas.width/2,
-canvas.height/2 - 120
+canvas.height/2 - 140
 );
 
-ctx.fillStyle="white";
-ctx.font="40px Arial";
+ctx.font = "20px 'Press Start 2P'";
+ctx.fillStyle = "#00ffff";
 
 ctx.fillText(
-"Score: " + score.value,
+"SCORE: " + score.value,
 canvas.width/2,
-canvas.height/2 - 40
+canvas.height/2 - 60
 );
 
-ctx.fillStyle="#00ff00";
+let pulse = Math.sin(Date.now()*0.005)*5;
 
-ctx.fillRect(canvas.width/2 - 120,canvas.height/2 + 20,240,60);
+ctx.fillStyle = "#00ff00";
+ctx.fillRect(
+canvas.width/2 - 140,
+canvas.height/2 + 10 + pulse,
+280,
+60
+);
 
-ctx.fillStyle="black";
-ctx.font="30px Arial";
+ctx.fillStyle = "black";
+ctx.font = "18px 'Press Start 2P'";
 
 ctx.fillText(
 "RESTART",
 canvas.width/2,
-canvas.height/2 + 60
+canvas.height/2 + 50 + pulse
 );
 
-ctx.fillStyle="#ff4444";
+ctx.fillStyle = "#ff4444";
+ctx.fillRect(
+canvas.width/2 - 140,
+canvas.height/2 + 100 + pulse,
+280,
+60
+);
 
-ctx.fillRect(canvas.width/2 - 120,canvas.height/2 + 100,240,60);
-
-ctx.fillStyle="white";
+ctx.fillStyle = "white";
 
 ctx.fillText(
 "EXIT",
 canvas.width/2,
-canvas.height/2 + 140
+canvas.height/2 + 140 + pulse
 );
 
 }
