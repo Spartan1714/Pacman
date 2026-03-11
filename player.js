@@ -14,22 +14,35 @@ export function setDirection(dx, dy){
 
 export function updatePlayer(scoreRef){
 
-    let nextX = pacman.x + pacman.dx;
-    let nextY = pacman.y + pacman.dy;
+ let lastMoveTime = 0;
+const MOVE_DELAY = 120;
 
-    if(map[nextY] && map[nextY][nextX] !== 1){
+export function updatePlayer(scoreRef){
 
-        pacman.x = nextX;
-        pacman.y = nextY;
+let now = Date.now();
 
-        if(map[nextY][nextX] === 2){
+if(now - lastMoveTime < MOVE_DELAY) return;
 
-            map[nextY][nextX] = 0;
-            scoreRef.value += 10;
+let nextX = pacman.x + pacman.dx;
+let nextY = pacman.y + pacman.dy;
 
-        }
+if(map[nextY] && map[nextY][nextX] !== 1){
 
-    }
+pacman.x = nextX;
+pacman.y = nextY;
+
+if(map[nextY][nextX] === 2){
+
+map[nextY][nextX] = 0;
+scoreRef.value += 10;
+
+}
+
+}
+
+lastMoveTime = now;
+
+}
 
 }
 
