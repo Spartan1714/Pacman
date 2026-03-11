@@ -1,6 +1,7 @@
 import { map } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 import { updateGhosts, drawGhosts } from "./ghosts.js";
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -38,6 +39,7 @@ let score = { value: 0 };
 let gameOver = false;
 let level = 1;
 let lives = { value: 3 };
+
 function drawMap(){
 
 for(let y=0;y<map.length;y++){
@@ -87,6 +89,7 @@ ctx.font="16px Arial";
 ctx.fillText("Score: " + score.value,10,20);
 ctx.fillText("Level: " + level,10,40);
 ctx.fillText("Lives: " + lives.value,10,60);
+
 }
 
 function generateMaze(){
@@ -184,14 +187,25 @@ generateMaze();
 }
 
 function update(){
-  
-  updatePlayer(score);
-  updateGhosts(lives);
-  if(lives.value <= 0){
-gameOver = true;
-}
+
 if(gameOver) return;
 
+updatePlayer(score);
+updateGhosts(lives);
+
+if(lives.value <= 0){
+
+gameOver = true;
+
+document.getElementById("finalScore").textContent = score.value;
+
+document
+.getElementById("gameOverScreen")
+.classList.remove("hidden");
+
+return;
+
+}
 
 let now = Date.now();
 
@@ -210,7 +224,6 @@ lastMoveTime = now;
 }
 
 function draw(){
-  
 
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -218,9 +231,6 @@ drawMap();
 drawGhosts(ctx,tileSize,offsetX,offsetY);
 drawPlayer(ctx,tileSize,offsetX,offsetY);
 drawScore();
-if(gameOver){
-drawGameOver();
-}
 
 }
 
@@ -230,106 +240,6 @@ update();
 draw();
 
 requestAnimationFrame(gameLoop);
-if(gameOver){
-drawGameOver();
-
-}
-
-}
-
-function drawGameOver(){
-
-ctx.fillStyle = "rgba(0,0,0,0.9)";
-ctx.fillRect(0,0,canvas.width,canvas.height);
-
-ctx.textAlign = "center";
-
-let centerX = canvas.width/2;
-let centerY = canvas.height/2;
-
-let blink = Math.floor(Date.now()/400)%2;
-let pulse = Math.sin(Date.now()*0.005)*5;
-
-function drawArcadeText(text,x,y,size){
-
-ctx.font = size + "px 'Press Start 2P'";
-
-/* sombra negra base */
-
-ctx.fillStyle = "#000";
-ctx.fillText(text,x+6,y+6);
-
-/* glow grande */
-
-ctx.shadowColor = "#ffff00";
-ctx.shadowBlur = 40;
-ctx.fillStyle = "#ffff33";
-ctx.fillText(text,x,y);
-
-/* glow medio */
-
-ctx.shadowBlur = 25;
-ctx.fillText(text,x,y);
-
-/* glow pequeño */
-
-ctx.shadowBlur = 10;
-ctx.fillText(text,x,y);
-
-ctx.shadowBlur = 0;
-
-}
-
-drawArcadeText(
-"GAME OVER",
-centerX,
-centerY - 140,
-70
-);
-
-ctx.font = "20px 'Press Start 2P'";
-ctx.fillStyle = "#00ffff";
-
-ctx.fillText(
-"SCORE: " + score.value,
-centerX,
-centerY - 60
-);
-
-ctx.fillStyle = "#00ff00";
-
-ctx.fillRect(
-centerX - 160,
-centerY + pulse,
-320,
-60
-);
-
-ctx.fillStyle = "#000";
-ctx.font = "20px 'Press Start 2P'";
-
-ctx.fillText(
-"RESTART",
-centerX,
-centerY + 40 + pulse
-);
-
-ctx.fillStyle = "#ff4444";
-
-ctx.fillRect(
-centerX - 160,
-centerY + 90 + pulse,
-320,
-60
-);
-
-ctx.fillStyle = "#fff";
-
-ctx.fillText(
-"EXIT",
-centerX,
-centerY + 130 + pulse
-);
 
 }
 
@@ -339,40 +249,6 @@ if(e.key === "ArrowUp") setDirection(0,-1);
 if(e.key === "ArrowDown") setDirection(0,1);
 if(e.key === "ArrowLeft") setDirection(-1,0);
 if(e.key === "ArrowRight") setDirection(1,0);
-document.addEventListener("keydown", e=>{
-
-
-});
-
-});
-
-canvas.addEventListener("click",function(e){
-
-if(!gameOver) return;
-
-let rect = canvas.getBoundingClientRect();
-let mouseX = e.clientX - rect.left;
-let mouseY = e.clientY - rect.top;
-
-let centerX = canvas.width/2;
-
-if(
-mouseX > centerX-120 &&
-mouseX < centerX+120 &&
-mouseY > canvas.height/2 + 20 &&
-mouseY < canvas.height/2 + 80
-){
-location.reload();
-}
-
-if(
-mouseX > centerX-120 &&
-mouseX < centerX+120 &&
-mouseY > canvas.height/2 + 100 &&
-mouseY < canvas.height/2 + 160
-){
-window.location.href = "login.html";
-}
 
 });
 
