@@ -75,8 +75,8 @@ export function drawPlayer(ctx){
     ctx.beginPath();
 
     ctx.arc(
-        pacman.x * TILE_SIZE + TILE_SIZE/2,
-        pacman.y * TILE_SIZE + TILE_SIZE/2,
+        offsetX + pacman.x,
+        offsetY + pacman.y,
         TILE_SIZE/2 - 2,
         startAngle,
         endAngle

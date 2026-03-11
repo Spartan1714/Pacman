@@ -52,8 +52,8 @@ if(tile === 1){
 
 ctx.fillStyle = "blue";
 ctx.fillRect(
-x*TILE_SIZE,
-y*TILE_SIZE,
+offsetX + x*TILE_SIZE,
+offsetY + y*TILE_SIZE,
 TILE_SIZE,
 TILE_SIZE
 );
@@ -66,9 +66,9 @@ ctx.fillStyle = "white";
 
 ctx.beginPath();
 ctx.arc(
-x*TILE_SIZE + TILE_SIZE/2,
-y*TILE_SIZE + TILE_SIZE/2,
-3,
+offsetX + x*TILE_SIZE + TILE_SIZE/2,
+offsetY + y*TILE_SIZE + TILE_SIZE/2,
+TILE_SIZE/8,
 0,
 Math.PI*2
 );
