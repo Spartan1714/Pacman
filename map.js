@@ -1,4 +1,4 @@
-export const TILE_SIZE = 24;
+export let TILE_SIZE = 24;
 export const map = [
 
 [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],

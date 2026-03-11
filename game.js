@@ -1,11 +1,10 @@
-import { map, TILE_SIZE } from "./map.js";
+import { map } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-//Funcion para centrar el mapa
-let TILE_SIZE;
+let tileSize;
 let offsetX = 0;
 let offsetY = 0;
 
@@ -14,15 +13,15 @@ function resizeGame(){
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-TILE_SIZE = Math.floor(
+tileSize = Math.floor(
 Math.min(
 canvas.width / map[0].length,
 canvas.height / map.length
 )
 );
 
-let mapWidth = map[0].length * TILE_SIZE;
-let mapHeight = map.length * TILE_SIZE;
+let mapWidth = map[0].length * tileSize;
+let mapHeight = map.length * tileSize;
 
 offsetX = Math.floor((canvas.width - mapWidth) / 2);
 offsetY = Math.floor((canvas.height - mapHeight) / 2);
@@ -31,7 +30,6 @@ offsetY = Math.floor((canvas.height - mapHeight) / 2);
 
 resizeGame();
 window.addEventListener("resize", resizeGame);
-
 
 let lastMoveTime = 0;
 let moveDelay = 120;
@@ -42,33 +40,32 @@ let lives = 3;
 
 function drawMap(){
 
-for(let y = 0; y < map.length; y++){
-
-for(let x = 0; x < map[y].length; x++){
+for(let y=0;y<map.length;y++){
+for(let x=0;x<map[y].length;x++){
 
 let tile = map[y][x];
 
 if(tile === 1){
 
-ctx.fillStyle = "blue";
+ctx.fillStyle="blue";
 ctx.fillRect(
-offsetX + x*TILE_SIZE,
-offsetY + y*TILE_SIZE,
-TILE_SIZE,
-TILE_SIZE
+offsetX + x*tileSize,
+offsetY + y*tileSize,
+tileSize,
+tileSize
 );
 
 }
 
 if(tile === 2){
 
-ctx.fillStyle = "white";
+ctx.fillStyle="white";
 
 ctx.beginPath();
 ctx.arc(
-offsetX + x*TILE_SIZE + TILE_SIZE/2,
-offsetY + y*TILE_SIZE + TILE_SIZE/2,
-TILE_SIZE/8,
+offsetX + x*tileSize + tileSize/2,
+offsetY + y*tileSize + tileSize/2,
+tileSize/8,
 0,
 Math.PI*2
 );
@@ -78,19 +75,18 @@ ctx.fill();
 }
 
 }
-
 }
 
 }
 
 function drawScore(){
 
-ctx.fillStyle = "white";
-ctx.font = "16px Arial";
+ctx.fillStyle="white";
+ctx.font="16px Arial";
 
-ctx.fillText("Score: " + score.value, 10, 20);
-ctx.fillText("Level: " + level, 10, 40);
-ctx.fillText("Lives: " + lives, 10, 60);
+ctx.fillText("Score: " + score.value,10,20);
+ctx.fillText("Level: " + level,10,40);
+ctx.fillText("Lives: " + lives,10,60);
 
 }
 
@@ -147,7 +143,6 @@ carve(nx,ny);
 }
 
 map[1][1] = 0;
-
 carve(1,1);
 
 for(let y=0;y<height;y++){
@@ -164,68 +159,12 @@ map[1][1] = 0;
 
 }
 
-function fixUnreachablePellets(){
-
-let visited = [];
-
-for(let y=0;y<map.length;y++){
-visited[y] = [];
-for(let x=0;x<map[y].length;x++){
-visited[y][x] = false;
-}
-}
-
-let queue = [];
-queue.push({x:1,y:1});
-visited[1][1] = true;
-
-while(queue.length > 0){
-
-let cell = queue.shift();
-
-let directions = [
-{x:1,y:0},
-{x:-1,y:0},
-{x:0,y:1},
-{x:0,y:-1}
-];
-
-for(let d of directions){
-
-let nx = cell.x + d.x;
-let ny = cell.y + d.y;
-
-if(
-map[ny] &&
-map[ny][nx] !== 1 &&
-!visited[ny][nx]
-){
-visited[ny][nx] = true;
-queue.push({x:nx,y:ny});
-}
-
-}
-
-}
-
-for(let y=0;y<map.length;y++){
-for(let x=0;x<map[y].length;x++){
-
-if(map[y][x] === 2 && !visited[y][x]){
-map[y][x] = 0;
-}
-
-}
-}
-
-}
-
 function pelletsRemaining(){
 
 let count = 0;
 
-for(let y = 0; y < map.length; y++){
-for(let x = 0; x < map[y].length; x++){
+for(let y=0;y<map.length;y++){
+for(let x=0;x<map[y].length;x++){
 
 if(map[y][x] === 2){
 count++;
@@ -241,7 +180,6 @@ return count;
 function nextLevel(){
 
 level++;
-
 generateMaze();
 
 }
@@ -255,9 +193,7 @@ if(now - lastMoveTime > moveDelay){
 updatePlayer(score);
 
 if(pelletsRemaining() === 0){
-
 nextLevel();
-
 }
 
 lastMoveTime = now;
@@ -271,7 +207,7 @@ function draw(){
 ctx.clearRect(0,0,canvas.width,canvas.height);
 
 drawMap();
-drawPlayer(ctx);
+drawPlayer(ctx,tileSize,offsetX,offsetY);
 drawScore();
 
 }
