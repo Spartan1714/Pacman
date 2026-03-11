@@ -32,14 +32,13 @@ export function updatePlayer(scoreRef, deltaTime){
         pacman.y = nextY;
 
         if(map[tileY][tileX] === 2){
-
             map[tileY][tileX] = 0;
             scoreRef.value += 10;
-
         }
 
     }
 
+    // animación de boca
     mouthAngle += 0.02 * mouthDir;
 
     if(mouthAngle > 0.35 || mouthAngle < 0.05){
@@ -83,5 +82,4 @@ export function drawPlayer(ctx){
     ctx.lineTo(pacman.x, pacman.y);
 
     ctx.fill();
-
 }

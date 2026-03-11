@@ -82,8 +82,19 @@ drawScore();
 
 function gameLoop(){
 
-update();
+let lastTime = 0;
+
+function gameLoop(time){
+
+let deltaTime = time - lastTime;
+lastTime = time;
+
+update(deltaTime);
 draw();
+
+requestAnimationFrame(gameLoop);
+
+}
 
 requestAnimationFrame(gameLoop);
 
@@ -97,5 +108,6 @@ if(e.key === "ArrowLeft") setDirection(-1,0);
 if(e.key === "ArrowRight") setDirection(1,0);
 
 });
+
 
 gameLoop();
