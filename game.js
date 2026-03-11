@@ -3,6 +3,8 @@ import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+let lastMoveTime = 0;
+let moveDelay = 120; 
 
 let score = { value: 0 };
 
@@ -59,8 +61,13 @@ ctx.fillText("Score: " + score.value, 10, 20);
 
 function update(){
 
-updatePlayer(score);
+let now = Date.now();
 
+if(now - lastMoveTime > moveDelay){
+
+updatePlayer(score);
+lastMoveTime = now;
+}
 }
 
 function draw(){
