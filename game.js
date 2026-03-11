@@ -35,6 +35,7 @@ let lastMoveTime = 0;
 let moveDelay = 120;
 
 let score = { value: 0 };
+let gameOver = false;
 let level = 1;
 let lives = { value: 3 };
 function drawMap(){
@@ -183,8 +184,14 @@ generateMaze();
 }
 
 function update(){
+  
   updatePlayer(score);
   updateGhosts(lives);
+  if(lives.value <= 0){
+gameOver = true;
+}
+if(gameOver) return;
+
 
 let now = Date.now();
 
@@ -211,6 +218,9 @@ drawMap();
 drawGhosts(ctx,tileSize,offsetX,offsetY);
 drawPlayer(ctx,tileSize,offsetX,offsetY);
 drawScore();
+if(gameOver){
+drawGameOver();
+}
 
 }
 
@@ -220,6 +230,89 @@ update();
 draw();
 
 requestAnimationFrame(gameLoop);
+if(gameOver){
+
+ctx.fillStyle = "rgba(0,0,0,0.7)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.fillStyle="red";
+ctx.font="60px Ari  al";
+ctx.textAlign="center";
+
+ctx.fillText(
+"GAME OVER",
+canvas.width/2,
+canvas.height/2 - 40
+);
+
+ctx.fillStyle="white";
+ctx.font="30px Arial";
+
+ctx.fillText(
+"Press R to Restart",
+canvas.width/2,
+canvas.height/2 + 20
+);
+
+ctx.fillText(
+"Press ESC to Exit",
+canvas.width/2,
+canvas.height/2 + 60
+);
+
+}
+
+}
+
+function drawGameOver(){
+
+ctx.fillStyle = "rgba(0,0,0,0.8)";
+ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ctx.textAlign = "center";
+
+ctx.fillStyle = "red";
+ctx.font = "80px Arial";
+
+ctx.fillText(
+"GAME OVER",
+canvas.width/2,
+canvas.height/2 - 120
+);
+
+ctx.fillStyle="white";
+ctx.font="40px Arial";
+
+ctx.fillText(
+"Score: " + score.value,
+canvas.width/2,
+canvas.height/2 - 40
+);
+
+ctx.fillStyle="#00ff00";
+
+ctx.fillRect(canvas.width/2 - 120,canvas.height/2 + 20,240,60);
+
+ctx.fillStyle="black";
+ctx.font="30px Arial";
+
+ctx.fillText(
+"RESTART",
+canvas.width/2,
+canvas.height/2 + 60
+);
+
+ctx.fillStyle="#ff4444";
+
+ctx.fillRect(canvas.width/2 - 120,canvas.height/2 + 100,240,60);
+
+ctx.fillStyle="white";
+
+ctx.fillText(
+"EXIT",
+canvas.width/2,
+canvas.height/2 + 140
+);
 
 }
 
@@ -229,6 +322,51 @@ if(e.key === "ArrowUp") setDirection(0,-1);
 if(e.key === "ArrowDown") setDirection(0,1);
 if(e.key === "ArrowLeft") setDirection(-1,0);
 if(e.key === "ArrowRight") setDirection(1,0);
+document.addEventListener("keydown", e=>{
+
+if(gameOver){
+
+if(e.key === "r" || e.key === "R"){
+location.reload();
+}
+
+if(e.key === "Escape"){
+window.close();
+}
+
+}
+
+});
+
+});
+
+canvas.addEventListener("click",function(e){
+
+if(!gameOver) return;
+
+let rect = canvas.getBoundingClientRect();
+let mouseX = e.clientX - rect.left;
+let mouseY = e.clientY - rect.top;
+
+let centerX = canvas.width/2;
+
+if(
+mouseX > centerX-120 &&
+mouseX < centerX+120 &&
+mouseY > canvas.height/2 + 20 &&
+mouseY < canvas.height/2 + 80
+){
+location.reload();
+}
+
+if(
+mouseX > centerX-120 &&
+mouseX < centerX+120 &&
+mouseY > canvas.height/2 + 100 &&
+mouseY < canvas.height/2 + 160
+){
+window.location.href = "login.html";
+}
 
 });
 
