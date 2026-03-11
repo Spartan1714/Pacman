@@ -244,44 +244,56 @@ ctx.fillRect(0,0,canvas.width,canvas.height);
 
 ctx.textAlign = "center";
 
-let blink = Math.floor(Date.now()/400)%2;
-let pulse = Math.sin(Date.now()*0.005)*5;
-
 let centerX = canvas.width/2;
 let centerY = canvas.height/2;
 
-function drawNeonText(text,x,y,color,size){
+let blink = Math.floor(Date.now()/400)%2;
+let pulse = Math.sin(Date.now()*0.005)*5;
+
+function drawArcadeText(text,x,y,size){
 
 ctx.font = size + "px 'Press Start 2P'";
 
-ctx.fillStyle = "black";
-ctx.fillText(text,x+4,y+4);
+/* sombra negra base */
 
-ctx.fillStyle = color;
+ctx.fillStyle = "#000";
+ctx.fillText(text,x+6,y+6);
+
+/* glow grande */
+
+ctx.shadowColor = "#ffff00";
+ctx.shadowBlur = 40;
+ctx.fillStyle = "#ffff33";
 ctx.fillText(text,x,y);
 
-ctx.shadowColor = color;
-ctx.shadowBlur = 20;
+/* glow medio */
+
+ctx.shadowBlur = 25;
+ctx.fillText(text,x,y);
+
+/* glow pequeño */
+
+ctx.shadowBlur = 10;
 ctx.fillText(text,x,y);
 
 ctx.shadowBlur = 0;
 
 }
 
-drawNeonText(
+drawArcadeText(
 "GAME OVER",
 centerX,
-centerY - 150,
-blink ? "#ff0033" : "#ffaa00",
+centerY - 140,
 70
 );
 
-drawNeonText(
+ctx.font = "20px 'Press Start 2P'";
+ctx.fillStyle = "#00ffff";
+
+ctx.fillText(
 "SCORE: " + score.value,
 centerX,
-centerY - 70,
-"#00ffff",
-22
+centerY - 60
 );
 
 ctx.fillStyle = "#00ff00";
@@ -293,12 +305,13 @@ centerY + pulse,
 60
 );
 
-drawNeonText(
+ctx.fillStyle = "#000";
+ctx.font = "20px 'Press Start 2P'";
+
+ctx.fillText(
 "RESTART",
 centerX,
-centerY + 40 + pulse,
-"#000000",
-20
+centerY + 40 + pulse
 );
 
 ctx.fillStyle = "#ff4444";
@@ -310,12 +323,12 @@ centerY + 90 + pulse,
 60
 );
 
-drawNeonText(
+ctx.fillStyle = "#fff";
+
+ctx.fillText(
 "EXIT",
 centerX,
-centerY + 130 + pulse,
-"#ffffff",
-20
+centerY + 130 + pulse
 );
 
 }
