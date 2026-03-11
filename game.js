@@ -4,6 +4,9 @@ import { updatePlayer, drawPlayer, setDirection } from "./player.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+canvas.width = map[0].length * TILE_SIZE;
+canvas.height = map.length * TILE_SIZE;
+
 let score = { value: 0 };
 
 function drawMap(){
@@ -14,12 +17,20 @@ for(let x=0;x<map[y].length;x++){
 let tile = map[y][x];
 
 if(tile === 1){
-ctx.fillStyle = "blue";
-ctx.fillRect(x*TILE_SIZE,y*TILE_SIZE,TILE_SIZE,TILE_SIZE);
+
+ctx.fillStyle="blue";
+ctx.fillRect(
+x*TILE_SIZE,
+y*TILE_SIZE,
+TILE_SIZE,
+TILE_SIZE
+);
+
 }
 
 if(tile === 2){
-ctx.fillStyle = "white";
+
+ctx.fillStyle="white";
 
 ctx.beginPath();
 ctx.arc(
@@ -29,7 +40,9 @@ y*TILE_SIZE + TILE_SIZE/2,
 0,
 Math.PI*2
 );
+
 ctx.fill();
+
 }
 
 }
@@ -38,14 +51,16 @@ ctx.fill();
 }
 
 function drawScore(){
+
 ctx.fillStyle="white";
 ctx.font="16px Arial";
-ctx.fillText("Score: "+score.value,10,20);
+ctx.fillText("Score: " + score.value,10,20);
+
 }
 
 function update(deltaTime){
 
-updatePlayer(score, deltaTime);
+updatePlayer(score,deltaTime);
 
 }
 
