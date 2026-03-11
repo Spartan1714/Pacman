@@ -68,5 +68,12 @@ window.location = "index.html";
 alert(error.message);
 
 }
+document.getElementById("facebook").onclick = () => {
+alert("Facebook login coming soon");
+};
+
+document.getElementById("apple").onclick = () => {
+alert("Apple login coming soon");
+};
 
 };
