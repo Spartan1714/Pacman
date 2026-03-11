@@ -67,68 +67,49 @@ ctx.fillText("Lives: " + lives, 10, 60);
 
 function generateMaze(){
 
-let visited = [];
+let width = map[0].length;
+let height = map.length;
 
-for(let y=0;y<map.length;y++){
-visited[y] = [];
-for(let x=0;x<map[y].length;x++){
-visited[y][x] = false;
-}
-}
-
-for(let y=0;y<map.length;y++){
-for(let x=0;x<map[y].length;x++){
-
-if(
-x === 0 ||
-y === 0 ||
-x === map[y].length-1 ||
-y === map.length-1
-){
+for(let y=0;y<height;y++){
+for(let x=0;x<width;x++){
 map[y][x] = 1;
 }
-else{
-
-if(Math.random() < 0.2){
-map[y][x] = 1;
-}
-else{
-map[y][x] = 0;
 }
 
+function shuffle(array){
+for(let i=array.length-1;i>0;i--){
+let j=Math.floor(Math.random()*(i+1));
+[array[i],array[j]]=[array[j],array[i]];
+}
+return array;
 }
 
-}
-}
+function carve(x,y){
 
-let queue = [];
-queue.push({x:1,y:1});
-visited[1][1] = true;
-
-while(queue.length > 0){
-
-let cell = queue.shift();
-
-let dirs = [
-{x:1,y:0},
-{x:-1,y:0},
-{x:0,y:1},
-{x:0,y:-1}
-];
+let dirs = shuffle([
+[2,0],
+[-2,0],
+[0,2],
+[0,-2]
+]);
 
 for(let d of dirs){
 
-let nx = cell.x + d.x;
-let ny = cell.y + d.y;
+let nx = x + d[0];
+let ny = y + d[1];
 
 if(
-map[ny] &&
-map[ny][nx] !== 1 &&
-!visited[ny][nx]
+ny > 0 &&
+ny < height-1 &&
+nx > 0 &&
+nx < width-1 &&
+map[ny][nx] === 1
 ){
 
-visited[ny][nx] = true;
-queue.push({x:nx,y:ny});
+map[y + d[1]/2][x + d[0]/2] = 0;
+map[ny][nx] = 0;
+
+carve(nx,ny);
 
 }
 
@@ -136,15 +117,21 @@ queue.push({x:nx,y:ny});
 
 }
 
-for(let y=0;y<map.length;y++){
-for(let x=0;x<map[y].length;x++){
+map[1][1] = 0;
 
-if(visited[y][x] && map[y][x] === 0){
+carve(1,1);
+
+for(let y=0;y<height;y++){
+for(let x=0;x<width;x++){
+
+if(map[y][x] === 0){
 map[y][x] = 2;
 }
 
 }
 }
+
+map[1][1] = 0;
 
 }
 
