@@ -2,22 +2,25 @@ import { map } from "./map.js";
 import { pacman } from "./player.js";
 
 export let ghosts = [
-{ x:5, y:5, dx:1, dy:0, color:"red" }
+{ x:5, y:5, dx:1, dy:0, color:"red" },
+{ x:6, y:5, dx:-1, dy:0, color:"pink" },
+{ x:5, y:6, dx:0, dy:1, color:"cyan" },
+{ x:6, y:6, dx:0, dy:-1, color:"orange" }
 ];
 
 let lastGhostMove = 0;
 const GHOST_DELAY = 180;
 
-function randomDirection(){
+function possibleDirections(g){
 
-let dirs = [
-{dx:1,dy:0},
-{dx:-1,dy:0},
-{dx:0,dy:1},
-{dx:0,dy:-1}
-];
+let dirs = [];
 
-return dirs[Math.floor(Math.random()*dirs.length)];
+if(map[g.y][g.x+1] !== 1) dirs.push({dx:1,dy:0});
+if(map[g.y][g.x-1] !== 1) dirs.push({dx:-1,dy:0});
+if(map[g.y+1] && map[g.y+1][g.x] !== 1) dirs.push({dx:0,dy:1});
+if(map[g.y-1] && map[g.y-1][g.x] !== 1) dirs.push({dx:0,dy:-1});
+
+return dirs;
 
 }
 
@@ -39,9 +42,13 @@ g.y = nextY;
 
 }else{
 
-let d = randomDirection();
+let dirs = possibleDirections(g);
+
+if(dirs.length > 0){
+let d = dirs[Math.floor(Math.random()*dirs.length)];
 g.dx = d.dx;
 g.dy = d.dy;
+}
 
 }
 
@@ -52,8 +59,10 @@ livesRef.value--;
 pacman.x = 1;
 pacman.y = 1;
 
-g.x = 5;
-g.y = 5;
+for(let gh of ghosts){
+gh.x = 5;
+gh.y = 5;
+}
 
 }
 
