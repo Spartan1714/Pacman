@@ -1,63 +1,95 @@
 import { map } from "./map.js";
-import { pacman, resetPlayer } from "./player.js?v=3";
+import { pacman, resetPlayer } from "./player.js";
 
 export let ghosts = [];
 
 export function spawnGhostsForLevel() {
-    ghosts = []; // Vaciamos para que no se acumulen
+    ghosts = [];
     const colors = ["red", "pink", "cyan", "orange"];
-    // Spawn en zona central despejada (ajusta según tu mapa si 9,9 es muro)
+    // Spawn en zona segura (fila 1, col 10)
     for (let i = 0; i < 4; i++) {
         ghosts.push({
-            x: 9, y: 9, vX: 9, vY: 9,
+            x: 10, y: 1,         // Posición lógica
+            vX: 10, vY: 1,       // Posición visual (deslizamiento)
+            dx: 0, dy: 0,        // Dirección actual
             color: colors[i],
-            speed: 0.08,
-            dirX: 0, dirY: 0
+            speed: 0.1,          // Un poco más lentos que Pacman (0.15)
+            wobble: Math.random() * 10 // Para animar las patas
         });
     }
 }
 
 export function updateGhosts(lives) {
     for (let g of ghosts) {
+        g.wobble += 0.2; // Animación de patas
+
+        // 1. Lógica de Rejilla (IA y snap)
         if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
-            g.vX = g.x; g.vY = g.y;
-            let dirs = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(d => {
-                return map[g.y + d.dy] && map[g.y + d.dy][g.x + d.dx] !== 1;
+            g.vX = g.x; // Snap visual
+            g.vY = g.y;
+
+            // IA Básica: elegir dirección al azar evitando volver atrás
+            let dirs = [{x:1, y:0}, {x:-1, y:0}, {x:0, y:1}, {x:0, y:-1}];
+            let valid = dirs.filter(d => {
+                let ny = Math.round(g.y + d.y);
+                let nx = Math.round(g.x + d.x);
+                if(ny < 0 || ny >= map.length || nx < 0 || nx >= map[0].length) return false;
+                return map[ny][nx] !== 1;
             });
-            let move = dirs[Math.floor(Math.random() * dirs.length)];
-            g.dirX = move.dx; g.dirY = move.dy;
-            g.x += g.dirX; g.y += g.dy;
+
+            if (valid.length > 0) {
+                if (valid.length > 1) {
+                    // Evitar dar media vuelta si hay más opciones
+                    valid = valid.filter(d => d.x !== -g.dx || d.y !== -g.dy);
+                }
+                let chosen = valid[Math.floor(Math.random() * valid.length)];
+                g.dx = chosen.x; g.dy = chosen.y;
+                g.x += g.dx; g.y += g.dy;
+            }
         }
 
+        // 2. Deslizamiento Visual (ELIMINA EL LAG)
         if (g.vX < g.x) g.vX += g.speed;
         if (g.vX > g.x) g.vX -= g.speed;
         if (g.vY < g.y) g.vY += g.speed;
         if (g.vY > g.y) g.vY -= g.speed;
 
-        // COLISIÓN MEJORADA: Solo mueres si la distancia visual es muy corta
-        let dist = Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY);
-        if (dist < 0.5) { // Reducido de 0.7 a 0.5 para que sea más justo
+        // 3. Colisión (Muerte por proximidad visual, más justa)
+        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.6) {
             lives.value--;
             resetPlayer();
-            ghosts.forEach(gh => { gh.x = 9; gh.y = 9; gh.vX = 9; gh.vY = 9; });
-            break; 
+            // Resetear fantasmas
+            ghosts.forEach(gh => { gh.x = 10; gh.y = 1; gh.vX = 10; gh.vY = 1; });
         }
     }
 }
 
 export function drawGhosts(ctx, tileSize, offsetX, offsetY) {
     for (let g of ghosts) {
-        let gx = offsetX + g.vX * tileSize + tileSize/2;
-        let gy = offsetY + g.vY * tileSize + tileSize/2;
+        let tx = offsetX + g.vX * tileSize;
+        let ty = offsetY + g.vY * tileSize;
+        let r = tileSize / 2;
+
         ctx.fillStyle = g.color;
+        
+        // Cabeza clásica redonda
         ctx.beginPath();
-        ctx.arc(gx, gy, tileSize/2.2, 0, Math.PI * 2);
+        ctx.arc(tx + r, ty + r, r * 0.9, Math.PI, 0); 
+        
+        // Patas onduladas animadas
+        let feet = 3;
+        let feetWidth = (tileSize * 0.9) / feet;
+        for (let i = 0; i < feet; i++) {
+            let x = tx + tileSize * 0.9 - (i * feetWidth);
+            let y = ty + tileSize + Math.sin(g.wobble + i) * 3;
+            ctx.lineTo(x, y);
+        }
+        ctx.lineTo(tx + tileSize * 0.1, ty + r);
         ctx.fill();
-        // Ojos para distinguir dirección
+
+        // Ojos básicos
         ctx.fillStyle = "white";
-        ctx.beginPath();
-        ctx.arc(gx - 4, gy - 2, 3, 0, 7);
-        ctx.arc(gx + 4, gy - 2, 3, 0, 7);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(tx + r - 4, ty + r - 2, 3, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(tx + r + 4, ty + r - 2, 3, 0, Math.PI * 2); ctx.fill();
     }
 }
