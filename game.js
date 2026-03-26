@@ -17,18 +17,16 @@ function resize() {
 window.onresize = resize; resize();
 
 function drawMap() {
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = "black";
     ctx.fillRect(0,0,canvas.width, canvas.height);
     for(let y=0; y<map.length; y++) {
         for(let x=0; x<map[y].length; x++) {
-            let rx = offsetX + x * tileSize;
-            let ry = offsetY + y * tileSize;
             if(map[y][x] === 1) {
-                ctx.strokeStyle = "#2222FF"; ctx.lineWidth = 2;
-                ctx.strokeRect(rx+3, ry+3, tileSize-6, tileSize-6);
+                ctx.strokeStyle = "blue";
+                ctx.strokeRect(offsetX + x*tileSize + 2, offsetY + y*tileSize + 2, tileSize-4, tileSize-4);
             } else if(map[y][x] === 2) {
-                ctx.fillStyle = "#FFB8AE";
-                ctx.beginPath(); ctx.arc(rx+tileSize/2, ry+tileSize/2, 2, 0, 7); ctx.fill();
+                ctx.fillStyle = "white";
+                ctx.beginPath(); ctx.arc(offsetX+x*tileSize+tileSize/2, offsetY+y*tileSize+tileSize/2, 2, 0, 7); ctx.fill();
             }
         }
     }
@@ -42,11 +40,11 @@ function gameLoop() {
         drawGhosts(ctx, tileSize, offsetX, offsetY);
         drawPlayer(ctx, tileSize, offsetX, offsetY);
         
-        ctx.fillStyle = "white"; ctx.font = "bold 18px Arial";
-        ctx.fillText(`SCORE: ${score.value}  LIVES: ${lives.value}`, offsetX, offsetY - 10);
+        ctx.fillStyle = "white"; ctx.font = "20px Arial";
+        ctx.fillText(`Score: ${score.value}  Lives: ${lives.value}`, 20, 30);
         requestAnimationFrame(gameLoop);
     } else {
-        alert("GAME OVER! Score: " + score.value);
+        alert("GAME OVER");
         location.reload();
     }
 }
