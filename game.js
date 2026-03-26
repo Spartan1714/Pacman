@@ -16,6 +16,32 @@ function resize() {
 window.onresize = resize;
 resize();
 
+// --- FUNCIÓN DE LA CEREZA ESTILIZADA ---
+function drawCherry(ctx, x, y) {
+    let s = TILE_SIZE;
+    let cx = x + s / 2;
+    let cy = y + s / 2;
+
+    ctx.save();
+    // 1. Cerezas rojas
+    ctx.fillStyle = "#ff0000";
+    ctx.beginPath();
+    ctx.arc(cx - s * 0.15, cy + s * 0.15, s * 0.2, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.15, cy - s * 0.10, s * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 2. Tallos verdes
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
+    ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.15, cy + s * 0.15);
+    ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
+    ctx.lineTo(cx + s * 0.15, cy - s * 0.10);
+    ctx.stroke();
+    ctx.restore();
+}
+
 function gameLoop() {
     if (lives.value <= 0) {
         ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -35,26 +61,25 @@ function gameLoop() {
         resetPlayer(); spawnGhosts(level); spawnCherry(level);
     }
 
-    // DIBUJO ULTRA-FLUIDO
+    // DIBUJO
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
     const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2);
 
-    // Muros neón simplificados (2 líneas rápidas, sin sombras)
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * TILE_SIZE, ry = offsetY + y * TILE_SIZE;
-            if (tile === 1) {
+            if (tile === 1) { // Muros Neón
                 ctx.strokeStyle = "#00ffff"; ctx.lineWidth = 1.5;
                 ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
-            } else if (tile === 2) {
+            } else if (tile === 2) { // Puntos
                 ctx.fillStyle = "#ff00ff";
                 ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
-            } else if (tile === 3) {
-                ctx.fillStyle = "red"; ctx.beginPath();
-                ctx.arc(rx + TILE_SIZE/2, ry + TILE_SIZE/2, 5, 0, 7); ctx.fill();
+            } else if (tile === 3) { 
+                // --- CAMBIO AQUÍ: LLAMAMOS A TU FUNCIÓN ---
+                drawCherry(ctx, rx, ry); 
             }
         });
     });

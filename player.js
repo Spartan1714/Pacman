@@ -54,10 +54,36 @@ export function updatePlayer(score, onPowerUp) {
 export function drawPlayer(ctx, size, ox, oy) {
     let x = ox + pacman.vX * size + size / 2;
     let y = oy + pacman.vY * size + size / 2;
+    let radius = size * 0.45;
+
+    ctx.save();
     ctx.fillStyle = "yellow";
+    
+    // Un brillo muy ligero que no alenta (shadowBlur bajo)
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "yellow";
+
+    // Calculamos el ángulo de la boca basándonos en la dirección y el tiempo
+    let mouthAngle = (Math.sin(Date.now() * 0.02) + 1) * 0.2; // Velocidad de masticado
+    
+    // Rotamos el contexto según la dirección para que la boca mire a donde va
+    let rotation = 0;
+    if (pacman.dirX === 1) rotation = 0;
+    else if (pacman.dirX === -1) rotation = Math.PI;
+    else if (pacman.dirY === 1) rotation = Math.PI / 2;
+    else if (pacman.dirY === -1) rotation = -Math.PI / 2;
+
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
+    // Dibujamos el arco de Pac-Man (el cuerpo)
     ctx.beginPath();
-    let mouth = (Math.sin(Date.now() * 0.015) + 1) * 0.2; // Boca un poco más rápida
-    ctx.arc(x, y, size * 0.45, mouth, Math.PI * 2 - mouth);
-    ctx.lineTo(x, y);
+    // Empezamos el arco dejando el hueco de la boca
+    ctx.arc(0, 0, radius, mouthAngle, Math.PI * 2 - mouthAngle);
+    
+    // Línea hacia el centro para cerrar la "cuña" de la boca
+    ctx.lineTo(0, 0);
     ctx.fill();
+    
+    ctx.restore();
 }
