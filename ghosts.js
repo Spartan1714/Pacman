@@ -11,7 +11,7 @@ const sounds = {
 
 export let ghosts = [
     { x: 5, y: 5, dx: 1, dy: 0, color: "red", type: "berserker", isFrightened: false },
-    { x: 6, y: 5, dx: -1, dy: 0, color: "pink", type: "random", isFrightened: false },
+ //   { x: 6, y: 5, dx: -1, dy: 0, color: "pink", type: "random", isFrightened: false },
     { x: 5, y: 6, dx: 0, dy: 1, color: "cyan", type: "random", isFrightened: false },
     { x: 6, y: 6, dx: 0, dy: -1, color: "orange", type: "random", isFrightened: false }
 ];
