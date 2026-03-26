@@ -37,8 +37,8 @@ export function updatePlayer(score, onPowerUp) {
     }
 
     // Suavizado visual (Interpolación) - ESTO ES LO QUE DA FLUIDEZ
-    pacman.vX += (pacman.x - pacman.vX) * 0.12;
-    pacman.vY += (pacman.y - pacman.vY) * 0.12;
+    pacman.vX += (pacman.x - pacman.vX) * 0.30;
+    pacman.vY += (pacman.y - pacman.vY) * 0.30;
 
     let mx = Math.round(pacman.x);
     let my = Math.round(pacman.y);
