@@ -6,6 +6,10 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 let score = { value: 0 }, lives = { value: 3 };
 
+let level = 1;
+spawnCherry(level);
+spawnGhosts();
+gameLoop();
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;

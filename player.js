@@ -1,4 +1,6 @@
 import { map } from "./map.js";
+// IMPORTANTE: Importamos powerMode para saber cuándo Pacman debe ser grande
+import { powerMode } from "./ghosts.js"; 
 
 export let pacman = {
     x: 1, y: 1, 
@@ -52,59 +54,71 @@ export function updatePlayer(score) {
     else if (pacman.vY < pacman.y) { pacman.vY += pacman.speed; pacman.angle = Math.PI/2; }
     else if (pacman.vY > pacman.y) { pacman.vY -= pacman.speed; pacman.angle = -Math.PI/2; }
 
-    // Comer puntos
+    // Comer puntos (2) o Cereza (3)
     let mx = Math.round(pacman.vX);
     let my = Math.round(pacman.vY);
+    
     if (map[my] && map[my][mx] === 2) { 
         score.value += 10; 
         map[my][mx] = 0; 
+    } 
+    // Lógica para la cereza
+    else if (map[my] && map[my][mx] === 3) {
+        score.value += 100;
+        map[my][mx] = 0;
+        // La función activatePower() debe estar en ghosts.js para activar el powerMode
+        import("./ghosts.js").then(m => m.activatePower());
     }
 }
 
 export function drawPlayer(ctx, tileSize, offsetX, offsetY) {
     let px = offsetX + pacman.vX * tileSize + tileSize/2;
     let py = offsetY + pacman.vY * tileSize + tileSize/2;
-    let r = tileSize/2.2;
+    
+    // --- LÓGICA DE PACMAN GRANDE ---
+    // Si powerMode es true, multiplicamos el radio por 1.4 (40% más grande)
+    let sizeMultiplier = powerMode ? 1.4 : 1.0;
+    let r = (tileSize / 2.2) * sizeMultiplier;
     
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(pacman.angle);
     
-    // 1. Cuerpo amarillo (Misma boca animada)
+    // 1. Cuerpo amarillo
     ctx.fillStyle = "yellow";
     ctx.beginPath();
     ctx.moveTo(0,0);
+    // Ajustamos la apertura de la boca según el modo (opcional)
     ctx.arc(0, 0, r, pacman.mouth, Math.PI * 2 - pacman.mouth);
     ctx.lineTo(0,0);
     ctx.fill();
     
-    // 2. Lógica de posición del ojo (Siempre arriba)
-    let eyeY = -tileSize/3.5;
-    if (Math.abs(pacman.angle - Math.PI) < 0.1) { // Si mira a la izquierda (PI)
-        eyeY = tileSize/3.5; 
+    // 2. Lógica de posición del ojo (Escalada con el radio r)
+    let eyeY = -r / 1.5;
+    if (Math.abs(pacman.angle - Math.PI) < 0.1) { 
+        eyeY = r / 1.5; 
     }
     
-    // 3. DISEÑO DEL OJO "MÁS BONITO" (Estilizado)
-    let eyeR = tileSize/8; // Radio base del ojo
-    let pupilR = tileSize/16; // Radio de la pupila
+    // 3. DISEÑO DEL OJO (Escalado proporcionalmente a r)
+    let eyeR = r / 4; 
+    let pupilR = r / 8; 
     
-    // 3a. Globo ocular (Blanco elíptico)
+    // 3a. Globo ocular
     ctx.fillStyle = "white";
     ctx.beginPath();
-    // Usamos ellipse para que no sea un círculo perfecto, se ve más orgánico
-    ctx.ellipse(tileSize/8, eyeY, eyeR, eyeR * 1.3, 0, 0, Math.PI * 2);
+    ctx.ellipse(r / 3, eyeY, eyeR, eyeR * 1.3, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // 3b. Pupila (Negra, un poco adelantada)
+    // 3b. Pupila
     ctx.fillStyle = "black";
     ctx.beginPath();
-    ctx.arc(tileSize/6.5, eyeY, pupilR, 0, Math.PI * 2);
+    ctx.arc(r / 2.5, eyeY, pupilR, 0, Math.PI * 2);
     ctx.fill();
     
-    // 3c. Brillo (Pequeño punto blanco)
+    // 3c. Brillo
     ctx.fillStyle = "white";
     ctx.beginPath();
-    ctx.arc(tileSize/5.8, eyeY - tileSize/20, pupilR/3, 0, Math.PI * 2);
+    ctx.arc(r / 2.2, eyeY - r / 10, pupilR / 3, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();
