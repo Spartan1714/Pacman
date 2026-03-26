@@ -1,16 +1,36 @@
-export let TILE_SIZE = 24;
-export const map = [
+export let map = [];
 
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-[1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,1,1,2,2,1],
-[1,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,1],
-[1,2,1,2,1,1,1,2,1,1,1,2,1,1,1,2,1,2,2,1],
-[1,2,2,2,2,2,1,2,2,2,2,2,1,2,2,2,2,2,2,1],
-[1,1,1,1,1,2,1,1,1,1,1,2,1,1,1,1,1,1,2,1],
-[1,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1,2,2,2,1],
-[1,2,1,2,1,1,1,2,1,1,1,2,1,1,1,2,1,2,2,1],
-[1,2,1,2,2,2,2,2,2,2,2,2,2,2,2,2,1,2,2,1],
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+export function generateMaze(cols = 19, rows = 19) {
+    let newMap = Array.from({ length: rows }, () => Array(cols).fill(1));
 
-];
+    function carve(x, y) {
+        newMap[y][x] = 0;
+        const dirs = [[0, 2], [0, -2], [2, 0], [-2, 0]].sort(() => Math.random() - 0.5);
+        for (let [dx, dy] of dirs) {
+            let nx = x + dx, ny = y + dy;
+            if (ny > 0 && ny < rows - 1 && nx > 0 && nx < cols - 1 && newMap[ny][nx] === 1) {
+                newMap[y + dy / 2][x + dx / 2] = 0;
+                carve(nx, ny);
+            }
+        }
+    }
+
+    carve(1, 1);
+    
+    // Tu lógica: Llenar de puntos (2) y colocar Berserker (3)
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            if (newMap[y][x] === 0) newMap[y][x] = 2;
+        }
+    }
+    
+    // Asegurar que el punto de inicio de Pacman esté limpio
+    newMap[1][1] = 0; 
+    // Power-up en una posición alejada
+    newMap[rows - 2][cols - 2] = 3;
+
+    map.length = 0;
+    newMap.forEach(row => map.push(row));
+}
+
+generateMaze();
