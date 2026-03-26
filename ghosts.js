@@ -8,23 +8,12 @@ export function spawnGhostsForLevel(level = 1) {
     const colors = ["#FF0000", "#FFB8FF", "#00FFFF", "#FFB852"];
     const num = Math.min(2 + level, colors.length);
     
-    // BUSCADOR DE POSICIÓN LIBRE: Encuentra el primer '0' o '2' en el mapa
-    let spawnPos = { x: 1, y: 1 };
-    outer: for (let y = 0; y < map.length; y++) {
-        for (let x = 0; x < map[y].length; x++) {
-            if (map[y][x] !== 1) {
-                spawnPos = { x, y };
-                break outer;
-            }
-        }
-    }
-
     for (let i = 0; i < num; i++) {
+        // Los ponemos un poco lejos de Pacman (en la coordenada 1, 3)
         ghosts.push({
-            x: spawnPos.x, y: spawnPos.y, 
-            vX: spawnPos.x, vY: spawnPos.y,
+            x: 1, y: 3, vX: 1, vY: 3,
             color: colors[i],
-            speed: 0.07 + (level * 0.01),
+            speed: 0.07,
             dirX: 0, dirY: 0
         });
     }
@@ -32,36 +21,21 @@ export function spawnGhostsForLevel(level = 1) {
 
 export function updateGhosts(lives, level) {
     for (let g of ghosts) {
-        // Solo decide dirección cuando está centrado en la celda
+        // IA de movimiento fluido
         if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
             g.vX = g.x; g.vY = g.y;
+            let dirs = [{dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}]
+                .filter(d => map[Math.round(g.y + d.dy)] && map[Math.round(g.y + d.dy)][Math.round(g.x + d.dx)] !== 1);
 
-            let possibleDirs = [
-                {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
-            ].filter(d => {
-                let ny = Math.round(g.y + d.dy);
-                let nx = Math.round(g.x + d.dx);
-                return map[ny] && (map[ny][nx] === 0 || map[ny][nx] === 2);
-            });
-
-            if (possibleDirs.length > 0) {
-                // Evita que el fantasma se dé la vuelta 180 grados si hay otra opción
-                if (possibleDirs.length > 1) {
-                    possibleDirs = possibleDirs.filter(d => d.dx !== -g.dirX || d.dy !== -g.dirY);
-                }
-                let m = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
-                g.dirX = m.dx; g.dirY = m.dy;
-                g.x += g.dirX; g.y += g.dy;
-            }
+            if (dirs.length > 1) dirs = dirs.filter(d => d.dx !== -g.dirX || d.dy !== -g.dirY);
+            let m = dirs[Math.floor(Math.random() * dirs.length)];
+            if(m) { g.dirX = m.dx; g.dirY = m.dy; g.x += g.dirX; g.y += g.dy; }
         }
+        // Deslizamiento
+        if (g.vX < g.x) g.vX += g.speed; if (g.vX > g.x) g.vX -= g.speed;
+        if (g.vY < g.y) g.vY += g.speed; if (g.vY > g.y) g.vY -= g.speed;
 
-        // Movimiento visual (Deslizamiento)
-        if (g.vX < g.x) g.vX = Math.min(g.vX + g.speed, g.x);
-        if (g.vX > g.x) g.vX = Math.max(g.vX - g.speed, g.x);
-        if (g.vY < g.y) g.vY = Math.min(g.vY + g.speed, g.y);
-        if (g.vY > g.y) g.vY = Math.max(g.vY - g.speed, g.y);
-
-        // Colisión con Pacman
+        // Colisión (Solo si están cerca visualmente)
         if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.5) {
             lives.value--;
             resetPlayer();
@@ -81,29 +55,27 @@ export function drawGhosts(ctx, tileSize, offsetX, offsetY) {
         ctx.beginPath();
         // Cabeza
         ctx.arc(x + s/2, y + s/2.5, s * 0.4, Math.PI, 0);
-        // Cuerpo y las 3 puntas rectas (Diseño limpio)
+        // Cuerpo con 3 Puntas rectangulares (Como en la foto)
         ctx.lineTo(x + s * 0.9, y + s * 0.9);
-        ctx.lineTo(x + s * 0.75, y + s * 0.75); // Punta 1
+        ctx.lineTo(x + s * 0.75, y + s * 0.75);
         ctx.lineTo(x + s * 0.6, y + s * 0.9);
-        ctx.lineTo(x + s * 0.5, y + s * 0.75); // Punta 2
+        ctx.lineTo(x + s * 0.5, y + s * 0.75);
         ctx.lineTo(x + s * 0.4, y + s * 0.9);
-        ctx.lineTo(x + s * 0.25, y + s * 0.75); // Punta 3
+        ctx.lineTo(x + s * 0.25, y + s * 0.75);
         ctx.lineTo(x + s * 0.1, y + s * 0.9);
         ctx.lineTo(x + s * 0.1, y + s/2.5);
         ctx.fill();
 
-        // OJOS PROFESIONALES (lancos con pupila azul mirando arriba)
+        // Ojos: Blancos con pupilas azules fijas arriba
         ctx.fillStyle = "white";
         ctx.beginPath();
-        ctx.ellipse(x + s*0.35, y + s*0.4, s*0.1, s*0.13, 0, 0, Math.PI*2)
-;
+        ctx.ellipse(x + s*0.35, y + s*0.4, s*0.1, s*0.13, 0, 0, Math.PI*2);
         ctx.ellipse(x + s*0.65, y + s*0.4, s*0.1, s*0.13, 0, 0, Math.PI*2);
         ctx.fill();
-
         ctx.fillStyle = "blue";
         ctx.beginPath();
-        ctx.arc(x + s*0.35, y + s*0.32, s*0.05, 0, Math.PI*2);
-        ctx.arc(x + s*0.65, y + s*0.32, s*0.05, 0, Math.PI*2);
+        ctx.arc(x + s*0.35, y + s*0.3, s*0.05, 0, Math.PI*2);
+        ctx.arc(x + s*0.65, y + s*0.3, s*0.05, 0, Math.PI*2);
         ctx.fill();
     }
 }
