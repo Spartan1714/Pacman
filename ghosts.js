@@ -26,7 +26,7 @@ export function updateGhosts(lives, level) {
         // Animación sutil de las ondas inferiores
         g.wobble += 0.2;
 
-        if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
+        if (Math.abs(g.x - g.vX) < 0.2 && Math.abs(g.y - g.vY) < 0.2){
             g.vX = g.x; g.vY = g.y;
 
             let possibleDirs = [

@@ -64,3 +64,31 @@ export function drawPlayer(ctx, tileSize, offsetX, offsetY) {
     ctx.fill();
     ctx.restore();
 }
+// ... (resto del código igual hasta drawPlayer)
+
+export function drawPlayer(ctx, tileSize, offsetX, offsetY) {
+    let px = offsetX + pacman.vX * tileSize + tileSize/2;
+    let py = offsetY + pacman.vY * tileSize + tileSize/2;
+    
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(pacman.angle);
+    
+    // Cuerpo
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0, 0, tileSize/2.2, pacman.mouth, Math.PI * 2 - pacman.mouth);
+    ctx.fill();
+    
+    // OJO CORREGIDO: Si el ángulo es PI (izquierda), invertimos el eje Y del ojo
+    let eyeY = -tileSize/4;
+    if (pacman.angle === Math.PI) eyeY = tileSize/4; 
+    
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(tileSize/10, eyeY, 2.5, 0, 7);
+    ctx.fill();
+    
+    ctx.restore();
+}
