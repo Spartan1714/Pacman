@@ -20,32 +20,47 @@ export function updateGhosts(lives, score) {
     }
 
     ghosts.forEach(g => {
-        if (g.dead) return; // Si está muerto, no hace nada
+        if (g.dead) return;
 
+        // --- MOVIMIENTO FLUIDO ---
+        // Solo calculamos nueva dirección cuando el fantasma está "casi" en el centro de una celda
         if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
-            g.vX = g.x; g.vY = g.y;
+            g.vX = g.x; // Sincronizamos posición visual con lógica
+            g.vY = g.y;
+
             let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
                 map[Math.round(g.y + m.dy)]?.[Math.round(g.x + m.dx)] !== 1
             );
 
             let choice;
             if (g.mode === "berserker" && !powerMode) {
+                // Berserker más inteligente: no puede dar media vuelta (hace el movimiento más fluido)
                 choice = moves.sort((a, b) => 
-                    Math.hypot(g.x + a.dx - pacman.x, g.y + a.dy - pacman.y) - 
-                    Math.hypot(g.x + b.dx - pacman.x, g.y + b.dy - pacman.y)
+                    Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
+                    Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
                 )[0];
             } else {
                 choice = moves[Math.floor(Math.random() * moves.length)];
             }
-            if (choice) { g.x += choice.dx; g.y += choice.dy; }
+            
+            if (choice) {
+                g.x += choice.dx;
+                g.y += choice.dy;
+            }
         }
-        
-        g.vX += (g.x - g.vX) * 0.08;
-        g.vY += (g.y - g.vY) * 0.08;
 
-        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.6) {
+        // Interpolación: El fantasma se desplaza suavemente hacia su destino (g.x, g.y)
+        const step = g.mode === "berserker" ? 0.12 : 0.09; // Ajusta estos números para la velocidad
+        if (g.vX < g.x) g.vX += step;
+        else if (g.vX > g.x) g.vX -= step;
+        
+        if (g.vY < g.y) g.vY += step;
+        else if (g.vY > g.y) g.vY -= step;
+
+        // Colisión precisa
+        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.7) {
             if (powerMode) {
-                g.dead = true; // ELIMINADO DEFINITIVAMENTE DEL NIVEL
+                g.dead = true;
                 score.value += 500;
             } else {
                 lives.value--;

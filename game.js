@@ -91,6 +91,11 @@ function gameLoop() {
 
 // Controles
 document.onkeydown = (e) => {
+    // Esto evita que las flechas muevan el scroll del navegador
+    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
+        e.preventDefault();
+    }
+
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
