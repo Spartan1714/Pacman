@@ -6,29 +6,31 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 let score = { value: 0 }, lives = { value: 3 }, level = 1, tileSize, offsetX, offsetY;
 
-const GRID = 19; // Tamaño impar para tu generador
+const GRID = 15; // TAMAÑO MEDIANO FIJO
 
 function resize() {
-    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-    tileSize = Math.floor(Math.min(canvas.width / GRID, canvas.height / GRID) * 0.9);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    // Forzamos que el laberinto ocupe una parte cómoda de la pantalla
+    tileSize = Math.floor(Math.min(canvas.width / (GRID + 2), canvas.height / (GRID + 2)));
     offsetX = (canvas.width - GRID * tileSize) / 2;
     offsetY = (canvas.height - GRID * tileSize) / 2;
 }
-window.onresize = resize; resize();
+
+window.onresize = resize;
+resize();
 
 function gameLoop() {
     if (lives.value > 0) {
         updatePlayer(score);
         updateGhosts(lives, level, score);
 
-        // Lógica Berserker
         let px = Math.round(pacman.vX), py = Math.round(pacman.vY);
         if (map[py]?.[px] === 3) {
             map[py][px] = 0;
-            berserker.active = true; berserker.timer = 500;
+            berserker.active = true; berserker.timer = 400;
         }
 
-        // Ganar nivel -> Nuevo Laberinto Random
         if (!map.some(row => row.includes(2))) {
             level++;
             generateMaze(GRID, GRID);
@@ -37,31 +39,42 @@ function gameLoop() {
         }
 
         ctx.fillStyle = "black"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        
         map.forEach((row, y) => row.forEach((tile, x) => {
             let rx = offsetX + x * tileSize, ry = offsetY + y * tileSize;
-            if (tile === 1) { ctx.strokeStyle = "#2b2bff"; ctx.strokeRect(rx+2, ry+2, tileSize-4, tileSize-4); }
-            else if (tile === 2) { ctx.fillStyle = "#ffb8ae"; ctx.beginPath(); ctx.arc(rx+tileSize/2, ry+tileSize/2, 2, 0, 7); ctx.fill(); }
-            else if (tile === 3) { ctx.fillStyle = "white"; ctx.beginPath(); ctx.arc(rx+tileSize/2, ry+tileSize/2, tileSize/4, 0, 7); ctx.fill(); }
+            if (tile === 1) { 
+                ctx.strokeStyle = "#2b2bff"; ctx.lineWidth = 3;
+                ctx.strokeRect(rx + 4, ry + 4, tileSize - 8, tileSize - 8); 
+            }
+            else if (tile === 2) { 
+                ctx.fillStyle = "#ffb8ae"; ctx.beginPath(); 
+                ctx.arc(rx + tileSize/2, ry + tileSize/2, 3, 0, 7); ctx.fill(); 
+            }
+            else if (tile === 3) { 
+                ctx.fillStyle = "white"; ctx.beginPath(); 
+                ctx.arc(rx + tileSize/2, ry + tileSize/2, tileSize/3.5, 0, 7); ctx.fill(); 
+            }
         }));
 
         drawGhosts(ctx, tileSize, offsetX, offsetY);
         drawPlayer(ctx, tileSize, offsetX, offsetY);
         
-        ctx.fillStyle = "white"; ctx.font = "20px Arial";
-        ctx.fillText(`SCORE: ${score.value}  LIVES: ${lives.value}  LEVEL: ${level}`, offsetX, offsetY - 10);
+        ctx.fillStyle = "white"; ctx.font = "bold 24px Arial"; ctx.textAlign = "left";
+        ctx.fillText(`SCORE: ${score.value}  LIVES: ${lives.value}`, offsetX, offsetY - 20);
         requestAnimationFrame(gameLoop);
     } else {
-        ctx.fillStyle = "red"; ctx.font = "50px Arial"; ctx.textAlign = "center";
+        ctx.fillStyle = "rgba(0,0,0,0.8)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = "red"; ctx.font = "bold 60px Arial"; ctx.textAlign = "center";
         ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2);
     }
 }
 
-// Iniciar con tu lógica
 generateMaze(GRID, GRID);
 spawnGhosts(level);
 gameLoop();
 
 document.onkeydown = (e) => {
+    if (e.key.includes("Arrow")) e.preventDefault();
     if (e.key === "ArrowUp") setDirection(0,-1);
     if (e.key === "ArrowDown") setDirection(0,1);
     if (e.key === "ArrowLeft") setDirection(-1,0);

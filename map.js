@@ -1,6 +1,7 @@
 export let map = [];
 
-export function generateMaze(cols = 19, rows = 21) {
+export function generateMaze(cols = 15, rows = 15) {
+    // 1. Crear rejilla llena de paredes
     let newMap = Array.from({ length: rows }, () => Array(cols).fill(1));
 
     function carve(x, y) {
@@ -17,7 +18,7 @@ export function generateMaze(cols = 19, rows = 21) {
 
     carve(1, 1);
     
-    // Llenar pasillos con puntos
+    // Rellenar con puntos (2) y un Berserker (3)
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
             if (newMap[y][x] === 0) newMap[y][x] = 2;
@@ -25,10 +26,10 @@ export function generateMaze(cols = 19, rows = 21) {
     }
     
     newMap[1][1] = 0; // Inicio Pacman
-    newMap[rows - 2][cols - 2] = 3; // Berserker
+    newMap[rows - 2][cols - 2] = 3; // Berserker en la otra esquina
 
     map.length = 0;
     newMap.forEach(row => map.push(row));
 }
 
-generateMaze();
+generateMaze(15, 15);
