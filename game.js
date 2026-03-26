@@ -1,6 +1,6 @@
 import { map } from "./map.js";
-import { updatePlayer, drawPlayer, setDirection } from "./player.js";
-import { updateGhosts, drawGhosts } from "./ghosts.js";
+import { updatePlayer, drawPlayer, setDirection, pacman } from "./player.js"; // Importamos pacman para resetearlo
+import { updateGhosts, drawGhosts, spawnGhostsForLevel } from "./ghost.js"; // Importamos la función de spawn
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -9,24 +9,22 @@ let tileSize;
 let offsetX = 0;
 let offsetY = 0;
 
-function resizeGame(){
+function resizeGame() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+    tileSize = Math.floor(
+        Math.min(
+            canvas.width / map[0].length,
+            canvas.height / map.length
+        )
+    );
 
-tileSize = Math.floor(
-Math.min(
-canvas.width / map[0].length,
-canvas.height / map.length
-)
-);
+    let mapWidth = map[0].length * tileSize;
+    let mapHeight = map.length * tileSize;
 
-let mapWidth = map[0].length * tileSize;
-let mapHeight = map.length * tileSize;
-
-offsetX = Math.floor((canvas.width - mapWidth) / 2);
-offsetY = Math.floor((canvas.height - mapHeight) / 2);
-
+    offsetX = Math.floor((canvas.width - mapWidth) / 2);
+    offsetY = Math.floor((canvas.height - mapHeight) / 2);
 }
 
 resizeGame();
@@ -40,227 +38,165 @@ let gameOver = false;
 let level = 1;
 let lives = { value: 3 };
 
-function drawMap(){
+// --- MEJORA: DIBUJO DEL MAPA (Añadimos soporte para frutas/valor 3) ---
+function drawMap() {
+    for (let y = 0; y < map.length; y++) {
+        for (let x = 0; x < map[y].length; x++) {
+            let tile = map[y][x];
 
-for(let y=0;y<map.length;y++){
-for(let x=0;x<map[y].length;x++){
+            if (tile === 1) { // Muros
+                ctx.fillStyle = "blue";
+                ctx.fillRect(offsetX + x * tileSize, offsetY + y * tileSize, tileSize, tileSize);
+            }
 
-let tile = map[y][x];
+            if (tile === 2) { // Pellets normales
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc(offsetX + x * tileSize + tileSize / 2, offsetY + y * tileSize + tileSize / 2, tileSize / 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
 
-if(tile === 1){
-
-ctx.fillStyle="blue";
-ctx.fillRect(
-offsetX + x*tileSize,
-offsetY + y*tileSize,
-tileSize,
-tileSize
-);
-
+            if (tile === 3) { // FRUTA (Poder especial)
+                ctx.fillStyle = "red"; // Color de la fruta
+                ctx.beginPath();
+                ctx.arc(offsetX + x * tileSize + tileSize / 2, offsetY + y * tileSize + tileSize / 2, tileSize / 3, 0, Math.PI * 2);
+                ctx.fill();
+                // Detalle verde de la fruta
+                ctx.fillStyle = "green";
+                ctx.fillRect(offsetX + x * tileSize + tileSize / 2 - 2, offsetY + y * tileSize + 2, 4, 6);
+            }
+        }
+    }
 }
 
-if(tile === 2){
-
-ctx.fillStyle="white";
-
-ctx.beginPath();
-ctx.arc(
-offsetX + x*tileSize + tileSize/2,
-offsetY + y*tileSize + tileSize/2,
-tileSize/8,
-0,
-Math.PI*2
-);
-
-ctx.fill();
-
+function drawScore() {
+    ctx.fillStyle = "white";
+    ctx.font = "16px Arial";
+    ctx.fillText("Score: " + score.value, 10, 20);
+    ctx.fillText("Level: " + level, 10, 40);
+    ctx.fillText("Lives: " + lives.value, 10, 60);
 }
 
-}
-}
+function generateMaze() {
+    let width = map[0].length;
+    let height = map.length;
 
-}
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            map[y][x] = 1;
+        }
+    }
 
-function drawScore(){
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
 
-ctx.fillStyle="white";
-ctx.font="16px Arial";
+    function carve(x, y) {
+        let dirs = shuffle([[2, 0], [-2, 0], [0, 2], [0, -2]]);
+        for (let d of dirs) {
+            let nx = x + d[0];
+            let ny = y + d[1];
+            if (ny > 0 && ny < height - 1 && nx > 0 && nx < width - 1 && map[ny][nx] === 1) {
+                map[y + d[1] / 2][x + d[0] / 2] = 0;
+                map[ny][nx] = 0;
+                carve(nx, ny);
+            }
+        }
+    }
 
-ctx.fillText("Score: " + score.value,10,20);
-ctx.fillText("Level: " + level,10,40);
-ctx.fillText("Lives: " + lives.value,10,60);
+    map[1][1] = 0;
+    carve(1, 1);
 
-}
-
-function generateMaze(){
-
-let width = map[0].length;
-let height = map.length;
-
-for(let y=0;y<height;y++){
-for(let x=0;x<width;x++){
-map[y][x] = 1;
-}
-}
-
-function shuffle(array){
-for(let i=array.length-1;i>0;i--){
-let j=Math.floor(Math.random()*(i+1));
-[array[i],array[j]]=[array[j],array[i]];
-}
-return array;
-}
-
-function carve(x,y){
-
-let dirs = shuffle([
-[2,0],
-[-2,0],
-[0,2],
-[0,-2]
-]);
-
-for(let d of dirs){
-
-let nx = x + d[0];
-let ny = y + d[1];
-
-if(
-ny > 0 &&
-ny < height-1 &&
-nx > 0 &&
-nx < width-1 &&
-map[ny][nx] === 1
-){
-
-map[y + d[1]/2][x + d[0]/2] = 0;
-map[ny][nx] = 0;
-
-carve(nx,ny);
-
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            if (map[y][x] === 0) {
+                // Probabilidad de poner una fruta (valor 3) en lugar de un pellet
+                map[y][x] = Math.random() > 0.95 ? 3 : 2; 
+            }
+        }
+    }
+    map[1][1] = 0; // Inicio de Pacman despejado
 }
 
+function pelletsRemaining() {
+    let count = 0;
+    for (let y = 0; y < map.length; y++) {
+        for (let x = 0; x < map[y].length; x++) {
+            if (map[y][x] === 2 || map[y][x] === 3) count++;
+        }
+    }
+    return count;
 }
 
+// --- CORRECCIÓN CLAVE: FUNCIÓN NEXTLEVEL ---
+function nextLevel() {
+    level++;
+    generateMaze();
+    
+    // Resetear a Pacman al inicio
+    pacman.x = 1;
+    pacman.y = 1;
+    setDirection(0, 0); // Detenerlo al empezar nivel
+
+    // Generar nueva cantidad de fantasmas (IA Berserker incluida)
+    spawnGhostsForLevel(); 
 }
 
-map[1][1] = 0;
-carve(1,1);
+function update() {
+    if (gameOver) return;
 
-for(let y=0;y<height;y++){
-for(let x=0;x<width;x++){
+    // Eliminamos la duplicación de updatePlayer que tenías fuera del timer
+    // para que el movimiento sea más fluido y controlado por moveDelay.
 
-if(map[y][x] === 0){
-map[y][x] = 2;
+    let now = Date.now();
+    if (now - lastMoveTime > moveDelay) {
+        updatePlayer(score);
+        updateGhosts(lives); // Mover fantasmas al mismo ritmo
+
+        if (pelletsRemaining() === 0) {
+            nextLevel();
+        }
+        lastMoveTime = now;
+    }
+
+    if (lives.value <= 0) {
+        gameOver = true;
+        document.getElementById("finalScore").textContent = score.value;
+        document.getElementById("gameOverScreen").classList.remove("hidden");
+    }
 }
 
-}
-}
-
-map[1][1] = 0;
-
-}
-
-function pelletsRemaining(){
-
-let count = 0;
-
-for(let y=0;y<map.length;y++){
-for(let x=0;x<map[y].length;x++){
-
-if(map[y][x] === 2){
-count++;
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawMap();
+    drawGhosts(ctx, tileSize, offsetX, offsetY);
+    drawPlayer(ctx, tileSize, offsetX, offsetY);
+    drawScore();
 }
 
-}
-}
-
-return count;
-
-}
-
-function nextLevel(){
-
-level++;
-generateMaze();
-
-}
-
-function update(){
-
-if(gameOver) return;
-
-updatePlayer(score);
-updateGhosts(lives);
-
-if(lives.value <= 0){
-
-gameOver = true;
-
-document.getElementById("finalScore").textContent = score.value;
-
-document
-.getElementById("gameOverScreen")
-.classList.remove("hidden");
-
-return;
-
-}
-
-let now = Date.now();
-
-if(now - lastMoveTime > moveDelay){
-
-updatePlayer(score);
-
-if(pelletsRemaining() === 0){
-nextLevel();
-}
-
-lastMoveTime = now;
-
-}
-
-}
-
-function draw(){
-
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-drawMap();
-drawGhosts(ctx,tileSize,offsetX,offsetY);
-drawPlayer(ctx,tileSize,offsetX,offsetY);
-drawScore();
-
-}
-
-function gameLoop(){
-
-update();
-draw();
-
-requestAnimationFrame(gameLoop);
-
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
 }
 
 document.addEventListener("keydown", e => {
-
-if(e.key === "ArrowUp") setDirection(0,-1);
-if(e.key === "ArrowDown") setDirection(0,1);
-if(e.key === "ArrowLeft") setDirection(-1,0);
-if(e.key === "ArrowRight") setDirection(1,0);
-
+    if (e.key === "ArrowUp") setDirection(0, -1);
+    if (e.key === "ArrowDown") setDirection(0, 1);
+    if (e.key === "ArrowLeft") setDirection(-1, 0);
+    if (e.key === "ArrowRight") setDirection(1, 0);
 });
 
 gameLoop();
+
 document.getElementById("restartBtn").addEventListener("click", () => {
-
-location.reload();
-
+    location.reload();
 });
 
 document.getElementById("exitBtn").addEventListener("click", () => {
-
-window.location.href = "login.html";
-
+    window.location.href = "login.html";
 });
