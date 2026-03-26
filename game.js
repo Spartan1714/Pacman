@@ -15,55 +15,44 @@ function resize() {
 }
 window.onresize = resize; resize();
 
-let score = { value: 0 }, lives = { value: 3 }, level = 1, gameOver = false;
-
-function drawMap() {
-    ctx.fillStyle = "black";
-    ctx.fillRect(0,0,canvas.width, canvas.height);
-    for(let y=0; y<map.length; y++) {
-        for(let x=0; x<map[y].length; x++) {
-            let tile = map[y][x];
-            if(tile === 1) { // Muro estético
-                ctx.strokeStyle = "blue"; ctx.lineWidth = 2;
-                ctx.strokeRect(offsetX + x*tileSize + 2, offsetY + y*tileSize + 2, tileSize-4, tileSize-4);
-            } else if(tile === 2) { // Puntos
-                ctx.fillStyle = "white";
-                ctx.beginPath(); ctx.arc(offsetX + x*tileSize + tileSize/2, offsetY + y*tileSize + tileSize/2, 2, 0, 6.28); ctx.fill();
-            } else if(tile === 3) { // Fruta
-                ctx.fillStyle = "red";
-                ctx.beginPath(); ctx.arc(offsetX + x*tileSize + tileSize/2, offsetY + y*tileSize + tileSize/2, tileSize/3, 0, 6.28); ctx.fill();
-            }
-        }
-    }
-}
-
-function update() {
-    if (gameOver) return;
-    updatePlayer(score);
-    updateGhosts(lives);
-
-    // Revisar si se terminó el nivel
-    let dots = 0;
-    map.forEach(row => row.forEach(t => { if(t===2 || t===3) dots++; }));
-    if (dots === 0) {
-        level++;
-        spawnGhostsForLevel();
-        // Aquí deberías llamar a tu función generateMaze() si la tienes
-    }
-
-    if (lives.value <= 0) gameOver = true;
-}
+let score = { value: 0 }, lives = { value: 3 }, level = 1;
 
 function loop() {
-    update();
-    drawMap();
-    drawGhosts(ctx, tileSize, offsetX, offsetY);
-    drawPlayer(ctx, tileSize, offsetX, offsetY);
-    
-    // UI
-    ctx.fillStyle = "white"; ctx.font = "20px Arial";
-    ctx.fillText(`Score: ${score.value}  Lives: ${lives.value}  Level: ${level}`, 20, 30);
-    
+    if (lives.value > 0) {
+        // ACTUALIZACIÓN
+        updatePlayer(score);
+        updateGhosts(lives);
+
+        // DIBUJO
+        ctx.fillStyle = "black";
+        ctx.fillRect(0,0,canvas.width, canvas.height);
+        
+        // Dibujar Mapa
+        for(let y=0; y<map.length; y++) {
+            for(let x=0; x<map[y].length; x++) {
+                if(map[y][x] === 1) {
+                    ctx.fillStyle = "#1919a6";
+                    ctx.fillRect(offsetX + x*tileSize + 1, offsetY + y*tileSize + 1, tileSize - 2, tileSize - 2);
+                } else if(map[y][x] === 2) {
+                    ctx.fillStyle = "white";
+                    ctx.beginPath(); ctx.arc(offsetX+x*tileSize+tileSize/2, offsetY+y*tileSize+tileSize/2, 2, 0, 7); ctx.fill();
+                } else if(map[y][x] === 3) {
+                    ctx.fillStyle = "red";
+                    ctx.beginPath(); ctx.arc(offsetX+x*tileSize+tileSize/2, offsetY+y*tileSize+tileSize/2, tileSize/3, 0, 7); ctx.fill();
+                }
+            }
+        }
+
+        drawGhosts(ctx, tileSize, offsetX, offsetY);
+        drawPlayer(ctx, tileSize, offsetX, offsetY);
+        
+        // Marcador
+        ctx.fillStyle = "white"; ctx.font = "20px Arial";
+        ctx.fillText(`Score: ${score.value}  Lives: ${lives.value}`, 20, 30);
+    } else {
+        ctx.fillStyle = "red"; ctx.font = "50px Arial";
+        ctx.fillText("GAME OVER", canvas.width/2 - 150, canvas.height/2);
+    }
     requestAnimationFrame(loop);
 }
 

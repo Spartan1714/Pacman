@@ -1,89 +1,91 @@
 import { map } from "./map.js";
-import { pacman } from "./player.js";
 
-export let ghosts = [];
+export let pacman = {
+    x: 1, y: 1,           // Celda lógica
+    vX: 1, vY: 1,         // Posición visual (la que se dibuja)
+    dirX: 0, dirY: 0,
+    nextDirX: 0, nextDirY: 0,
+    speed: 0.15,          // Velocidad de deslizamiento (ajústala si va muy rápido)
+    mouth: 0,
+    mouthDir: 1,
+    isSuper: false
+};
 
-export function spawnGhostsForLevel() {
-    ghosts = [];
-    const colors = ["red", "pink", "cyan", "orange"];
-    const num = 1 + Math.floor(Math.random() * 4); // Entre 1 y 4
-
-    for (let i = 0; i < num; i++) {
-        ghosts.push({
-            x: 5, y: 5, vX: 5, vY: 5,
-            dx: 0, dy: 0,
-            color: colors[i],
-            type: (i === 0) ? "berserker" : "random",
-            speed: 0.1 // Un poco más lentos que Pacman
-        });
-    }
+export function setDirection(dx, dy) {
+    pacman.nextDirX = dx;
+    pacman.nextDirY = dy;
 }
 
-function getPossibleDirs(g) {
-    let dirs = [{x:1, y:0}, {x:-1, y:0}, {x:0, y:1}, {x:0, y:-1}];
-    return dirs.filter(d => map[Math.round(g.y + d.y)][Math.round(g.x + d.x)] !== 1);
+export function resetPlayer() {
+    pacman.x = 1; pacman.y = 1;
+    pacman.vX = 1; pacman.vY = 1;
+    pacman.dirX = 0; pacman.dirY = 0;
+    pacman.nextDirX = 0; pacman.nextDirY = 0;
 }
 
-export function updateGhosts(livesRef) {
-    for (let g of ghosts) {
-        // Movimiento suave
-        if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
-            let dirs = getPossibleDirs(g);
-            let chosen;
+export function updatePlayer(score) {
+    // Animación de la boca (cambia el 0.1 para velocidad de masticado)
+    pacman.mouth += 0.15 * pacman.mouthDir;
+    if (pacman.mouth > 0.25 || pacman.mouth < 0) pacman.mouthDir *= -1;
 
-            if (g.type === "berserker" && !pacman.isSuper) {
-                // IA que busca a Pacman
-                dirs.sort((a, b) => {
-                    let distA = Math.abs((g.x+a.x) - pacman.x) + Math.abs((g.y+a.y) - pacman.y);
-                    let distB = Math.abs((g.x+b.x) - pacman.x) + Math.abs((g.y+b.y) - pacman.y);
-                    return distA - distB;
-                });
-                chosen = dirs[0];
-            } else {
-                chosen = dirs[Math.floor(Math.random() * dirs.length)];
-            }
+    // Lógica de "Snap to Grid" (ajuste a la rejilla)
+    // Si la posición visual alcanzó a la posición lógica, buscamos el siguiente paso
+    if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
+        pacman.vX = pacman.x;
+        pacman.vY = pacman.y;
 
-            if (chosen) {
-                g.dx = chosen.x; g.dy = chosen.y;
-                g.x += g.dx; g.y += g.dy;
-            }
+        // Intentar girar a donde el usuario quiere
+        if (map[pacman.y + pacman.nextDirY][pacman.x + pacman.nextDirX] !== 1) {
+            pacman.dirX = pacman.nextDirX;
+            pacman.dirY = pacman.nextDirY;
         }
 
-        if (g.vX < g.x) g.vX += g.speed;
-        if (g.vX > g.x) g.vX -= g.speed;
-        if (g.vY < g.y) g.vY += g.speed;
-        if (g.vY > g.y) g.vY -= g.speed;
-
-        // Colisión
-        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.5) {
-            if (pacman.isSuper) {
-                g.x = 5; g.y = 5; g.vX = 5; g.vY = 5;
-            } else {
-                livesRef.value--;
-                resetPlayer();
-                ghosts.forEach(gh => { gh.x=5; gh.y=5; gh.vX=5; gh.vY=5; });
-            }
+        // Mover si no hay muro
+        if (map[pacman.y + pacman.dirY][pacman.x + pacman.dirX] !== 1) {
+            pacman.x += pacman.dirX;
+            pacman.y += pacman.dirY;
         }
     }
-}
 
-export function drawGhosts(ctx, tileSize, offsetX, offsetY) {
-    for (let g of ghosts) {
-        let tx = offsetX + g.vX * tileSize + tileSize / 2;
-        let ty = offsetY + g.vY * tileSize + tileSize / 2;
-        ctx.fillStyle = pacman.isSuper ? "blue" : g.color;
-        
-        ctx.beginPath();
-        ctx.arc(tx, ty, tileSize/2.2, 0, Math.PI * 2);
-        ctx.fill();
-        // Ojos básicos
-        ctx.fillStyle = "white";
-        ctx.beginPath();
-        ctx.arc(tx-5, ty-5, 3, 0, Math.PI*2);
-        ctx.arc(tx+5, ty-5, 3, 0, Math.PI*2);
-        ctx.fill();
+    // Deslizamiento fluido
+    if (pacman.vX < pacman.x) pacman.vX += pacman.speed;
+    if (pacman.vX > pacman.x) pacman.vX -= pacman.speed;
+    if (pacman.vY < pacman.y) pacman.vY += pacman.speed;
+    if (pacman.vY > pacman.y) pacman.vY -= pacman.speed;
+
+    // Comer
+    let gx = Math.round(pacman.vX);
+    let gy = Math.round(pacman.vY);
+    if (map[gy][gx] === 2 || map[gy][gx] === 3) {
+        if (map[gy][gx] === 3) {
+            pacman.isSuper = true;
+            setTimeout(() => pacman.isSuper = false, 8000);
+        }
+        score.value += (map[gy][gx] === 3) ? 50 : 10;
+        map[gy][gx] = 0;
     }
 }
 
-// Iniciar fantasmas la primera vez
-spawnGhostsForLevel();
+export function drawPlayer(ctx, tileSize, offsetX, offsetY) {
+    let tx = offsetX + pacman.vX * tileSize + tileSize / 2;
+    let ty = offsetY + pacman.vY * tileSize + tileSize / 2;
+    let r = tileSize * 0.45;
+
+    ctx.save();
+    ctx.translate(tx, ty);
+    
+    // Rotar según dirección
+    if (pacman.dirX === 1) ctx.rotate(0);
+    else if (pacman.dirX === -1) ctx.rotate(Math.PI);
+    else if (pacman.dirY === 1) ctx.rotate(Math.PI / 2);
+    else if (pacman.dirY === -1) ctx.rotate(-Math.PI / 2);
+
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    // Dibujo de la boca abierta
+    ctx.arc(0, 0, r, pacman.mouth * Math.PI, (2 - pacman.mouth) * Math.PI);
+    ctx.lineTo(0, 0);
+    ctx.fill();
+    ctx.restore();
+}
