@@ -58,23 +58,7 @@ function drawMap() {
         }
     }
 }
-function checkWin() {
-    for (let row of map) {
-        if (row.includes(2)) return false; // Si hay al menos un '2', no has ganado
-    }
-    return true;
-}
 
-// 2. Función para reiniciar los puntos del mapa (opcionalmente puedes resetear el array map)
-function resetMapPoints() {
-    for (let y = 0; y < map.length; y++) {
-        for (let x = 0; x < map[y].length; x++) {
-            // Si el diseño original tenía puntos ahí, pon un 2. 
-            // (Aquí depende de cómo guardes tu mapa original)
-            if (map[y][x] === 0) map[y][x] = 2; 
-        }
-    }
-}
 
 // Tu gameLoop perfecto
 function gameLoop() {
