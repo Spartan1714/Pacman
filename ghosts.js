@@ -1,110 +1,94 @@
 import { map, TILE_SIZE } from "./map.js";
-import { pacman } from "./player.js"; // Importamos solo los datos, no funciones
+import { pacman } from "./player.js";
 
-export let ghosts = [];
+export let ghosts = [
+    { x: 18, y: 8, vX: 18, vY: 8, lastDx: 0, lastDy: 0, color: "red", mode: "berserker", timer: 0 },
+    { x: 1, y: 8, vX: 1, vY: 8, lastDx: 0, lastDy: 0, color: "pink", mode: "random", timer: 0 },
+    { x: 18, y: 1, vX: 18, vY: 1, lastDx: 0, lastDy: 0, color: "cyan", mode: "random", timer: 0 }
+];
+
 export let powerMode = false;
 let powerTimer = 0;
 
-// ESTA FUNCIÓN ES LA QUE DABA EL ERROR DE PANTALLA NEGRA
-export function activatePower() {
-    powerMode = true;
-    powerTimer = 400; // Duración del poder (aprox 7 segundos)
-    console.log("¡Power Up Activo!");
+// --- CONTROL DE VELOCIDAD DE FANTASMAS ---
+// Sube este número para que los fantasmas vayan MÁS LENTO (ej: 18)
+// El 14 los hace un poco más lentos que a Pac-Man (que estaba en 12)
+const GHOST_SPEED_DIVIDER = 14; 
+
+export function spawnGhosts(level) {
+    // Reiniciar posiciones si es necesario al subir de nivel
 }
 
-export function spawnGhosts(level = 1) {
-    const extraSpeed = Math.min(level * 0.01, 0.06); 
-    ghosts = [
-        { x: 18, y: 1, vX: 18, vY: 1, color: "red", mode: "berserker", dead: false, speed: 0.11 + extraSpeed, lastDx: 0, lastDy: 0 },
-        { x: 1, y: 8, vX: 1, vY: 8, color: "pink", mode: "random", dead: false, speed: 0.08, lastDx: 0, lastDy: 0 },
-        { x: 18, y: 8, vX: 18, vY: 8, color: "cyan", mode: "random", dead: false, speed: 0.08, lastDx: 0, lastDy: 0 }
-    ];
+export function activatePower() {
+    powerMode = true;
+    powerTimer = 600; // Duración del poder
 }
 
 export function allGhostsDead() {
-    if (ghosts.length === 0) return false;
     return ghosts.every(g => g.dead);
 }
 
 export function updateGhosts(lives, score) {
-    // 1. Manejo del cronómetro del poder
     if (powerMode) {
         powerTimer--;
         if (powerTimer <= 0) powerMode = false;
     }
 
-    // --- VELOCIDAD DE LOS FANTASMAS ---
-    // 0.05 es lento y fluido, 0.1 es rápido. Tú decides.
-    const ghostSpeed = powerMode ? 0.04 : 0.06; 
-
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        // 2. Lógica de movimiento en intersecciones (Solo cuando llegan al centro de un tile)
-        if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
-            g.vX = Math.round(g.x); 
-            g.vY = Math.round(g.y);
+        g.timer++;
 
+        // SOLO se mueven cada X cuadros (Freno de mano)
+        if (g.timer >= GHOST_SPEED_DIVIDER) {
+            g.timer = 0;
+
+            let cx = Math.round(g.x);
+            let cy = Math.round(g.y);
+
+            // Buscar caminos posibles
             let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
-                map[Math.round(g.vY + m.dy)]?.[Math.round(g.vX + m.dx)] !== 1
+                map[cy + m.dy]?.[cx + m.dx] !== 1
             );
 
+            // No volver atrás
             if (moves.length > 1) {
                 moves = moves.filter(m => m.dx !== -g.lastDx || m.dy !== -g.lastDy);
             }
 
             let choice;
             if (g.mode === "berserker" && !powerMode) {
-                // Persigue a Pacman
+                // Inteligencia: buscar el camino que reduzca la distancia a Pac-Man
                 choice = moves.sort((a, b) => 
-                    Math.hypot((g.vX + a.dx) - pacman.x, (g.vY + b.dy) - pacman.y) - 
-                    Math.hypot((g.vX + b.dx) - pacman.x, (g.vY + b.dy) - pacman.y)
+                    Math.hypot((cx + a.dx) - pacman.x, (cy + a.dy) - pacman.y) - 
+                    Math.hypot((cx + b.dx) - pacman.x, (cy + b.dy) - pacman.y)
                 )[0];
             } else {
+                // Aleatorio para los demás o si están asustados
                 choice = moves[Math.floor(Math.random() * moves.length)];
             }
             
             if (choice) {
-                g.targetX = g.vX + choice.dx;
-                g.targetY = g.vY + choice.dy;
+                g.x += choice.dx; 
+                g.y += choice.dy;
                 g.lastDx = choice.dx; 
                 g.lastDy = choice.dy;
             }
         }
 
-        // 3. MOVIMIENTO SUAVE (Aquí es donde controlamos la velocidad real)
-        if (g.targetX !== undefined) {
-            if (g.x < g.targetX) g.x += ghostSpeed;
-            else if (g.x > g.targetX) g.x -= ghostSpeed;
-            
-            if (g.y < g.targetY) g.y += ghostSpeed;
-            else if (g.y > g.targetY) g.y -= ghostSpeed;
-            
-            // Si ya casi llegó al destino, lo fijamos
-            if (Math.abs(g.x - g.targetX) < ghostSpeed) g.x = g.targetX;
-            if (Math.abs(g.y - g.targetY) < ghostSpeed) g.y = g.targetY;
-        }
+        // Suavizado visual (Interpolación)
+        g.vX += (g.x - g.vX) * 0.12;
+        g.vY += (g.y - g.vY) * 0.12;
 
-        // 4. Interpolación visual para el dibujo
-        g.vX += (g.x - g.vX) * 0.2;
-        g.vY += (g.y - g.vY) * 0.2;
-    });
-}
-        
-        // Interpolación suave (lo que evita que se vean "trabados")
-        const step = g.mode === "berserker" ? 0.11 : 0.08;
-        g.vX += (g.x - g.vX) * step;
-        g.vY += (g.y - g.vY) * step;
-
-        // Detección de colisión con Pacman
-        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.6) {
+        // COLISIÓN CON PACMAN
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.6) {
             if (powerMode) {
                 g.dead = true;
-                score.value += 500;
+                score.value += 200;
+                setTimeout(() => { g.dead = false; g.x = 9; g.y = 4; }, 5000);
             } else {
                 lives.value--;
-                // Importación dinámica de resetPlayer para evitar el choque de archivos
-                import("./player.js").then(m => m.resetPlayer());
+                pacman.x = 1; pacman.y = 1; // Reset manual rápido
             }
         }
     });
@@ -113,33 +97,23 @@ export function updateGhosts(lives, score) {
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
-        let x = ox + g.vX * TILE_SIZE, y = oy + g.vY * TILE_SIZE, s = TILE_SIZE;
-        
-        ctx.save();
-        // Si hay powerMode, todos se vuelven azules
-        ctx.fillStyle = powerMode ? "#2121ff" : g.color;
-        
-        // Brillo neón para los fantasmas
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = ctx.fillStyle;
+        let gx = ox + g.vX * TILE_SIZE + TILE_SIZE / 2;
+        let gy = oy + g.vY * TILE_SIZE + TILE_SIZE / 2;
 
-        // Cuerpo del fantasma (Cúpula)
-        ctx.beginPath();
-        ctx.arc(x + s/2, y + s/2, s/2.5, Math.PI, 0);
-        ctx.lineTo(x + s*0.85, y + s*0.9);
-        ctx.lineTo(x + s*0.65, y + s*0.75);
-        ctx.lineTo(x + s*0.5, y + s*0.9);
-        ctx.lineTo(x + s*0.35, y + s*0.75);
-        ctx.lineTo(x + s*0.15, y + s*0.9);
-        ctx.fill();
+        ctx.fillStyle = powerMode ? "blue" : g.color;
         
-        // Ojos
-        ctx.fillStyle = "white";
-        ctx.shadowBlur = 0;
-        ctx.beginPath(); 
-        ctx.arc(x + s*0.35, y + s*0.4, s*0.1, 0, 7); 
-        ctx.arc(x + s*0.65, y + s*0.4, s*0.1, 0, 7); 
+        // Cuerpo del fantasma
+        ctx.beginPath();
+        ctx.arc(gx, gy, TILE_SIZE * 0.4, Math.PI, 0);
+        ctx.lineTo(gx + TILE_SIZE * 0.4, gy + TILE_SIZE * 0.4);
+        ctx.lineTo(gx - TILE_SIZE * 0.4, gy + TILE_SIZE * 0.4);
         ctx.fill();
-        ctx.restore();
+
+        // Ojos de los fantasmas
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(gx - 5, gy - 5, 3, 0, 7);
+        ctx.arc(gx + 5, gy - 5, 3, 0, 7);
+        ctx.fill();
     });
 }
