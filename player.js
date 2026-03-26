@@ -15,30 +15,29 @@ export function resetPlayer() {
 }
 
 export function updatePlayer(score, onPowerUp) {
-    // MOVIMIENTO FLUIDO: Solo gira en el centro de la celda
+    // 1. Lógica de giro perfecta
     if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
         pacman.vX = pacman.x;
         pacman.vY = pacman.y;
 
-        // ¿Puede girar a donde el usuario quiere?
+        // Intentar girar
         if (map[Math.round(pacman.y + pacman.nextDY)]?.[Math.round(pacman.x + pacman.nextDX)] !== 1) {
             pacman.dirX = pacman.nextDX;
             pacman.dirY = pacman.nextDY;
         }
         
-        // ¿Choca con pared en su direccion actual?
+        // Colisión frontal
         if (map[Math.round(pacman.y + pacman.dirY)]?.[Math.round(pacman.x + pacman.dirX)] === 1) {
-            pacman.dirX = 0;
-            pacman.dirY = 0;
+            pacman.dirX = 0; pacman.dirY = 0;
         }
         
         pacman.x += pacman.dirX;
         pacman.y += pacman.dirY;
     }
 
-    // Suavizado visual (Interpolación) - ESTO ES LO QUE DA FLUIDEZ
-    pacman.vX += (pacman.x - pacman.vX) * 0.30;
-    pacman.vY += (pacman.y - pacman.vY) * 0.30;
+    // 2. Interpolación ALTA (0.3) para que no haya retraso visual
+    pacman.vX += (pacman.x - pacman.vX) * 0.3;
+    pacman.vY += (pacman.y - pacman.vY) * 0.3;
 
     let mx = Math.round(pacman.x);
     let my = Math.round(pacman.y);
@@ -57,8 +56,8 @@ export function drawPlayer(ctx, size, ox, oy) {
     let y = oy + pacman.vY * size + size / 2;
     ctx.fillStyle = "yellow";
     ctx.beginPath();
-    let mouth = (Math.sin(Date.now() * 0.01) + 1) * 0.2;
-    ctx.arc(x, y, size * 0.4, mouth, Math.PI * 2 - mouth);
+    let mouth = (Math.sin(Date.now() * 0.015) + 1) * 0.2; // Boca un poco más rápida
+    ctx.arc(x, y, size * 0.45, mouth, Math.PI * 2 - mouth);
     ctx.lineTo(x, y);
     ctx.fill();
 }
