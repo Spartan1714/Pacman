@@ -1,69 +1,109 @@
 import { map } from "./map.js";
-import { pacman, resetPlayer } from "./player.js?v=2";
+import { pacman, resetPlayer } from "./player.js";
 
 export let ghosts = [];
 
-export function spawnGhostsForLevel() {
-    ghosts = [];
-    const colors = ["red", "pink", "cyan", "orange"];
-    for (let i = 0; i < 4; i++) {
+export function spawnGhostsForLevel(level = 1) {
+    ghosts.length = 0;
+    const colors = ["#FF0000", "#FFB8FF", "#00FFFF", "#FFB852"];
+    const num = Math.min(2 + level, colors.length);
+    
+    // BUSCADOR DE POSICIÓN LIBRE: Encuentra el primer '0' o '2' en el mapa
+    let spawnPos = { x: 1, y: 1 };
+    outer: for (let y = 0; y < map.length; y++) {
+        for (let x = 0; x < map[y].length; x++) {
+            if (map[y][x] !== 1) {
+                spawnPos = { x, y };
+                break outer;
+            }
+        }
+    }
+
+    for (let i = 0; i < num; i++) {
         ghosts.push({
-            x: 9, y: 9, vX: 9, vY: 9, // Asegúrate de que 9,9 sea un espacio vacío en tu map.js
+            x: spawnPos.x, y: spawnPos.y, 
+            vX: spawnPos.x, vY: spawnPos.y,
             color: colors[i],
-            speed: 0.08,
-            dirX: 0, dirY: 0,
-            anim: 0
+            speed: 0.07 + (level * 0.01),
+            dirX: 0, dirY: 0
         });
     }
 }
 
-export function updateGhosts(lives) {
+export function updateGhosts(lives, level) {
     for (let g of ghosts) {
-        g.anim += 0.2;
+        // Solo decide dirección cuando está centrado en la celda
         if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
             g.vX = g.x; g.vY = g.y;
-            
-            // VALIDACIÓN DE SEGURIDAD PARA EL MAPA
-            let dirs = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(d => {
-                let ny = g.y + d.dy;
-                let nx = g.x + d.dx;
-                return map[ny] && map[ny][nx] !== undefined && map[ny][nx] !== 1;
+
+            let possibleDirs = [
+                {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
+            ].filter(d => {
+                let ny = Math.round(g.y + d.dy);
+                let nx = Math.round(g.x + d.dx);
+                return map[ny] && (map[ny][nx] === 0 || map[ny][nx] === 2);
             });
 
-            if (dirs.length > 0) {
-                let move = dirs[Math.floor(Math.random() * dirs.length)];
-                g.dirX = move.dx; g.dirY = move.dy;
+            if (possibleDirs.length > 0) {
+                // Evita que el fantasma se dé la vuelta 180 grados si hay otra opción
+                if (possibleDirs.length > 1) {
+                    possibleDirs = possibleDirs.filter(d => d.dx !== -g.dirX || d.dy !== -g.dirY);
+                }
+                let m = possibleDirs[Math.floor(Math.random() * possibleDirs.length)];
+                g.dirX = m.dx; g.dirY = m.dy;
                 g.x += g.dirX; g.y += g.dy;
             }
         }
-        // Movimiento visual
-        if (g.vX < g.x) g.vX += g.speed;
-        if (g.vX > g.x) g.vX -= g.speed;
-        if (g.vY < g.y) g.vY += g.speed;
-        if (g.vY > g.y) g.vY -= g.speed;
 
-        // Colisión real por distancia
-        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.6) {
+        // Movimiento visual (Deslizamiento)
+        if (g.vX < g.x) g.vX = Math.min(g.vX + g.speed, g.x);
+        if (g.vX > g.x) g.vX = Math.max(g.vX - g.speed, g.x);
+        if (g.vY < g.y) g.vY = Math.min(g.vY + g.speed, g.y);
+        if (g.vY > g.y) g.vY = Math.max(g.vY - g.speed, g.y);
+
+        // Colisión con Pacman
+        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.5) {
             lives.value--;
             resetPlayer();
-            ghosts.forEach(gh => { gh.x=9; gh.y=9; gh.vX=9; gh.vY=9; });
+            spawnGhostsForLevel(level);
+            return;
         }
     }
 }
 
 export function drawGhosts(ctx, tileSize, offsetX, offsetY) {
     for (let g of ghosts) {
-        let gx = offsetX + g.vX * tileSize + tileSize/2;
-        let gy = offsetY + g.vY * tileSize + tileSize/2;
+        let x = offsetX + g.vX * tileSize;
+        let y = offsetY + g.vY * tileSize;
+        let s = tileSize;
+
         ctx.fillStyle = g.color;
         ctx.beginPath();
-        ctx.arc(gx, gy, tileSize/2.2, 0, Math.PI * 2);
+        // Cabeza
+        ctx.arc(x + s/2, y + s/2.5, s * 0.4, Math.PI, 0);
+        // Cuerpo y las 3 puntas rectas (Diseño limpio)
+        ctx.lineTo(x + s * 0.9, y + s * 0.9);
+        ctx.lineTo(x + s * 0.75, y + s * 0.75); // Punta 1
+        ctx.lineTo(x + s * 0.6, y + s * 0.9);
+        ctx.lineTo(x + s * 0.5, y + s * 0.75); // Punta 2
+        ctx.lineTo(x + s * 0.4, y + s * 0.9);
+        ctx.lineTo(x + s * 0.25, y + s * 0.75); // Punta 3
+        ctx.lineTo(x + s * 0.1, y + s * 0.9);
+        ctx.lineTo(x + s * 0.1, y + s/2.5);
         ctx.fill();
-        // Ojos básicos
+
+        // OJOS PROFESIONALES (lancos con pupila azul mirando arriba)
         ctx.fillStyle = "white";
         ctx.beginPath();
-        ctx.arc(gx-4, gy-2, 3, 0, 7); ctx.arc(gx+4, gy-2, 3, 0, 7);
+        ctx.ellipse(x + s*0.35, y + s*0.4, s*0.1, s*0.13, 0, 0, Math.PI*2)
+;
+        ctx.ellipse(x + s*0.65, y + s*0.4, s*0.1, s*0.13, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.fillStyle = "blue";
+        ctx.beginPath();
+        ctx.arc(x + s*0.35, y + s*0.32, s*0.05, 0, Math.PI*2);
+        ctx.arc(x + s*0.65, y + s*0.32, s*0.05, 0, Math.PI*2);
         ctx.fill();
     }
 }
-spawnGhostsForLevel();
