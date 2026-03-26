@@ -83,22 +83,25 @@ function gameLoop() {
     const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
     const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2);
 
-    // 3. Dibujar Mapa Neón (Optimizado para Velocidad)
+// 3. DIBUJAR MAPA (Versión Ultra Rápida - Sin sombras pesadas)
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * TILE_SIZE;
             let ry = offsetY + y * TILE_SIZE;
 
             if (tile === 1) { 
-                ctx.save();
-                ctx.strokeStyle = "#00ffff";
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 8; // Brillo balanceado para que no vaya lento
-                ctx.shadowColor = "#00ffff";
+                // Dibujamos dos rectángulos: uno grueso oscuro y uno fino brillante
+                // Esto simula el neón sin usar la función "shadowBlur" que es lenta
+                ctx.strokeStyle = "#005555"; // Cian oscuro de fondo
+                ctx.lineWidth = 4;
                 ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
-                ctx.restore();
+                
+                ctx.strokeStyle = "#00ffff"; // Cian brillante en el centro
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+
             } else if (tile === 2) { 
-                ctx.fillStyle = "#ff00ff";
+                ctx.fillStyle = "#ff00ff"; // Puntos fucsia neón
                 ctx.beginPath();
                 ctx.arc(rx + TILE_SIZE / 2, ry + TILE_SIZE / 2, 2.5, 0, Math.PI * 2);
                 ctx.fill();
