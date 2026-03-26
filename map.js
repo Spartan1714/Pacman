@@ -1,6 +1,6 @@
 export let map = [];
 
-export function generateMaze(cols = 19, rows = 19) {
+export function generateMaze(cols = 19, rows = 21) {
     let newMap = Array.from({ length: rows }, () => Array(cols).fill(1));
 
     function carve(x, y) {
@@ -17,17 +17,15 @@ export function generateMaze(cols = 19, rows = 19) {
 
     carve(1, 1);
     
-    // Tu lógica: Llenar de puntos (2) y colocar Berserker (3)
+    // Llenar pasillos con puntos
     for (let y = 0; y < rows; y++) {
         for (let x = 0; x < cols; x++) {
             if (newMap[y][x] === 0) newMap[y][x] = 2;
         }
     }
     
-    // Asegurar que el punto de inicio de Pacman esté limpio
-    newMap[1][1] = 0; 
-    // Power-up en una posición alejada
-    newMap[rows - 2][cols - 2] = 3;
+    newMap[1][1] = 0; // Inicio Pacman
+    newMap[rows - 2][cols - 2] = 3; // Berserker
 
     map.length = 0;
     newMap.forEach(row => map.push(row));
