@@ -46,6 +46,15 @@ export function updatePlayer(score) {
             pacman.x += pacman.dirX;
             pacman.y += pacman.dirY;
         }
+        if (map[my][mx] === 2) { 
+    score.value += 10; 
+    map[my][mx] = 0; 
+    sounds.dot(); // Sonido al comer punto
+} else if (map[my][mx] === 3) {
+    map[my][mx] = 0;
+    activatePower();
+    sounds.cherry(); // Sonido especial cereza
+}
     }
 
     // Suavizado visual (Interpolación)

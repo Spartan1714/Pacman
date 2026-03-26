@@ -55,6 +55,16 @@ export function updateGhosts(lives, score) {
                 g.x += choice.dx; g.y += choice.dy;
                 g.lastDx = choice.dx; g.lastDy = choice.dy;
             }
+            if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.7) {
+    if (powerMode) {
+        g.dead = true;
+        sounds.ghostEat(); // Sonido al comer fantasma
+    } else {
+        lives.value--;
+        sounds.death(); // Sonido de muerte
+        resetPlayer();
+    }
+}
         }
         
         const step = g.mode === "berserker" ? g.speed : 0.08;

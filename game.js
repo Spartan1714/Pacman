@@ -1,5 +1,6 @@
 import { map, TILE_SIZE, spawnCherry } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
+import { sounds } from "./audio.js";
 import { updateGhosts, drawGhosts, spawnGhosts, allGhostsDead } from "./ghosts.js";
 
 const canvas = document.getElementById("gameCanvas");
@@ -87,6 +88,67 @@ document.onkeydown = (e) => {
     if (e.key === "ArrowLeft") setDirection(-1, 0);
     if (e.key === "ArrowRight") setDirection(1, 0);
 };
+function drawRetroMaze(ctx, rx, ry, TILE_SIZE) {
+    // Efecto de Neón
+    ctx.strokeStyle = "#00ffff"; // Cian Neón
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "#00ffff";
+    ctx.lineWidth = 3;
+    
+    // Dibujamos bordes redondeados para el estilo retro
+    ctx.strokeRect(rx + 5, ry + 5, TILE_SIZE - 10, TILE_SIZE - 10);
+    
+    // Reset del brillo para no ralentizar el resto del dibujo
+    ctx.shadowBlur = 0;
+}
+
+function gameLoop() {
+    // ... (lógica de actualización anterior)
+
+    // En la parte de dibujar mapa:
+    map.forEach((row, y) => {
+        row.forEach((tile, x) => {
+            let rx = offsetX + x * TILE_SIZE;
+            let ry = offsetY + y * TILE_SIZE;
+
+            if (tile === 1) {
+                // --- MUROS ESTILO TRON / NEÓN ---
+                ctx.save(); // Guardamos el estado para no afectar a otros dibujos
+                
+                ctx.strokeStyle = "#00ffff"; // Cian Neón
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 15;         // Intensidad del brillo
+                ctx.shadowColor = "#00ffff"; // Color del brillo
+                
+                // Dibujamos el contorno del bloque
+                ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                
+                // Dibujamos un segundo rectángulo interior más fino para dar profundidad
+                ctx.shadowBlur = 0; // Quitamos el brillo para el detalle interno
+                ctx.lineWidth = 1;
+                ctx.strokeRect(rx + 8, ry + 8, TILE_SIZE - 16, TILE_SIZE - 16);
+                
+                ctx.restore(); // Restauramos el estado original (quita el shadowBlur)
+
+            } else if (tile === 2) {
+                // --- PUNTOS NEÓN ---
+                ctx.fillStyle = "#ff00ff"; // Fucsia neón
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = "#ff00ff";
+                
+                ctx.beginPath();
+                ctx.arc(rx + TILE_SIZE / 2, ry + TILE_SIZE / 2, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0; // Siempre resetear el brillo
+            } else if (tile === 3) {
+                drawCherry(ctx, rx, ry);
+            }
+        });
+    });
+
+    // ... (resto del dibujo de fantasmas y pacman)
+}
 
 spawnCherry(level);
 spawnGhosts(level);
