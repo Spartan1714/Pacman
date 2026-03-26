@@ -1,28 +1,29 @@
-export const TILE_SIZE = 30; // Tamaño fijo para que se vea bien
+export const TILE_SIZE = 30; 
 export let map = [];
 
-export function generateLevel() {
+export function generateMaze() {
     const rows = 11;
     const cols = 20;
-    // Crear borde sólido (tu diseño)
+    // Crear el borde (tu diseño original)
     let newMap = Array.from({ length: rows }, (_, y) => 
         Array.from({ length: cols }, (_, x) => 
             (y === 0 || y === rows - 1 || x === 0 || x === cols - 1) ? 1 : 2
         )
     );
 
-    // Añadir bloques aleatorios internos (muros tipo caja azul)
-    for (let i = 0; i < 25; i++) {
+    // Generar obstáculos internos aleatorios (muros azules)
+    for (let i = 0; i < 30; i++) {
         let rx = Math.floor(Math.random() * (cols - 2)) + 1;
         let ry = Math.floor(Math.random() * (rows - 2)) + 1;
-        if ((rx !== 1 || ry !== 1) && (rx !== cols - 2 || ry !== rows - 2)) {
+        // No tapar las esquinas de spawn ni al jugador
+        if (!((rx < 3 && ry < 3) || (rx > 16 && ry > 7))) {
             newMap[ry][rx] = 1;
         }
     }
     
-    // Punto de poder (Berserker Item) en posición random
-    newMap[rows - 2][cols - 2] = 3; 
+    // El punto Berserker (3) siempre en una esquina
+    newMap[9][18] = 3; 
 
     map.length = 0;
-    newMap.forEach(r => map.push(r));
+    newMap.forEach(row => map.push(row));
 }
