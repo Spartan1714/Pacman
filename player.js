@@ -1,14 +1,9 @@
 import { map } from "./map.js";
 
 export let pacman = {
-    x: 1, y: 1,
-    vX: 1, vY: 1,
-    dirX: 0, dirY: 0,
-    nextDirX: 0, nextDirY: 0,
-    speed: 0.125, // Usamos 0.125 porque es una fracción exacta (1/8)
-    mouth: 0,
-    mouthDir: 1,
-    angle: 0
+    x: 1, y: 1, vX: 1, vY: 1,
+    dirX: 0, dirY: 0, nextDirX: 0, nextDirY: 0,
+    speed: 0.15, mouth: 0, mouthDir: 1, angle: 0
 };
 
 export function setDirection(dx, dy) {
@@ -24,65 +19,48 @@ export function resetPlayer() {
 }
 
 export function updatePlayer(score) {
-    // 1. Animación de boca (Suave)
     pacman.mouth += 0.15 * pacman.mouthDir;
     if (pacman.mouth > 0.4 || pacman.mouth < 0.1) pacman.mouthDir *= -1;
 
-    // 2. LÓGICA DE MOVIMIENTO CON "IMÁN"
-    // Si la distancia entre la posición visual y la lógica es menor a la velocidad...
-    if (Math.abs(pacman.x - pacman.vX) <= pacman.speed && Math.abs(pacman.y - pacman.vY) <= pacman.speed) {
-        // FORZAMOS a Pacman al centro de la celda (El "Imán")
+    if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
         pacman.vX = pacman.x;
         pacman.vY = pacman.y;
-
-        // ¿Podemos girar? (nextDir)
         if (map[pacman.y + pacman.nextDirY] && map[pacman.y + pacman.nextDirY][pacman.x + pacman.nextDirX] !== 1) {
             pacman.dirX = pacman.nextDirX;
             pacman.dirY = pacman.nextDirY;
         }
-
-        // ¿Podemos seguir de frente?
-        if (map[pacman.y + pacman.dirY] && map[pacman.y + pacman.dirY][pacman.x + pacman.dx] !== 1) {
-            // Nota: Si dirX y dirY son 0 (quieto), no suma nada
-            if (map[pacman.y + pacman.dirY][pacman.x + pacman.dirX] !== 1) {
-                pacman.x += pacman.dirX;
-                pacman.y += pacman.dirY;
-            }
-        } else {
-            // Chocó: Detener posición lógica
-            pacman.dirX = 0;
-            pacman.dirY = 0;
+        if (map[pacman.y + pacman.dirY] && map[pacman.y + pacman.dirY][pacman.x + pacman.dirX] !== 1) {
+            pacman.x += pacman.dirX;
+            pacman.y += pacman.dirY;
         }
     }
 
-    // 3. DESLIZAMIENTO VISUAL (Interpolación sin lag)
     if (pacman.vX < pacman.x) { pacman.vX += pacman.speed; pacman.angle = 0; }
     else if (pacman.vX > pacman.x) { pacman.vX -= pacman.speed; pacman.angle = Math.PI; }
     else if (pacman.vY < pacman.y) { pacman.vY += pacman.speed; pacman.angle = Math.PI/2; }
     else if (pacman.vY > pacman.y) { pacman.vY -= pacman.speed; pacman.angle = -Math.PI/2; }
 
-    // Comer puntos (Detectamos por cercanía visual)
     let mx = Math.round(pacman.vX);
     let my = Math.round(pacman.vY);
-    if (map[my] && map[my][mx] === 2) {
-        score.value += 10;
-        map[my][mx] = 0;
-    }
+    if (map[my] && map[my][mx] === 2) { score.value += 10; map[my][mx] = 0; }
 }
 
 export function drawPlayer(ctx, tileSize, offsetX, offsetY) {
-    let px = offsetX + pacman.vX * tileSize + tileSize / 2;
-    let py = offsetY + pacman.vY * tileSize + tileSize / 2;
-    
+    let px = offsetX + pacman.vX * tileSize + tileSize/2;
+    let py = offsetY + pacman.vY * tileSize + tileSize/2;
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(pacman.angle);
     ctx.fillStyle = "yellow";
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    // Boca dinámica
-    ctx.arc(0, 0, tileSize / 2.2, pacman.mouth, Math.PI * 2 - pacman.mouth);
-    ctx.lineTo(0, 0);
+    ctx.moveTo(0,0);
+    ctx.arc(0, 0, tileSize/2.2, pacman.mouth, Math.PI * 2 - pacman.mouth);
+    ctx.lineTo(0,0);
+    ctx.fill();
+    // OJO NEGRO
+    ctx.fillStyle = "black";
+    ctx.beginPath();
+    ctx.arc(tileSize/10, -tileSize/4, 2.5, 0, 7);
     ctx.fill();
     ctx.restore();
 }
