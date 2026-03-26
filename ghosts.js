@@ -22,42 +22,49 @@ export function updateGhosts(lives, score) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        // --- MOVIMIENTO FLUIDO ---
-        // Solo calculamos nueva dirección cuando el fantasma está "casi" en el centro de una celda
+        // Solo decidimos nueva dirección cuando el fantasma está centrado en la celda
         if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
-            g.vX = g.x; // Sincronizamos posición visual con lógica
+            g.vX = g.x;
             g.vY = g.y;
 
-            let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
-                map[Math.round(g.y + m.dy)]?.[Math.round(g.x + m.dx)] !== 1
-            );
+            // 1. Buscamos todas las direcciones que NO son un muro (1)
+            let moves = [
+                { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+                { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
+            ].filter(m => map[Math.round(g.y + m.dy)]?.[Math.round(g.x + m.dx)] !== 1);
+
+            // 2. FILTRO ANTI-REBOTE: Si hay más de una opción, no permitas volver atrás
+            if (moves.length > 1) {
+                moves = moves.filter(m => m.dx !== -g.lastDx || m.dy !== -g.lastDy);
+            }
 
             let choice;
             if (g.mode === "berserker" && !powerMode) {
-                // Berserker más inteligente: no puede dar media vuelta (hace el movimiento más fluido)
+                // El Berserker elige el camino que más lo acerca a Pacman
                 choice = moves.sort((a, b) => 
                     Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
                     Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
                 )[0];
             } else {
+                // Los demás eligen una dirección al azar de las permitidas
                 choice = moves[Math.floor(Math.random() * moves.length)];
             }
             
             if (choice) {
                 g.x += choice.dx;
                 g.y += choice.dy;
+                // Guardamos la dirección actual para evitar que "rebote" en el siguiente frame
+                g.lastDx = choice.dx;
+                g.lastDy = choice.dy;
             }
         }
 
-        // Interpolación: El fantasma se desplaza suavemente hacia su destino (g.x, g.y)
-        const step = g.mode === "berserker" ? 0.12 : 0.09; // Ajusta estos números para la velocidad
-        if (g.vX < g.x) g.vX += step;
-        else if (g.vX > g.x) g.vX -= step;
-        
-        if (g.vY < g.y) g.vY += step;
-        else if (g.vY > g.y) g.vY -= step;
+        // Suavizado visual (Interpolación)
+        const step = g.mode === "berserker" ? 0.1 : 0.08;
+        if (g.vX < g.x) g.vX += step; else if (g.vX > g.x) g.vX -= step;
+        if (g.vY < g.y) g.vY += step; else if (g.vY > g.y) g.vY -= step;
 
-        // Colisión precisa
+        // Colisión
         if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.7) {
             if (powerMode) {
                 g.dead = true;
