@@ -1,8 +1,17 @@
 import { map, TILE_SIZE } from "./map.js";
 import { powerMode } from "./ghosts.js";
 
-export let pacman = { x: 1, y: 1, vX: 1, vY: 1, dirX: 0, dirY: 0, nextDX: 0, nextDY: 0 };
-const PLAYER_SPEED = 4.0; // AJUSTA ESTO: 2.0 es muy lento, 5.0 es rápido.
+export let pacman = { 
+    x: 1, y: 1, 
+    vX: 1, vY: 1, 
+    dirX: 0, dirY: 0, 
+    nextDX: 0, nextDY: 0,
+    moveTimer: 0 // Acumulador para controlar la velocidad
+};
+
+// --- CONFIGURACIÓN DE VELOCIDAD ---
+// 0.2 es lento (Arcade), 0.1 es rápido, 0.05 es super rápido.
+const MOVE_DELAY = 0.18; 
 
 export function setDirection(dx, dy) {
     pacman.nextDX = dx;
@@ -17,39 +26,46 @@ export function resetPlayer() {
 }
 
 export function updatePlayer(score, onPowerUp, dt) {
-    // Si no hay dt (primer frame), no hacemos nada
     if (!dt) return;
 
-    // Solo permitimos cambiar de dirección si estamos cerca del centro de un tile
-    if (Math.abs(pacman.x - Math.round(pacman.x)) < 0.1 && Math.abs(pacman.y - Math.round(pacman.y)) < 0.1) {
-        
-        // Intentar girar hacia la nueva dirección solicitada
+    // Acumulamos el tiempo transcurrido
+    pacman.moveTimer += dt;
+
+    // Solo nos movemos si el acumulador superó el retraso (MOVE_DELAY)
+    if (pacman.moveTimer >= MOVE_DELAY) {
+        pacman.moveTimer = 0; // Reiniciamos el reloj para el siguiente paso
+
+        // Intentar girar
         if (map[Math.round(pacman.y + pacman.nextDY)]?.[Math.round(pacman.x + pacman.nextDX)] !== 1) {
             pacman.dirX = pacman.nextDX;
             pacman.dirY = pacman.nextDY;
         }
 
-        // Si hay un muro enfrente, detenerse
-        if (map[Math.round(pacman.y + pacman.dirY)]?.[Math.round(pacman.x + pacman.dirX)] === 1) {
+        // Verificar colisión frontal antes de avanzar
+        if (map[Math.round(pacman.y + pacman.dirY)]?.[Math.round(pacman.x + pacman.dirX)] !== 1) {
+            pacman.x += pacman.dirX;
+            pacman.y += pacman.dirY;
+        } else {
             pacman.dirX = 0;
             pacman.dirY = 0;
-            // Ajustar al centro exacto para no quedar "entre tiles"
-            pacman.x = Math.round(pacman.x);
-            pacman.y = Math.round(pacman.y);
+        }
+
+        // Comer puntos o cereza
+        let mx = Math.round(pacman.x);
+        let my = Math.round(pacman.y);
+        if (map[my]?.[mx] === 2) {
+            map[my][mx] = 0;
+            score.value += 10;
+        } else if (map[my]?.[mx] === 3) {
+            map[my][mx] = 0;
+            if (onPowerUp) onPowerUp();
         }
     }
 
-    // MOVER según el tiempo transcurrido (esto garantiza velocidad constante)
-    pacman.x += pacman.dirX * PLAYER_SPEED * dt;
-    pacman.y += pacman.dirY * PLAYER_SPEED * dt;
-
-    // Interpolación visual para el dibujo
-    pacman.vX += (pacman.x - pacman.vX) * 0.4;
-    pacman.vY += (pacman.y - pacman.vY) * 0.4;
-
-    let mx = Math.round(pacman.x), my = Math.round(pacman.y);
-    if (map[my]?.[mx] === 2) { map[my][mx] = 0; score.value += 10; }
-    else if (map[my]?.[mx] === 3) { map[my][mx] = 0; if (onPowerUp) onPowerUp(); }
+    // INTERPOLACIÓN VISUAL SUAVE (El "vX" sigue al "x" real poco a poco)
+    // Bajamos este valor a 0.1 para que el deslizamiento sea lento y no brusco
+    pacman.vX += (pacman.x - pacman.vX) * 0.12;
+    pacman.vY += (pacman.y - pacman.vY) * 0.12;
 }
 
 export function drawPlayer(ctx, size, ox, oy) {
@@ -59,31 +75,37 @@ export function drawPlayer(ctx, size, ox, oy) {
 
     ctx.save();
     ctx.translate(px, py);
-    
-    // Rotación del cuerpo
+
+    // 1. ROTACIÓN CUERPO
     let rotation = 0;
-    if (pacman.dirX < 0) rotation = Math.PI;
-    else if (pacman.dirY > 0) rotation = Math.PI/2;
-    else if (pacman.dirY < 0) rotation = -Math.PI/2;
-    
+    if (pacman.dirX === -1) rotation = Math.PI;
+    else if (pacman.dirY === 1) rotation = Math.PI/2;
+    else if (pacman.dirY === -1) rotation = -Math.PI/2;
+
     ctx.save();
     ctx.rotate(rotation);
     ctx.fillStyle = "yellow";
     if (powerMode) { ctx.shadowBlur = 15; ctx.shadowColor = "yellow"; }
-    let mouth = (Math.sin(Date.now() * 0.02) + 1) * 0.2;
+    
+    // Animación boca
+    let mouth = (Math.sin(Date.now() * 0.012) + 1) * 0.2;
     ctx.beginPath();
     ctx.arc(0, 0, radius, mouth, Math.PI * 2 - mouth);
     ctx.lineTo(0, 0);
     ctx.fill();
     ctx.restore();
 
-    // El Ojo Ovalado (Siempre arriba)
+    // 2. EL OJO OVALADO (Fijo arriba)
     ctx.fillStyle = "black";
-    let eyeX = (pacman.dirX < 0) ? -radius * 0.25 : radius * 0.25;
+    ctx.shadowBlur = 0;
+    let eyeX = (pacman.dirX === -1) ? -radius * 0.25 : radius * 0.25;
+    
     ctx.save();
     ctx.translate(eyeX, -radius * 0.45);
-    ctx.scale(0.8, 1.4);
-    ctx.beginPath(); ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2); ctx.fill();
+    ctx.scale(0.8, 1.4); // Óvalo vertical
+    ctx.beginPath();
+    ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
 
     ctx.restore();
