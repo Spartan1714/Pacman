@@ -47,61 +47,53 @@ export function updatePlayer(score, onPowerUp) {
     }
 }
 export function drawPlayer(ctx, size, ox, oy) {
+    // Posición central de Pac-Man
     let x = ox + pacman.vX * size + size / 2;
     let y = oy + pacman.vY * size + size / 2;
     
-    // --- EFECTO DE TAMAÑO ---
-    // Si powerMode es true, el radio es más grande (size * 0.7)
-    let radius = powerMode ? size * 0.7 : size * 0.45;
+    // Radio dinámico (Grande con cereza)
+    let radius = powerMode ? size * 0.75 : size * 0.45;
 
     ctx.save();
+
+    // 1. ÁNGULO DE LA BOCA (Animación)
+    // El ángulo se abre y cierra entre 0.1 y 0.4 radianes
+    let mouthOpen = (Math.sin(Date.now() * 0.02) + 1) * 0.2; 
     
-    // EFECTO DE RESPLANDOR (Solo si tiene el poder)
+    // 2. ORIENTACIÓN (Hacia dónde mira)
+    let rotation = 0;
+    if (pacman.dirX === 1) rotation = 0;             // Derecha
+    else if (pacman.dirX === -1) rotation = Math.PI;    // Izquierda
+    else if (pacman.dirY === 1) rotation = Math.PI / 2; // Abajo
+    else if (pacman.dirY === -1) rotation = -Math.PI / 2; // Arriba
+
+    // Trasladamos al centro de Pac-Man y rotamos TODO el dibujo
+    ctx.translate(x, y);
+    ctx.rotate(rotation);
+
+    // 3. DIBUJAR CUERPO (Con efecto Neón si tiene poder)
+    ctx.fillStyle = "yellow";
     if (powerMode) {
-        ctx.fillStyle = "yellow";
         ctx.shadowBlur = 15;
         ctx.shadowColor = "yellow";
-    } else {
-        ctx.fillStyle = "yellow";
-        ctx.shadowBlur = 0;
     }
 
-    // 1. Calculamos la rotación de la BOCA (pero no de todo el cuerpo)
-    let mouth = (Math.sin(Date.now() * 0.02) + 1) * 0.2;
-    
-    // Dirección de la boca (Ángulos base)
-    let baseRotation = 0; // Por defecto a la derecha (0 radianes)
-    if (pacman.dirX === -1) baseRotation = Math.PI;      // Izquierda
-    else if (pacman.dirY === 1) baseRotation = Math.PI/2; // Abajo
-    else if (pacman.dirY === -1) baseRotation = -Math.PI/2; // Arriba
-
-    // Dibujamos el arco del cuerpo dejando el hueco de la boca
     ctx.beginPath();
-    ctx.arc(x, y, radius, baseRotation + mouth, baseRotation + (Math.PI * 2) - mouth);
-    ctx.lineTo(x, y);
+    // Dibujamos el arco desde el ángulo de la boca superior hasta el inferior
+    ctx.arc(0, 0, radius, mouthOpen, Math.PI * 2 - mouthOpen);
+    ctx.lineTo(0, 0); // Cerramos hacia el centro para crear la "V" de la boca
     ctx.fill();
 
-    // 2. --- EL OJO INTELIGENTE (No rota con el cuerpo) ---
-    // Dibujamos un ojo retro (cuadrado) o clásico (círculo)
+    // 4. EL OJO (Estilo Clásico)
+    // Lo dibujamos relativo al centro rotado. 
+    // Siempre estará "arriba" (Y negativa) y un poco al "frente" (X positiva)
     ctx.fillStyle = "black";
     ctx.shadowBlur = 0; // El ojo no brilla
-
-    // Calculamos el desfase del ojo para que siempre esté arriba y al frente
-    // Por defecto, arriba a la derecha de la boca
-    let eyeOffsetX = radius * 0.25;
-    let eyeOffsetY = -radius * 0.45;
-
-    // Si Pac-Man va a la IZQUIERDA, el ojo debe moverse a la IZQUIERDA (-X)
-    if (pacman.dirX === -1) {
-        eyeOffsetX = -radius * 0.25;
-        // El Offset Y se mantiene negativo (ARRIBA)
-    }
-    // Si va hacia ABAJO, el ojo se mueve según la rotación de la boca,
-    // pero para este estilo retro, mantenerlo arriba y al frente funciona mejor.
     
     ctx.beginPath();
-    // Ojo Clásico (Círculo)
-    ctx.arc(x + eyeOffsetX, y + eyeOffsetY, radius * 0.15, 0, Math.PI * 2);
+    // Posición: frente (radius*0.2) y arriba (radius*-0.5)
+    // Lo hacemos un poco ovalado para más estilo
+    ctx.ellipse(radius * 0.2, -radius * 0.5, radius * 0.12, radius * 0.15, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
