@@ -1,14 +1,14 @@
 import { map } from "./map.js";
 
 export let pacman = {
-    x: 1, y: 1,
-    vX: 1, vY: 1,
+    x: 1, y: 1,           // Posición en la rejilla (grid)
+    vX: 1, vY: 1,         // Posición visual (la que se desliza, ELIMINA EL LAG)
     dirX: 0, dirY: 0,
     nextDirX: 0, nextDirY: 0,
-    speed: 0.15, 
-    mouth: 0,
-    mouthDir: 1,
-    angle: 0
+    speed: 0.15,          // Velocidad de deslizamiento por frame (ajustado para 60fps)
+    radius: 0.45,
+    mouth: 0,             // Variable para animar la boca
+    mouthDir: 1
 };
 
 export function setDirection(dx, dy) {
@@ -24,55 +24,65 @@ export function resetPlayer() {
 }
 
 export function updatePlayer(score) {
-    // Animación de boca: siempre corre para dar sensación de vida
-    pacman.mouth += 0.2 * pacman.mouthDir;
-    if (pacman.mouth > 0.4 || pacman.mouth < 0.1) pacman.mouthDir *= -1;
+    // 1. Animación de la boca (oscila entre 0 y 0.2 PI radianes)
+    pacman.mouth += 0.05 * pacman.mouthDir;
+    if (pacman.mouth > 0.2 || pacman.mouth < 0) pacman.mouthDir *= -1;
 
-    // Lógica de movimiento por rejilla
+    // 2. Lógica de Rejilla (Snap to Grid)
+    // Si la posición visual alcanzó a la lógica, buscamos el siguiente paso.
     if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
-        pacman.vX = pacman.x;
-        pacman.vY = pacman.y;
-
-        // Intentar girar (Validación de seguridad con '&&')
-        if (map[pacman.y + pacman.nextDirY] && map[pacman.y + pacman.nextDirY][pacman.x + pacman.nextDirX] !== 1) {
+        
+        // Intentar girar a la dirección deseada (nextDir)
+        if (map[pacman.y + pacman.nextDirY][pacman.x + pacman.nextDirX] !== 1) {
             pacman.dirX = pacman.nextDirX;
             pacman.dirY = pacman.nextDirY;
         }
 
-        // Moverse si no hay pared
-        if (map[pacman.y + pacman.dirY] && map[pacman.y + pacman.dirY][pacman.x + pacman.dirX] !== 1) {
+        // Mover si la dirección actual está despejada
+        if (map[pacman.y + pacman.dirY][pacman.x + pacman.dirX] !== 1) {
             pacman.x += pacman.dirX;
             pacman.y += pacman.dirY;
+        } else {
+            // Se chocó, detenerse
+            pacman.dirX = 0;
+            pacman.dirY = 0;
+            // Alinear posición visual exactamente
+            pacman.vX = pacman.x;
+            pacman.vY = pacman.y;
         }
     }
 
-    // Suavizado visual (Interpolación)
-    if (pacman.vX < pacman.x) { pacman.vX += pacman.speed; pacman.angle = 0; }
-    else if (pacman.vX > pacman.x) { pacman.vX -= pacman.speed; pacman.angle = Math.PI; }
-    else if (pacman.vY < pacman.y) { pacman.vY += pacman.speed; pacman.angle = Math.PI/2; }
-    else if (pacman.vY > pacman.y) { pacman.vY -= pacman.speed; pacman.angle = -Math.PI/2; }
+    // 3. Deslizamiento Suave (ELIMINA EL LAG VISUAL)
+    if (pacman.vX < pacman.x) pacman.vX += pacman.speed;
+    if (pacman.vX > pacman.x) pacman.vX -= pacman.speed;
+    if (pacman.vY < pacman.y) pacman.vY += pacman.speed;
+    if (pacman.vY > pacman.y) pacman.vY -= pacman.speed;
 
-    // Comer puntos
-    let mx = Math.round(pacman.x);
-    let my = Math.round(pacman.y);
-    if (map[my] && (map[my][mx] === 2 || map[my][mx] === 3)) {
+    // 4. Comer puntos
+    let currentTile = map[Math.round(pacman.vY)][Math.round(pacman.vX)];
+    if (currentTile === 2) { // Asumiendo que 2 son los puntos
         score.value += 10;
-        map[my][mx] = 0;
+        map[Math.round(pacman.vY)][Math.round(pacman.vX)] = 0;
     }
 }
 
 export function drawPlayer(ctx, tileSize, offsetX, offsetY) {
-    let px = offsetX + pacman.vX * tileSize + tileSize/2;
-    let py = offsetY + pacman.vY * tileSize + tileSize/2;
-    ctx.save();
-    ctx.translate(px, py);
-    ctx.rotate(pacman.angle);
+    let tx = offsetX + pacman.vX * tileSize + tileSize / 2;
+    let ty = offsetY + pacman.vY * tileSize + tileSize / 2;
+    let r = tileSize * pacman.radius;
+
     ctx.fillStyle = "yellow";
     ctx.beginPath();
-    ctx.moveTo(0,0);
-    // Arco dinámico según pacman.mouth
-    ctx.arc(0, 0, tileSize/2.2, pacman.mouth, Math.PI * 2 - pacman.mouth);
-    ctx.lineTo(0,0);
+    ctx.moveTo(tx, ty); // Centro del círculo
+
+    // Rotar la boca según la dirección
+    let angleOffset = 0;
+    if (pacman.dirX === 1) angleOffset = 0;
+    if (pacman.dirX === -1) angleOffset = Math.PI;
+    if (pacman.dirY === 1) angleOffset = Math.PI / 2;
+    if (pacman.dirY === -1) angleOffset = -Math.PI / 2;
+
+    // Arco que empieza en (boca) y termina en (2PI - boca)
+    ctx.arc(tx, ty, r, angleOffset + pacman.mouth * Math.PI, angleOffset + (2 - pacman.mouth) * Math.PI);
     ctx.fill();
-    ctx.restore();
 }
