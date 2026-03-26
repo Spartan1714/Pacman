@@ -7,6 +7,9 @@ const ctx = canvas.getContext("2d");
 let tileSize, offsetX, offsetY;
 let score = { value: 0 }, lives = { value: 3 };
 
+// --- Variable de Nivel Actual ---
+let currentLevel = 1; 
+
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -18,6 +21,20 @@ function resize() {
 }
 window.onresize = resize;
 resize();
+
+// Función auxiliar para contar puntos (para saber si ganaste)
+function countDots() {
+    let dots = 0;
+    map.forEach(row => row.forEach(tile => { if (tile === 2) dots++; }));
+    return dots;
+}
+
+// Función para resetear los puntos del mapa al subir de nivel
+function resetDots() {
+    // Aquí deberías recargar tu mapa original. Por simplicidad, asumimos que todos los 0 se vuelven 2.
+    // map.forEach((row, y) => row.forEach((tile, x) => { if (tile === 0) map[y][x] = 2; }));
+    // Lo ideal es tener un `originalMap` y hacer map = JSON.parse(JSON.stringify(originalMap));
+}
 
 function drawMap() {
     ctx.fillStyle = "black";
@@ -32,38 +49,47 @@ function drawMap() {
                 ctx.strokeStyle = "#2b2bff";
                 ctx.lineWidth = 2;
                 ctx.strokeRect(rx + 2, ry + 2, tileSize - 4, tileSize - 4);
-            } else if (map[y][x] === 2) { // Puntos Blancos Visibles
+            } else if (map[y][x] === 2) { // Puntos Blancos
                 ctx.fillStyle = "white";
                 ctx.beginPath();
-                ctx.arc(rx + tileSize / 2, ry + tileSize / 2, tileSize / 5, 0, Math.PI * 2);
+                ctx.arc(rx + tileSize / 2, ry + tileSize / 2, tileSize / 6, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
     }
 }
 
-// Bucle Unificado a 60 FPS ( requestAnimationFrame )
+// Tu gameLoop perfecto
 function gameLoop() {
     if (lives.value > 0) {
         // 1. ACTUALIZACIÓN DE LÓGICA (Corriendo a 60fps)
         updatePlayer(score);
-        updateGhosts(lives);
+        updateGhosts(lives, currentLevel); // <--- PASAMOS EL NIVEL AQUÍ
 
         // 2. DIBUJO
         drawMap();
         drawGhosts(ctx, tileSize, offsetX, offsetY);
         drawPlayer(ctx, tileSize, offsetX, offsetY);
 
-        // UI (Score y Vidas)
+        // UI (Score, Vidas y Nivel)
         ctx.fillStyle = "white";
         ctx.font = "bold 20px Arial";
-        ctx.fillText(`SCORE: ${score.value}  LIVES: ${lives.value}`, offsetX, offsetY - 10);
+        ctx.fillText(`SCORE: ${score.value}  LIVES: ${lives.value}  LEVEL: ${currentLevel}`, offsetX, offsetY - 10);
+
+        // 3. Chequeo de Victoria (Cambio de Nivel)
+        if (countDots() === 0) {
+            currentLevel++;
+            // resetDots(); // Reactiva los puntos si tienes la lógica
+            spawnGhostsForLevel(currentLevel); // <--- CREAMOS MÁS FANTASMAS
+        }
 
         requestAnimationFrame(gameLoop);
     } else {
         // Game Over
         ctx.fillStyle = "red"; ctx.font = "50px Impact";
-        ctx.fillText("GAME OVER", canvas.width / 2 - 100, canvas.height / 2);
+        ctx.fillText("GAME OVER", canvas.width / 2 - 120, canvas.height / 2);
+        // Opcional: Recargar página tras 3 segundos
+        // setTimeout(() => location.reload(), 3000);
     }
 }
 
@@ -75,6 +101,6 @@ document.onkeydown = (e) => {
     if (e.key === "ArrowRight") setDirection(1, 0);
 };
 
-// Iniciar primer nivel
-spawnGhostsForLevel();
+// --- INICIO ÚNICO DEL JUEGO ---
+spawnGhostsForLevel(currentLevel); // <--- JUEGO EMPIEZA EN NIVEL 1
 gameLoop();
