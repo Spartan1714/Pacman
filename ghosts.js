@@ -27,49 +27,69 @@ export function allGhostsDead() {
 }
 
 export function updateGhosts(lives, score) {
-    // Manejo del cronómetro del poder
+    // 1. Manejo del cronómetro del poder
     if (powerMode) {
         powerTimer--;
         if (powerTimer <= 0) powerMode = false;
     }
 
+    // --- VELOCIDAD DE LOS FANTASMAS ---
+    // 0.05 es lento y fluido, 0.1 es rápido. Tú decides.
+    const ghostSpeed = powerMode ? 0.04 : 0.06; 
+
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        // Lógica de movimiento en intersecciones
+        // 2. Lógica de movimiento en intersecciones (Solo cuando llegan al centro de un tile)
         if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
-            g.vX = g.x; 
-            g.vY = g.y;
+            g.vX = Math.round(g.x); 
+            g.vY = Math.round(g.y);
 
-            // Buscar caminos posibles (que no sean muro 1)
             let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
-                map[Math.round(g.y + m.dy)]?.[Math.round(g.x + m.dx)] !== 1
+                map[Math.round(g.vY + m.dy)]?.[Math.round(g.vX + m.dx)] !== 1
             );
 
-            // Filtro para que no rebote (no volver atrás si hay más opciones)
             if (moves.length > 1) {
                 moves = moves.filter(m => m.dx !== -g.lastDx || m.dy !== -g.lastDy);
             }
 
             let choice;
-            // El Berserker persigue a Pacman si no hay Power Up
             if (g.mode === "berserker" && !powerMode) {
+                // Persigue a Pacman
                 choice = moves.sort((a, b) => 
-                    Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
-                    Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
+                    Math.hypot((g.vX + a.dx) - pacman.x, (g.vY + b.dy) - pacman.y) - 
+                    Math.hypot((g.vX + b.dx) - pacman.x, (g.vY + b.dy) - pacman.y)
                 )[0];
             } else {
-                // Movimiento aleatorio para los demás o si están asustados
                 choice = moves[Math.floor(Math.random() * moves.length)];
             }
             
             if (choice) {
-                g.x += choice.dx; 
-                g.y += choice.dy;
+                g.targetX = g.vX + choice.dx;
+                g.targetY = g.vY + choice.dy;
                 g.lastDx = choice.dx; 
                 g.lastDy = choice.dy;
             }
         }
+
+        // 3. MOVIMIENTO SUAVE (Aquí es donde controlamos la velocidad real)
+        if (g.targetX !== undefined) {
+            if (g.x < g.targetX) g.x += ghostSpeed;
+            else if (g.x > g.targetX) g.x -= ghostSpeed;
+            
+            if (g.y < g.targetY) g.y += ghostSpeed;
+            else if (g.y > g.targetY) g.y -= ghostSpeed;
+            
+            // Si ya casi llegó al destino, lo fijamos
+            if (Math.abs(g.x - g.targetX) < ghostSpeed) g.x = g.targetX;
+            if (Math.abs(g.y - g.targetY) < ghostSpeed) g.y = g.targetY;
+        }
+
+        // 4. Interpolación visual para el dibujo
+        g.vX += (g.x - g.vX) * 0.2;
+        g.vY += (g.y - g.vY) * 0.2;
+    });
+}
         
         // Interpolación suave (lo que evita que se vean "trabados")
         const step = g.mode === "berserker" ? 0.11 : 0.08;

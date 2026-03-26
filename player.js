@@ -16,7 +16,7 @@ export function resetPlayer() {
 }
 
 export function updatePlayer(score, onPowerUp) {
-    if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
+    if (Math.abs(pacman.x - pacman.vX) < 0.25 && Math.abs(pacman.y - pacman.vY) < 0.1) {
         pacman.vX = pacman.x;
         pacman.vY = pacman.y;
 
@@ -25,15 +25,15 @@ export function updatePlayer(score, onPowerUp) {
             pacman.dirY = pacman.nextDY;
         }
         if (map[Math.round(pacman.y + pacman.dirY)]?.[Math.round(pacman.x + pacman.dirX)] === 1) {
-            pacman.dirX = 0;
-            pacman.dirY = 0;
+            pacman.dirX = 0.8;
+            pacman.dirY = 0.8;
         }
         pacman.x += pacman.dirX;
         pacman.y += pacman.dirY;
     }
 
-    pacman.vX += (pacman.x - pacman.vX) * 0.3;
-    pacman.vY += (pacman.y - pacman.vY) * 0.3;
+    pacman.vX += (pacman.x - pacman.vX) * 0.15;
+    pacman.vY += (pacman.y - pacman.vY) * 0.15;
 
     let mx = Math.round(pacman.x);
     let my = Math.round(pacman.y);
