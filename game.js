@@ -8,11 +8,7 @@ const ctx = canvas.getContext("2d");
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
-
-// --- CONTROL DE VELOCIDAD (FPS) ---
 let lastTime = 0;
-const fps = 30; // Bajamos a 30 o 40 para que se sienta retro y controlado
-const interval = 1000 / fps;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -21,7 +17,7 @@ function resize() {
 window.onresize = resize;
 resize();
 
-// Tu función de la cereza que ya teníamos
+// Función de la cereza (La que te gustó)
 function drawCherry(ctx, x, y) {
     let s = TILE_SIZE;
     let cx = x + s / 2; let cy = y + s / 2;
@@ -39,25 +35,22 @@ function drawCherry(ctx, x, y) {
 }
 
 function gameLoop(currentTime) {
-    requestAnimationFrame(gameLoop);
-
-    // --- EL FILTRO DE TIEMPO ---
-    const delta = currentTime - lastTime;
-    if (delta < interval) return; // Si no ha pasado suficiente tiempo, no hace nada
-    
-    lastTime = currentTime - (delta % interval);
+    // Calculamos el Delta Time (tiempo entre frames)
+    const dt = (currentTime - lastTime) / 1000; 
+    lastTime = currentTime;
 
     if (lives.value <= 0) {
         ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white"; ctx.font = "40px Courier New"; ctx.textAlign = "center";
+        ctx.fillStyle = "red"; ctx.font = "40px Courier New"; ctx.textAlign = "center";
         ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
         return;
     }
 
-    // 1. ACTUALIZACIÓN (Ahora corre a una velocidad constante)
-    updatePlayer(score, () => activatePower());
-    updateGhosts(lives, score);
+    // 1. ACTUALIZACIÓN (Pasamos el dt para controlar la velocidad)
+    updatePlayer(score, () => activatePower(), dt);
+    updateGhosts(lives, score, dt);
     
+    // Victoria
     if (!map.some(row => row.includes(2)) || allGhostsDead()) {
         level++;
         map.forEach((row, y) => row.forEach((t, x) => { if(t === 0) map[y][x] = 2; }));
@@ -91,6 +84,8 @@ function gameLoop(currentTime) {
 
     ctx.fillStyle = "white"; ctx.font = "16px Courier New";
     ctx.fillText(`PTS: ${score.value}  VIDAS: ${lives.value}  LVL: ${level}`, offsetX, offsetY - 10);
+
+    requestAnimationFrame(gameLoop);
 }
 
 document.onkeydown = (e) => {
