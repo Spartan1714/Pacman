@@ -1,5 +1,5 @@
 import { map } from "./map.js";
-import { pacman, resetPlayer } from "./player.js";
+import { pacman, resetPlayer } from "./player.js?v=2";
 
 export let ghosts = [];
 
