@@ -36,22 +36,15 @@ export function updateGhosts(lives, score, dt) {
             }
         }
 
-     let distancia = Math.hypot(g.x - pacman.x, g.y - pacman.y);
-        
-        if (distancia < 0.7) { // Rango de colisión más justo
-            lives.value -= 1;  // Restamos vida
-            
-            // Reset de posiciones inmediato para evitar morir 3 veces seguidas
-            pacman.x = 1; 
-            pacman.y = 1;
-            pacman.dirX = 0; 
-            pacman.dirY = 0;
-            pacman.nextDX = 0; 
-            pacman.nextDY = 0;
+        // Movimiento real
+        g.x += g.dirX * GHOST_SPEED * dt;
+        g.y += g.dirY * GHOST_SPEED * dt;
 
-            // Opcional: Mandar fantasmas a sus casas
-            ghosts[0].x = 18; ghosts[0].y = 8;
-            ghosts[1].x = 1;  ghosts[1].y = 8;
+        // Colisión con Pacman
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.6) {
+            lives.value--;
+            pacman.x = 1; pacman.y = 1; // Reset posición
+            pacman.dirX = 0; pacman.dirY = 0;
         }
     }); // Aquí cerramos el forEach
 } // Aquí cerramos la función updateGhosts
