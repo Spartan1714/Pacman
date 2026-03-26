@@ -47,53 +47,59 @@ export function updatePlayer(score, onPowerUp) {
     }
 }
 export function drawPlayer(ctx, size, ox, oy) {
-    // Posición central de Pac-Man
     let x = ox + pacman.vX * size + size / 2;
     let y = oy + pacman.vY * size + size / 2;
-    
-    // Radio dinámico (Grande con cereza)
     let radius = powerMode ? size * 0.75 : size * 0.45;
 
     ctx.save();
+    ctx.translate(x, y);
 
-    // 1. ÁNGULO DE LA BOCA (Animación)
-    // El ángulo se abre y cierra entre 0.1 y 0.4 radianes
+    // 1. ANIMACIÓN DE BOCA
     let mouthOpen = (Math.sin(Date.now() * 0.02) + 1) * 0.2; 
     
-    // 2. ORIENTACIÓN (Hacia dónde mira)
+    // 2. ROTACIÓN DEL CUERPO (Boca)
     let rotation = 0;
-    if (pacman.dirX === 1) rotation = 0;             // Derecha
-    else if (pacman.dirX === -1) rotation = Math.PI;    // Izquierda
-    else if (pacman.dirY === 1) rotation = Math.PI / 2; // Abajo
-    else if (pacman.dirY === -1) rotation = -Math.PI / 2; // Arriba
+    if (pacman.dirX === 1) rotation = 0;
+    else if (pacman.dirX === -1) rotation = Math.PI;
+    else if (pacman.dirY === 1) rotation = Math.PI / 2;
+    else if (pacman.dirY === -1) rotation = -Math.PI / 2;
 
-    // Trasladamos al centro de Pac-Man y rotamos TODO el dibujo
-    ctx.translate(x, y);
+    // Dibujamos el cuerpo amarillo rotado
+    ctx.save();
     ctx.rotate(rotation);
-
-    // 3. DIBUJAR CUERPO (Con efecto Neón si tiene poder)
     ctx.fillStyle = "yellow";
     if (powerMode) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = "yellow";
     }
-
     ctx.beginPath();
-    // Dibujamos el arco desde el ángulo de la boca superior hasta el inferior
     ctx.arc(0, 0, radius, mouthOpen, Math.PI * 2 - mouthOpen);
-    ctx.lineTo(0, 0); // Cerramos hacia el centro para crear la "V" de la boca
+    ctx.lineTo(0, 0);
     ctx.fill();
+    ctx.restore(); // Restauramos para que el ojo NO rote con la boca
 
-    // 4. EL OJO (Estilo Clásico)
-    // Lo dibujamos relativo al centro rotado. 
-    // Siempre estará "arriba" (Y negativa) y un poco al "frente" (X positiva)
+    // 3. EL OJO (Posicionamiento Manual para que no se voltee)
     ctx.fillStyle = "black";
-    ctx.shadowBlur = 0; // El ojo no brilla
+    ctx.shadowBlur = 0;
     
+    let eyeX = 0;
+    let eyeY = -radius * 0.45; // Siempre ARRIBA (Y negativa)
+
+    // Ajustamos X del ojo según hacia dónde mira
+    if (pacman.dirX === -1) {
+        eyeX = -radius * 0.2; // Un poco a la izquierda si va a la izquierda
+    } else if (pacman.dirX === 1 || pacman.dirX === 0) {
+        eyeX = radius * 0.2;  // Un poco a la derecha si va a la derecha o está quieto
+    }
+    
+    // Si va hacia arriba o abajo, centramos el ojo un poco para que se vea tridimensional
+    if (pacman.dirY !== 0 && pacman.dirX === 0) {
+        eyeX = radius * 0.1; 
+    }
+
     ctx.beginPath();
-    // Posición: frente (radius*0.2) y arriba (radius*-0.5)
-    // Lo hacemos un poco ovalado para más estilo
-    ctx.ellipse(radius * 0.2, -radius * 0.5, radius * 0.12, radius * 0.15, 0, 0, Math.PI * 2);
+    // Dibujamos un ojo ovalado
+    ctx.ellipse(eyeX, eyeY, radius * 0.12, radius * 0.18, 0, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
