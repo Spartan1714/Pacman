@@ -1,11 +1,11 @@
 import { map } from "./map.js";
 
 export let pacman = {
-    x: 1, y: 1,      // Celda lógica
-    vX: 1, vY: 1,    // POSICIÓN VISUAL (Esta es la que quita el lag)
+    x: 1, y: 1,
+    vX: 1, vY: 1,
     dirX: 0, dirY: 0,
     nextDirX: 0, nextDirY: 0,
-    speed: 0.15,     // Misma velocidad que los fantasmas
+    speed: 0.125, // Usamos 0.125 porque es una fracción exacta (1/8)
     mouth: 0,
     mouthDir: 1,
     angle: 0
@@ -24,35 +24,44 @@ export function resetPlayer() {
 }
 
 export function updatePlayer(score) {
-    // Animación de boca
-    pacman.mouth += 0.1 * pacman.mouthDir;
-    if (pacman.mouth > 0.3 || pacman.mouth < 0) pacman.mouthDir *= -1;
+    // 1. Animación de boca (Suave)
+    pacman.mouth += 0.15 * pacman.mouthDir;
+    if (pacman.mouth > 0.4 || pacman.mouth < 0.1) pacman.mouthDir *= -1;
 
-    // SISTEMA DE MOVIMIENTO FLUIDO (IGUAL AL DE LOS FANTASMAS)
-    if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
+    // 2. LÓGICA DE MOVIMIENTO CON "IMÁN"
+    // Si la distancia entre la posición visual y la lógica es menor a la velocidad...
+    if (Math.abs(pacman.x - pacman.vX) <= pacman.speed && Math.abs(pacman.y - pacman.vY) <= pacman.speed) {
+        // FORZAMOS a Pacman al centro de la celda (El "Imán")
         pacman.vX = pacman.x;
         pacman.vY = pacman.y;
 
-        // ¿Podemos girar?
+        // ¿Podemos girar? (nextDir)
         if (map[pacman.y + pacman.nextDirY] && map[pacman.y + pacman.nextDirY][pacman.x + pacman.nextDirX] !== 1) {
             pacman.dirX = pacman.nextDirX;
             pacman.dirY = pacman.nextDirY;
         }
 
-        // ¿Podemos seguir?
-        if (map[pacman.y + pacman.dirY] && map[pacman.y + pacman.dirY][pacman.x + pacman.dirX] !== 1) {
-            pacman.x += pacman.dirX;
-            pacman.y += pacman.dirY;
+        // ¿Podemos seguir de frente?
+        if (map[pacman.y + pacman.dirY] && map[pacman.y + pacman.dirY][pacman.x + pacman.dx] !== 1) {
+            // Nota: Si dirX y dirY son 0 (quieto), no suma nada
+            if (map[pacman.y + pacman.dirY][pacman.x + pacman.dirX] !== 1) {
+                pacman.x += pacman.dirX;
+                pacman.y += pacman.dirY;
+            }
+        } else {
+            // Chocó: Detener posición lógica
+            pacman.dirX = 0;
+            pacman.dirY = 0;
         }
     }
 
-    // INTERPOLACIÓN (Esto es lo que ves suave en pantalla)
+    // 3. DESLIZAMIENTO VISUAL (Interpolación sin lag)
     if (pacman.vX < pacman.x) { pacman.vX += pacman.speed; pacman.angle = 0; }
-    if (pacman.vX > pacman.x) { pacman.vX -= pacman.speed; pacman.angle = Math.PI; }
-    if (pacman.vY < pacman.y) { pacman.vY += pacman.speed; pacman.angle = Math.PI/2; }
-    if (pacman.vY > pacman.y) { pacman.vY -= pacman.speed; pacman.angle = -Math.PI/2; }
+    else if (pacman.vX > pacman.x) { pacman.vX -= pacman.speed; pacman.angle = Math.PI; }
+    else if (pacman.vY < pacman.y) { pacman.vY += pacman.speed; pacman.angle = Math.PI/2; }
+    else if (pacman.vY > pacman.y) { pacman.vY -= pacman.speed; pacman.angle = -Math.PI/2; }
 
-    // Comer puntos
+    // Comer puntos (Detectamos por cercanía visual)
     let mx = Math.round(pacman.vX);
     let my = Math.round(pacman.vY);
     if (map[my] && map[my][mx] === 2) {
@@ -62,18 +71,18 @@ export function updatePlayer(score) {
 }
 
 export function drawPlayer(ctx, tileSize, offsetX, offsetY) {
-    // IMPORTANTE: Dibujamos en vX y vY, NO en x e y
-    let px = offsetX + pacman.vX * tileSize + tileSize/2;
-    let py = offsetY + pacman.vY * tileSize + tileSize/2;
+    let px = offsetX + pacman.vX * tileSize + tileSize / 2;
+    let py = offsetY + pacman.vY * tileSize + tileSize / 2;
     
     ctx.save();
     ctx.translate(px, py);
     ctx.rotate(pacman.angle);
     ctx.fillStyle = "yellow";
     ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.arc(0, 0, tileSize/2.2, pacman.mouth, Math.PI * 2 - pacman.mouth);
-    ctx.lineTo(0,0);
+    ctx.moveTo(0, 0);
+    // Boca dinámica
+    ctx.arc(0, 0, tileSize / 2.2, pacman.mouth, Math.PI * 2 - pacman.mouth);
+    ctx.lineTo(0, 0);
     ctx.fill();
     ctx.restore();
 }
