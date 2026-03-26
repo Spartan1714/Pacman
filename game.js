@@ -1,6 +1,6 @@
 import { map } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, pacman } from "./player.js";
-import { updateGhosts, drawGhosts, spawnGhostsForLevel } from "./ghost.js";
+import { updateGhosts, drawGhosts, spawnGhostsForLevel } from "./ghosts.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
