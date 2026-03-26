@@ -3,14 +3,13 @@ import { powerMode } from "./ghosts.js";
 
 export let pacman = { 
     x: 1, y: 1, vX: 1, vY: 1, 
-    dirX: 0, dirY: 0, nextDX: 0, nextDY: 0,
-    lastMove: 0 // Guardaremos la hora exacta del último paso
+    dirX: 0, dirY: 0, nextDX: 0, nextDY: 0 
 };
 
-// --- PARÁMETRO DE VELOCIDAD (Milisegundos) ---
-// 150ms es una velocidad clásica. 
-// Si lo quieres MÁS LENTO, sube a 200. Si lo quieres MÁS RÁPIDO, baja a 100.
-const PACMAN_MS = 150; 
+// --- VELOCIDAD REAL (Celdas por segundo) ---
+// 4.5 significa que cruzará 4.5 cuadros del mapa en 1 segundo, 
+// sin importar si el monitor es de 60Hz o 300Hz.
+const VELOCIDAD_BASE = 4.5; 
 
 export function setDirection(dx, dy) {
     pacman.nextDX = dx;
@@ -24,40 +23,43 @@ export function resetPlayer() {
     pacman.nextDX = 0; pacman.nextDY = 0;
 }
 
-export function updatePlayer(score, onPowerUp) {
-    let ahora = Date.now();
+export function updatePlayer(score, onPowerUp, dt) {
+    if (!dt) return; // Seguridad para el primer frame
 
-    // ¿Ha pasado suficiente tiempo desde el último movimiento?
-    if (ahora - pacman.lastMove >= PACMAN_MS) {
-        pacman.lastMove = ahora;
+    // 1. Intentar girar o detenerse (Lógica de colisión mejorada)
+    // Calculamos si estamos cerca del "corazón" de la celda
+    let centerX = Math.round(pacman.x);
+    let centerY = Math.round(pacman.y);
+    let distanciaAlCentro = Math.hypot(pacman.x - centerX, pacman.y - centerY);
 
-        let cx = Math.round(pacman.x);
-        let cy = Math.round(pacman.y);
-
-        // Intentar girar
-        if (map[cy + pacman.nextDY]?.[cx + pacman.nextDX] !== 1) {
+    if (distanciaAlCentro < 0.2) {
+        // ¿Quiere girar?
+        if (map[centerY + pacman.nextDY]?.[centerX + pacman.nextDX] !== 1) {
             pacman.dirX = pacman.nextDX;
             pacman.dirY = pacman.nextDY;
         }
-
-        // Avanzar o chocar
-        if (map[cy + pacman.dirY]?.[cx + pacman.dirX] !== 1) {
-            pacman.x += pacman.dirX;
-            pacman.y += pacman.dirY;
-        } else {
+        // ¿Hay muro enfrente?
+        if (map[centerY + pacman.dirY]?.[centerX + pacman.dirX] === 1) {
             pacman.dirX = 0; pacman.dirY = 0;
-            pacman.x = cx; pacman.y = cy;
+            pacman.x = centerX; pacman.y = centerY;
         }
-
-        // Comer
-        let mx = Math.round(pacman.x), my = Math.round(pacman.y);
-        if (map[my]?.[mx] === 2) { map[my][mx] = 0; score.value += 10; }
-        else if (map[my]?.[mx] === 3) { map[my][mx] = 0; if (onPowerUp) onPowerUp(); }
     }
 
-    // Suavizado visual (independiente del freno para que no se vea trabado)
-    pacman.vX += (pacman.x - pacman.vX) * 0.15;
-    pacman.vY += (pacman.y - pacman.vY) * 0.15;
+    // 2. MOVIMIENTO ADAPTATIVO
+    // Multiplicamos por dt (segundos transcurridos desde el último frame)
+    pacman.x += pacman.dirX * VELOCIDAD_BASE * dt;
+    pacman.y += pacman.dirY * VELOCIDAD_BASE * dt;
+
+    // 3. SUAVIZADO VISUAL (vX persigue a x)
+    // Usamos una tasa de aprendizaje basada en dt para que sea igual en todo monitor
+    let lerpFactor = 1 - Math.pow(0.001, dt); 
+    pacman.vX += (pacman.x - pacman.vX) * lerpFactor;
+    pacman.vY += (pacman.y - pacman.vY) * lerpFactor;
+
+    // Comer
+    let mx = Math.round(pacman.x), my = Math.round(pacman.y);
+    if (map[my]?.[mx] === 2) { map[my][mx] = 0; score.value += 10; }
+    else if (map[my]?.[mx] === 3) { map[my][mx] = 0; if (onPowerUp) onPowerUp(); }
 }
 
 export function drawPlayer(ctx, size, ox, oy) {
@@ -68,12 +70,11 @@ export function drawPlayer(ctx, size, ox, oy) {
     ctx.save();
     ctx.translate(px, py);
 
-    // Cuerpo
+    // Cuerpo (Boca)
     ctx.save();
-    let rotation = 0;
-    if (pacman.dirX === -1) rotation = Math.PI;
-    else if (pacman.dirY === 1) rotation = Math.PI/2;
-    else if (pacman.dirY === -1) rotation = -Math.PI/2;
+    let rotation = (pacman.dirX === -1) ? Math.PI : 
+                   (pacman.dirY === 1) ? Math.PI/2 : 
+                   (pacman.dirY === -1) ? -Math.PI/2 : 0;
     ctx.rotate(rotation);
     ctx.fillStyle = "yellow";
     if (powerMode) { ctx.shadowBlur = 15; ctx.shadowColor = "yellow"; }
@@ -84,16 +85,13 @@ export function drawPlayer(ctx, size, ox, oy) {
     ctx.fill();
     ctx.restore();
 
-    // Ojo Ovalado Fijo
+    // Ojo Ovalado Profesional (Fijo arriba)
     ctx.fillStyle = "black";
-    ctx.shadowBlur = 0;
     let eyeX = (pacman.dirX === -1) ? -radius * 0.3 : radius * 0.3;
     ctx.save();
     ctx.translate(eyeX, -radius * 0.45);
     ctx.scale(0.8, 1.4);
-    ctx.beginPath();
-    ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(0, 0, radius * 0.15, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
 
     ctx.restore();
