@@ -1,6 +1,6 @@
 import { map } from "./map.js";
-import { pacman, resetPlayer } from "./player.js";
-
+// Cambia esto en ghosts.js (Línea 2)
+import { pacman, resetPlayer } from "./player.js?v=2";
 export let ghosts = [];
 
 export function spawnGhostsForLevel() {
