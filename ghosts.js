@@ -1,56 +1,125 @@
-import { map } from "./map.js";
+import { map, TILE_SIZE } from "./map.js";
+import { pacman } from "./player.js"; // Importamos solo los datos, no funciones
 
 export let ghosts = [];
-let ghostSpeed = 3;
+export let powerMode = false;
+let powerTimer = 0;
 
-export function spawnGhosts() {
-    const colores = ["red", "pink", "cyan", "orange"];
-    ghosts = colores.map((col, i) => ({
-        x: 9 + i,
-        y: 7,
-        color: col,
-        dirX: 0,
-        dirY: 0
-    }));
+// ESTA FUNCIÓN ES LA QUE DABA EL ERROR DE PANTALLA NEGRA
+export function activatePower() {
+    powerMode = true;
+    powerTimer = 400; // Duración del poder (aprox 7 segundos)
+    console.log("¡Power Up Activo!");
 }
 
-export function updateGhosts(lives, pacmanPos, dt) {
-    if (!dt) return;
+export function spawnGhosts(level = 1) {
+    const extraSpeed = Math.min(level * 0.01, 0.06); 
+    ghosts = [
+        { x: 18, y: 1, vX: 18, vY: 1, color: "red", mode: "berserker", dead: false, speed: 0.11 + extraSpeed, lastDx: 0, lastDy: 0 },
+        { x: 1, y: 8, vX: 1, vY: 8, color: "pink", mode: "random", dead: false, speed: 0.08, lastDx: 0, lastDy: 0 },
+        { x: 18, y: 8, vX: 18, vY: 8, color: "cyan", mode: "random", dead: false, speed: 0.08, lastDx: 0, lastDy: 0 }
+    ];
+}
+
+export function allGhostsDead() {
+    if (ghosts.length === 0) return false;
+    return ghosts.every(g => g.dead);
+}
+
+export function updateGhosts(lives, score) {
+    // Manejo del cronómetro del poder
+    if (powerMode) {
+        powerTimer--;
+        if (powerTimer <= 0) powerMode = false;
+    }
 
     ghosts.forEach(g => {
-        let cx = Math.round(g.x);
-        let cy = Math.round(g.y);
+        if (g.dead) return;
 
-        if (Math.abs(g.x - cx) < 0.1 && Math.abs(g.y - cy) < 0.1) {
-            const moves = [
-                { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
-                { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
-            ].filter(m => map[cy + m.dy]?.[cx + m.dx] !== 1);
+        // Lógica de movimiento en intersecciones
+        if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
+            g.vX = g.x; 
+            g.vY = g.y;
 
-            let choice = moves[Math.floor(Math.random() * moves.length)];
+            // Buscar caminos posibles (que no sean muro 1)
+            let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
+                map[Math.round(g.y + m.dy)]?.[Math.round(g.x + m.dx)] !== 1
+            );
+
+            // Filtro para que no rebote (no volver atrás si hay más opciones)
+            if (moves.length > 1) {
+                moves = moves.filter(m => m.dx !== -g.lastDx || m.dy !== -g.lastDy);
+            }
+
+            let choice;
+            // El Berserker persigue a Pacman si no hay Power Up
+            if (g.mode === "berserker" && !powerMode) {
+                choice = moves.sort((a, b) => 
+                    Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
+                    Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
+                )[0];
+            } else {
+                // Movimiento aleatorio para los demás o si están asustados
+                choice = moves[Math.floor(Math.random() * moves.length)];
+            }
+            
             if (choice) {
-                g.dirX = choice.dx;
-                g.dirY = choice.dy;
+                g.x += choice.dx; 
+                g.y += choice.dy;
+                g.lastDx = choice.dx; 
+                g.lastDy = choice.dy;
             }
         }
+        
+        // Interpolación suave (lo que evita que se vean "trabados")
+        const step = g.mode === "berserker" ? 0.11 : 0.08;
+        g.vX += (g.x - g.vX) * step;
+        g.vY += (g.y - g.vY) * step;
 
-        g.x += g.dirX * ghostSpeed * dt;
-        g.y += g.dirY * ghostSpeed * dt;
-
-        // Colisión con Pac-Man
-        if (Math.hypot(g.x - pacmanPos.x, g.y - pacmanPos.y) < 0.7) {
-            lives.value--;
-            pacmanPos.x = 1;
-            pacmanPos.y = 1;
+        // Detección de colisión con Pacman
+        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.6) {
+            if (powerMode) {
+                g.dead = true;
+                score.value += 500;
+            } else {
+                lives.value--;
+                // Importación dinámica de resetPlayer para evitar el choque de archivos
+                import("./player.js").then(m => m.resetPlayer());
+            }
         }
     });
 }
 
-export function drawGhosts(ctx, size, ox, oy) {
+export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
-        ctx.fillStyle = g.color;
+        if (g.dead) return;
+        let x = ox + g.vX * TILE_SIZE, y = oy + g.vY * TILE_SIZE, s = TILE_SIZE;
+        
+        ctx.save();
+        // Si hay powerMode, todos se vuelven azules
+        ctx.fillStyle = powerMode ? "#2121ff" : g.color;
+        
+        // Brillo neón para los fantasmas
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = ctx.fillStyle;
+
+        // Cuerpo del fantasma (Cúpula)
         ctx.beginPath();
-        ctx.arc(ox + g.x * size + size / 2, oy + g.y * size + size / 2, size / 2.2, 0, Math.PI * 2);
+        ctx.arc(x + s/2, y + s/2, s/2.5, Math.PI, 0);
+        ctx.lineTo(x + s*0.85, y + s*0.9);
+        ctx.lineTo(x + s*0.65, y + s*0.75);
+        ctx.lineTo(x + s*0.5, y + s*0.9);
+        ctx.lineTo(x + s*0.35, y + s*0.75);
+        ctx.lineTo(x + s*0.15, y + s*0.9);
         ctx.fill();
+        
+        // Ojos
+        ctx.fillStyle = "white";
+        ctx.shadowBlur = 0;
+        ctx.beginPath(); 
+        ctx.arc(x + s*0.35, y + s*0.4, s*0.1, 0, 7); 
+        ctx.arc(x + s*0.65, y + s*0.4, s*0.1, 0, 7); 
+        ctx.fill();
+        ctx.restore();
     });
 }

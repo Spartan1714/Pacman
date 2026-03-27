@@ -1,25 +1,26 @@
-export const TILE_SIZE = 25;
-export let map = [];
+export const TILE_SIZE = 30;
+export let map = [
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+    [1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,1,2,1,2,1,1,2,1,1,2,1,1,2,1],
+    [1,2,1,1,2,1,1,2,2,2,1,1,2,1,1,2,1,1,2,1],
+    [1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,2,1,1,1,2,1,2,1,1,2,1,1,2,1],
+    [1,2,2,2,2,1,2,2,1,2,2,1,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,1,2,1,2,1,1,2,1,1,2,1,1,2,1],
+    [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
 
-export function generarMapaAleatorio() {
-    const rows = 15;
-    const cols = 20;
-    map = [];
-    for (let y = 0; y < rows; y++) {
-        let row = [];
-        for (let x = 0; x < cols; x++) {
-            // Bordes siempre muros
-            if (y === 0 || y === rows - 1 || x === 0 || x === cols - 1) {
-                row.push(1);
-            } else {
-                // 25% de muros, el resto puntos
-                row.push(Math.random() < 0.25 ? 1 : 2);
-            }
-        }
-        map.push(row);
+export function spawnCherry(level) {
+    // Limpiar cerezas previas (el 3 vuelve a ser camino o punto)
+    map.forEach((row, y) => row.forEach((c, x) => { if(c === 3) map[y][x] = 2; }));
+
+    // Forzamos en nivel 1, probabilidad en el resto
+    if (level === 1 || Math.random() > 0.5) {
+        let emptyCells = [];
+        map.forEach((row, y) => row.forEach((c, x) => { if(c !== 1) emptyCells.push({x, y}); }));
+        let pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        map[pos.y][pos.x] = 3;
     }
-    // Espacio libre para inicio
-    map[1][1] = 0; 
-    map[7][9] = 0; // Centro
-    map[7][10] = 0;
 }
