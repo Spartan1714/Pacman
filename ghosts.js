@@ -11,10 +11,12 @@ export function activatePower() {
 }
 
 export function spawnGhosts(level = 1) {
+    // Definimos velocidades que aumentan con el nivel
+    const speed = 2.5 + (level * 0.2);
     ghosts = [
-        { x: 18, y: 1, vX: 18, vY: 1, color: "red", mode: "berserker", dead: false, lastDx: 0, lastDy: 0 },
-        { x: 1, y: 8, vX: 1, vY: 8, color: "pink", mode: "random", dead: false, lastDx: 0, lastDy: 0 },
-        { x: 18, y: 8, vX: 18, vY: 8, color: "cyan", mode: "random", dead: false, lastDx: 0, lastDy: 0 }
+        { x: 18, y: 1, vX: 18, vY: 1, color: "red", mode: "berserker", dead: false, lastDx: 0, lastDy: 0, speed: speed },
+        { x: 1, y: 8, vX: 1, vY: 8, color: "pink", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed },
+        { x: 18, y: 8, vX: 18, vY: 8, color: "cyan", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed }
     ];
 }
 
@@ -23,6 +25,7 @@ export function allGhostsDead() {
 }
 
 export function updateGhosts(lives, score, dt) {
+    if (!dt) return;
     if (powerMode) {
         powerTimer--;
         if (powerTimer <= 0) powerMode = false;
@@ -31,15 +34,16 @@ export function updateGhosts(lives, score, dt) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        const lerpSpeed = 8; 
+        let centerX = Math.round(g.x);
+        let centerY = Math.round(g.y);
 
-        if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
-            g.vX = g.x; g.vY = g.y;
-
+        // Toma de decisiones en el centro de la celda
+        if (Math.abs(g.x - centerX) < 0.1 && Math.abs(g.y - centerY) < 0.1) {
             let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
-                map[Math.round(g.y + m.dy)]?.[Math.round(g.x + m.dx)] !== 1
+                map[centerY + m.dy]?.[centerX + m.dx] !== 1
             );
 
+            // Evitar que el fantasma se dé la vuelta 180 grados si hay otras opciones
             if (moves.length > 1) {
                 moves = moves.filter(m => m.dx !== -g.lastDx || m.dy !== -g.lastDy);
             }
@@ -47,34 +51,42 @@ export function updateGhosts(lives, score, dt) {
             let choice;
             if (g.mode === "berserker" && !powerMode) {
                 choice = moves.sort((a, b) => 
-                    Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
-                    Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
+                    Math.hypot((centerX + a.dx) - pacman.x, (centerY + a.dy) - pacman.y) - 
+                    Math.hypot((centerX + b.dx) - pacman.x, (centerY + b.dy) - pacman.y)
                 )[0];
             } else {
                 choice = moves[Math.floor(Math.random() * moves.length)];
             }
             
             if (choice) {
-                g.x += choice.dx; g.y += choice.dy;
-                g.lastDx = choice.dx; g.lastDy = choice.dy;
+                g.dirX = choice.dx;
+                g.dirY = choice.dy;
+                g.lastDx = choice.dx;
+                g.lastDy = choice.dy;
+                g.x = centerX; g.y = centerY; // Alineación
             }
         }
         
-        g.vX += (g.x - g.vX) * lerpSpeed * dt;
-        g.vY += (g.y - g.vY) * lerpSpeed * dt;
+        // Movimiento real
+        let actualSpeed = powerMode ? g.speed * 0.5 : g.speed;
+        g.x += g.dirX * actualSpeed * dt;
+        g.y += g.dirY * actualSpeed * dt;
+        g.vX = g.x; g.vY = g.y;
 
-        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.6) {
+        // Colisión más precisa
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
             } else {
                 lives.value--;
-                import("./player.js").then(m => m.resetPlayer());
+                resetPlayer(); // Importado directamente o mediante callback
             }
         }
     });
 }
 
+// ... drawGhosts se queda igual (está perfecto visualmente) ...
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
