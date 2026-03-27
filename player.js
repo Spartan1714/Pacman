@@ -1,7 +1,7 @@
 import { map, TILE_SIZE } from "./map.js";
 import { powerMode } from "./ghosts.js";
 
-// Mantenemos tu configuración de velocidad que da la fluidez buena
+// Mantenemos tu configuración de velocidad y fluidez original intacta
 export let pacman = { 
     x: 1, y: 1, 
     vX: 1, vY: 1, 
@@ -74,26 +74,53 @@ export function drawPlayer(ctx, size, ox, oy) {
 
     let mouth = (Math.sin(Date.now() * 0.015) + 1) * 0.2;
     let angle = 0;
-    if (pacman.dirX === -1) angle = Math.PI;
-    else if (pacman.dirY === 1) angle = Math.PI/2;
-    else if (pacman.dirY === -1) angle = -Math.PI/2;
+    if (pacman.dirX === -1) angle = Math.PI; // Izquierda
+    else if (pacman.dirY === 1) angle = Math.PI/2; // Abajo
+    else if (pacman.dirY === -1) angle = -Math.PI/2; // Arriba
 
+    // Dibujar cuerpo y boca
     ctx.beginPath();
     ctx.arc(x, y, radius, angle + mouth, angle + Math.PI * 2 - mouth);
     ctx.lineTo(x, y);
     ctx.fill();
 
-    // --- CORRECCIÓN DEL OJO (Rectángulo redondeado original) ---
+    // --- CORRECCIÓN DEL OJO QUE SIGUE LA DIRECCIÓN ---
     ctx.fillStyle = "black";
     ctx.shadowBlur = 0;
     
-    // Posición fija arriba del centro (Diseño original)
-    let eyeX = x + (radius * 0.3);
-    let eyeY = y - (radius * 0.45);
+    // Calculamos el desplazamiento del ojo basado en la dirección actual
+    // Si pacman está quieto (dirX y dirY son 0), el ojo se queda en una posición neutra (por ejemplo, arriba y a la derecha).
     
+    let baseOffset = radius * 0.45; // Qué tan lejos está el ojo del centro
+    let eyeX = x;
+    let eyeY = y;
+    let eyeRotation = angle; // El ojo rota con la boca
+
+    if (pacman.dirX === 0 && pacman.dirY === 0) {
+        // Posición neutral arriba a la derecha si está quieto
+        eyeX += baseOffset * 0.6;
+        eyeY -= baseOffset;
+    } else {
+        // Calculamos la posición visual del ojo que sigue a la boca (rota con el ángulo)
+        // Usamos trigonometría para que el ojo se mueva en el círculo correctamente
+        
+        let visualAngle = angle - Math.PI / 2.8; // Desplazamiento visual para que no esté sobre la boca
+        if(pacman.dirX === -1) visualAngle = angle + Math.PI / 1.5; // Ajuste específico para izquierda
+
+        eyeX += Math.cos(visualAngle) * baseOffset * 1.0;
+        eyeY += Math.sin(visualAngle) * baseOffset * 1.0;
+    }
+    
+    // Restauramos el roundRect (el rectángulo redondeado negro arcade)
     ctx.beginPath();
-    // Restauramos el roundRect que tenías en la versión estética
-    ctx.roundRect(eyeX - (radius*0.07), eyeY - (radius*0.17), radius*0.15, radius*0.35, 5); 
+    // Lo colocamos y rotamos para que mire en la dirección correcta
+    ctx.translate(eyeX, eyeY); // Movemos el origen al ojo
+    ctx.rotate(angle); // Rotamos el ojo con la dirección del cuerpo
+
+    // El rectángulo del ojo, dibujado en relación con su propio origen rotado
+    // (x, y, ancho, alto, radio de esquina)
+    // El ojo es un bloque vertical, por eso el alto (0.35) es mayor que el ancho (0.15)
+    ctx.roundRect(- (radius*0.07), - (radius*0.17), radius*0.15, radius*0.35, 5); 
     ctx.fill();
     
     ctx.restore();
