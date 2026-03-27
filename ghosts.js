@@ -1,22 +1,24 @@
 import { map, TILE_SIZE } from "./map.js";
 import { pacman } from "./player.js";
 
-// Cambiamos a let para que spawnGhosts pueda recrear la lista
-export let ghosts = [];
+// Cambiamos a 'let' para que spawnGhosts pueda recrear la lista cada nivel
+export let ghosts = []; 
 export let powerMode = false;
 let powerTimer = 0;
-let ghostSpeedMultiplier = 2.8; // Para aumentar dificultad
+let ghostSpeedMultiplier = 2.8; 
 
 const COLORES = ["red", "pink", "cyan", "orange", "purple"];
 
 // --- 1. FUNCIÓN PARA GENERAR FANTASMAS ALEATORIOS (1-5) ---
 export function spawnGhosts() {
+    // Genera un número aleatorio entre 1 y 5
     const cantidad = Math.floor(Math.random() * 5) + 1;
-    ghosts = [];
+    ghosts = []; // Limpiamos la lista anterior
+    
     for (let i = 0; i < cantidad; i++) {
         ghosts.push({
-            x: 9, y: 4, // Salen del centro del laberinto
-            color: COLORES[i],
+            x: 9, y: 4, // Salen del centro del laberinto (ajusta según tu mapa)
+            color: COLORES[i % COLORES.length],
             dirX: 0, dirY: 0, 
             lastDx: 0, lastDy: 0,
             dead: false,
@@ -25,14 +27,14 @@ export function spawnGhosts() {
     }
 }
 
-// --- 2. FUNCIÓN PARA EL POWER-UP (La que pedía game.js) ---
+// --- 2. LA FUNCIÓN QUE TE DABA ERROR (¡Ahora con export!) ---
 export function activarPowerMode() {
     powerMode = true;
-    powerTimer = 400; // Duración del efecto
+    powerTimer = 400; // Aproximadamente 7 segundos de poder
 }
 
 export function aumentarDificultad() {
-    ghostSpeedMultiplier += 0.4; // Aumenta en cada nivel
+    ghostSpeedMultiplier += 0.4; // Se vuelven más rápidos en cada nivel
 }
 
 export function updateGhosts(lives, score, dt) {
@@ -45,12 +47,12 @@ export function updateGhosts(lives, score, dt) {
     }
 
     ghosts.forEach(g => {
-        // Lógica de reaparición si fue comido
+        // Si el fantasma fue comido, esperar para revivir
         if (g.dead) {
             g.respawnTimer--;
             if (g.respawnTimer <= 0) {
                 g.dead = false;
-                g.x = 9; g.y = 4; // Vuelve a casa
+                g.x = 9; g.y = 4; 
             }
             return;
         }
@@ -58,7 +60,7 @@ export function updateGhosts(lives, score, dt) {
         let cx = Math.round(g.x);
         let cy = Math.round(g.y);
         
-        // Si el fantasma es azul, va más lento
+        // Si el fantasma es azul (asustado), va más lento
         let speed = powerMode ? ghostSpeedMultiplier * 0.6 : ghostSpeedMultiplier;
 
         if (Math.abs(g.x - cx) < 0.1 && Math.abs(g.y - cy) < 0.1) {
@@ -71,19 +73,19 @@ export function updateGhosts(lives, score, dt) {
 
             let choice;
             if (powerMode) {
-                // MODO MIEDO: Eligen la dirección que más los ALEJE de Pac-Man
+                // HUIR de Pac-Man
                 choice = finalChoices.sort((a,b) => 
                     Math.hypot((cx+b.dx)-pacman.x, (cy+b.dy)-pacman.y) - 
                     Math.hypot((cx+a.dx)-pacman.x, (cy+a.dy)-pacman.y)
                 )[0];
             } else if (g.color === "red") {
-                // Inteligencia Berserker (Persigue)
+                // PERSEGUIR (Berserker)
                 choice = finalChoices.sort((a,b) => 
                     Math.hypot((cx+a.dx)-pacman.x, (cy+a.dy)-pacman.y) - 
                     Math.hypot((cx+b.dx)-pacman.x, (cy+b.dy)-pacman.y)
                 )[0];
             } else {
-                // Otros: Siguen recto el 80% o azar
+                // PATRULLAJE (80% seguir recto)
                 let sigueRecto = finalChoices.find(m => m.dx === g.lastDx && m.dy === g.lastDy);
                 choice = (sigueRecto && Math.random() < 0.8) ? sigueRecto : finalChoices[Math.floor(Math.random() * finalChoices.length)];
             }
@@ -103,7 +105,7 @@ export function updateGhosts(lives, score, dt) {
             if (powerMode) {
                 // ¡COMER FANTASMA!
                 g.dead = true;
-                g.respawnTimer = 240; // 4 segundos fuera
+                g.respawnTimer = 240; 
                 score.value += 200;
             } else {
                 // MORIR
@@ -111,7 +113,6 @@ export function updateGhosts(lives, score, dt) {
                 pacman.x = 1; pacman.y = 1;
                 pacman.dirX = 0; pacman.dirY = 0;
                 pacman.nextDX = 0; pacman.nextDY = 0;
-                // Resetear posiciones de fantasmas vivos
                 ghosts.forEach(ghost => { ghost.x = 9; ghost.y = 4; });
             }
         }
@@ -120,14 +121,13 @@ export function updateGhosts(lives, score, dt) {
 
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
-        if (g.dead) return; // No dibujar si está comido
+        if (g.dead) return;
 
         let gx = ox + g.x * TILE_SIZE + TILE_SIZE / 2;
         let gy = oy + g.y * TILE_SIZE + TILE_SIZE / 2;
         let r = TILE_SIZE * 0.4; 
 
         ctx.save();
-        // Si powerMode está activo, todos son azules
         ctx.fillStyle = powerMode ? "blue" : g.color;
         
         ctx.beginPath();
@@ -144,14 +144,13 @@ export function drawGhosts(ctx, ox, oy) {
         }
         ctx.fill();
 
-        // Ojos
+        // Ojos y pupilas
         ctx.fillStyle = "white";
         ctx.beginPath();
         ctx.arc(gx - r/2.5, gy - r/3, r/3, 0, Math.PI * 2);
         ctx.arc(gx + r/2.5, gy - r/3, r/3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Pupilas (Si son azules, pupilas tristes/blancas)
         ctx.fillStyle = powerMode ? "white" : "blue";
         let ex = g.dirX * (r/6); 
         let ey = g.dirY * (r/6);
