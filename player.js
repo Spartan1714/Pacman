@@ -14,32 +14,53 @@ export function setDirection(dx, dy) {
 }
 
 export function updatePlayer(score, dt) {
+export function updatePlayer(score, dt) {
     if (!dt) return;
 
-    // Lógica de intersección: Solo girar cuando estemos cerca del centro de un tile
+    const SPEED = 4.5; // Puedes ajustar la velocidad aquí
+
+    // 1. Lógica de intersección: Solo girar cuando estemos cerca del centro de un tile
     let centerX = Math.round(pacman.x);
     let centerY = Math.round(pacman.y);
     
+    // Margen de error para permitir el giro (0.1)
     if (Math.abs(pacman.x - centerX) < 0.1 && Math.abs(pacman.y - centerY) < 0.1) {
-        // ¿Podemos girar a la dirección deseada?
+        
+        // ¿Podemos girar a la dirección que el usuario pulsó (nextD)?
         if (map[centerY + pacman.nextDY]?.[centerX + pacman.nextDX] !== 1) {
             pacman.dirX = pacman.nextDX;
             pacman.dirY = pacman.nextDY;
         }
-        // ¿Chocamos con un muro?
+
+        // ¿La dirección actual nos lleva a un muro? Si es así, frenamos.
         if (map[centerY + pacman.dirY]?.[centerX + pacman.dirX] === 1) {
-            pacman.dirX = 0; pacman.dirY = 0;
-            pacman.x = centerX; pacman.y = centerY;
+            pacman.dirX = 0; 
+            pacman.dirY = 0;
+            // Ajustamos exactamente al centro para que no quede "metido" en el muro
+            pacman.x = centerX; 
+            pacman.y = centerY;
         }
     }
 
-    // Mover posición lógica
+    // 2. Mover posición lógica
     pacman.x += pacman.dirX * SPEED * dt;
     pacman.y += pacman.dirY * SPEED * dt;
 
-    // Comer puntos
-    let mx = Math.round(pacman.x), my = Math.round(pacman.y);
-    if (map[my]?.[mx] === 2) { map[my][mx] = 0; score.value += 10; }
+    // 3. Comer puntos y cerezas
+    let mx = Math.round(pacman.x);
+    let my = Math.round(pacman.y);
+
+    if (map[my]?.[mx] === 2) { 
+        // Come punto normal
+        map[my][mx] = 0; 
+        score.value += 10; 
+    } else if (map[my]?.[mx] === 4) { 
+        // Come cereza (Power-Up)
+        map[my][mx] = 0; 
+        score.value += 100; 
+        // Nota: No importamos nada de ghosts aquí para evitar el error.
+        // El archivo game.js detectará que map[4][9] ya no es 4 y activará el poder.
+    }
 }
 
 export function drawPlayer(ctx, size, ox, oy) {
