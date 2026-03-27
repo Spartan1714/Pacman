@@ -1,5 +1,5 @@
 import { map, TILE_SIZE } from "./map.js";
-import { pacman } from "./player.js";
+import { pacman, resetPlayer } from "./player.js"; 
 
 export let ghosts = [];
 export let powerMode = false;
@@ -11,12 +11,11 @@ export function activatePower() {
 }
 
 export function spawnGhosts(level = 1) {
-    // Definimos velocidades que aumentan con el nivel
     const speed = 2.5 + (level * 0.2);
     ghosts = [
-        { x: 18, y: 1, vX: 18, vY: 1, color: "red", mode: "berserker", dead: false, lastDx: 0, lastDy: 0, speed: speed },
-        { x: 1, y: 8, vX: 1, vY: 8, color: "pink", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed },
-        { x: 18, y: 8, vX: 18, vY: 8, color: "cyan", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed }
+        { x: 18, y: 1, vX: 18, vY: 1, dirX: 0, dirY: 0, color: "red", mode: "berserker", dead: false, lastDx: 0, lastDy: 0, speed: speed },
+        { x: 1, y: 8, vX: 1, vY: 8, dirX: 0, dirY: 0, color: "pink", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed },
+        { x: 18, y: 8, vX: 18, vY: 8, dirX: 0, dirY: 0, color: "cyan", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed }
     ];
 }
 
@@ -37,13 +36,11 @@ export function updateGhosts(lives, score, dt) {
         let centerX = Math.round(g.x);
         let centerY = Math.round(g.y);
 
-        // Toma de decisiones en el centro de la celda
         if (Math.abs(g.x - centerX) < 0.1 && Math.abs(g.y - centerY) < 0.1) {
             let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
                 map[centerY + m.dy]?.[centerX + m.dx] !== 1
             );
 
-            // Evitar que el fantasma se dé la vuelta 180 grados si hay otras opciones
             if (moves.length > 1) {
                 moves = moves.filter(m => m.dx !== -g.lastDx || m.dy !== -g.lastDy);
             }
@@ -59,34 +56,29 @@ export function updateGhosts(lives, score, dt) {
             }
             
             if (choice) {
-                g.dirX = choice.dx;
-                g.dirY = choice.dy;
-                g.lastDx = choice.dx;
-                g.lastDy = choice.dy;
-                g.x = centerX; g.y = centerY; // Alineación
+                g.dirX = choice.dx; g.dirY = choice.dy;
+                g.lastDx = choice.dx; g.lastDy = choice.dy;
+                g.x = centerX; g.y = centerY;
             }
         }
         
-        // Movimiento real
         let actualSpeed = powerMode ? g.speed * 0.5 : g.speed;
-        g.x += g.dirX * actualSpeed * dt;
-        g.y += g.dirY * actualSpeed * dt;
+        g.x += (g.dirX || 0) * actualSpeed * dt;
+        g.y += (g.dirY || 0) * actualSpeed * dt;
         g.vX = g.x; g.vY = g.y;
 
-        // Colisión más precisa
         if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
             } else {
                 lives.value--;
-                resetPlayer(); // Importado directamente o mediante callback
+                resetPlayer();
             }
         }
     });
 }
 
-// ... drawGhosts se queda igual (está perfecto visualmente) ...
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
