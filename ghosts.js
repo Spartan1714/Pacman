@@ -1,5 +1,4 @@
 import { map, TILE_SIZE } from "./map.js";
-import { pacman } from "./player.js";
 
 export let ghosts = [];
 export let powerMode = false;
@@ -8,10 +7,11 @@ let ghostSpeed = 2.8;
 
 const COLORES = ["red", "pink", "cyan", "orange", "purple"];
 
+// --- EXPORTACIONES ---
 export function activarPowerMode() {
     powerMode = true;
     powerTimer = 400;
-    console.log("POWER MODE ON");
+    console.log("MODO PODER ACTIVADO");
 }
 
 export function aumentarDificultad() {
@@ -31,7 +31,7 @@ export function spawnGhosts() {
     }
 }
 
-export function updateGhosts(lives, score, dt) {
+export function updateGhosts(lives, score, dt, pacmanPos) {
     if (!dt) return;
     if (powerMode) {
         powerTimer--;
@@ -47,7 +47,7 @@ export function updateGhosts(lives, score, dt) {
 
         let cx = Math.round(g.x);
         let cy = Math.round(g.y);
-        let speed = powerMode ? ghostSpeed * 0.6 : ghostSpeed;
+        let currentSpeed = powerMode ? ghostSpeed * 0.6 : ghostSpeed;
 
         if (Math.abs(g.x - cx) < 0.1 && Math.abs(g.y - cy) < 0.1) {
             let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => {
@@ -62,15 +62,16 @@ export function updateGhosts(lives, score, dt) {
                 g.lastDx = choice.dx; g.lastDy = choice.dy;
             }
         }
-        g.x += g.dirX * speed * dt;
-        g.y += g.dirY * speed * dt;
+        g.x += g.dirX * currentSpeed * dt;
+        g.y += g.dirY * currentSpeed * dt;
 
-        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
+        // Colisión usando la posición que le pasamos desde game.js
+        if (Math.hypot(g.x - pacmanPos.x, g.y - pacmanPos.y) < 0.7) {
             if (powerMode) {
                 g.dead = true; g.respawnTimer = 200; score.value += 200;
             } else {
                 lives.value--;
-                pacman.x = 1; pacman.y = 1;
+                pacmanPos.x = 1; pacmanPos.y = 1;
                 ghosts.forEach(gh => { gh.x = 9; gh.y = 4; });
             }
         }
