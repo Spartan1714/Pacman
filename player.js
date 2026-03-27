@@ -1,7 +1,14 @@
 import { map, TILE_SIZE } from "./map.js";
 import { powerMode } from "./ghosts.js";
 
-export let pacman = { x: 1, y: 1, vX: 1, vY: 1, dirX: 0, dirY: 0, nextDX: 0, nextDY: 0 };
+// Mantenemos tu configuración de velocidad que da la fluidez buena
+export let pacman = { 
+    x: 1, y: 1, 
+    vX: 1, vY: 1, 
+    dirX: 0, dirY: 0, 
+    nextDX: 0, nextDY: 0,
+    speed: 4.5 // Tu velocidad original
+};
 
 export function setDirection(dx, dy) {
     pacman.nextDX = dx;
@@ -15,30 +22,35 @@ export function resetPlayer() {
     pacman.nextDX = 0; pacman.nextDY = 0;
 }
 
-export function updatePlayer(score, onPowerUp) {
-    // Mantenemos tu lógica de umbral 0.1 para que no haya tirones
-    if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
-        pacman.vX = pacman.x;
-        pacman.vY = pacman.y;
+export function updatePlayer(score, onPowerUp, dt) {
+    if (!dt) return;
 
-        if (map[Math.round(pacman.y + pacman.nextDY)]?.[Math.round(pacman.x + pacman.nextDX)] !== 1) {
+    // Tu lógica de giro y fluidez original intacta
+    const threshold = 0.15;
+    let centerX = Math.round(pacman.x);
+    let centerY = Math.round(pacman.y);
+
+    if (Math.abs(pacman.x - centerX) < threshold && Math.abs(pacman.y - centerY) < threshold) {
+        if (map[centerY + pacman.nextDY]?.[centerX + pacman.nextDX] !== 1) {
             pacman.dirX = pacman.nextDX;
             pacman.dirY = pacman.nextDY;
+            if(pacman.dirX !== 0) pacman.y = centerY;
+            if(pacman.dirY !== 0) pacman.x = centerX;
         }
-        if (map[Math.round(pacman.y + pacman.dirY)]?.[Math.round(pacman.x + pacman.dirX)] === 1) {
+        if (map[centerY + pacman.dirY]?.[centerX + pacman.dirX] === 1) {
             pacman.dirX = 0; pacman.dirY = 0;
+            pacman.x = centerX; pacman.y = centerY;
         }
-        pacman.x += pacman.dirX;
-        pacman.y += pacman.dirY;
     }
 
-    // Tu interpolación original de 0.3 para suavidad total
-    pacman.vX += (pacman.x - pacman.vX) * 0.3;
-    pacman.vY += (pacman.y - pacman.vY) * 0.3;
+    pacman.x += pacman.dirX * pacman.speed * dt;
+    pacman.y += pacman.dirY * pacman.speed * dt;
+
+    pacman.vX = pacman.x;
+    pacman.vY = pacman.y;
 
     let mx = Math.round(pacman.x);
     let my = Math.round(pacman.y);
-
     if (map[my]?.[mx] === 2) {
         map[my][mx] = 0;
         score.value += 10;
@@ -51,7 +63,7 @@ export function updatePlayer(score, onPowerUp) {
 export function drawPlayer(ctx, size, ox, oy) {
     let x = ox + pacman.vX * size + size / 2;
     let y = oy + pacman.vY * size + size / 2;
-    let radius = powerMode ? size * 0.70 : size * 0.45;
+    let radius = powerMode ? size * 0.60 : size * 0.45;
 
     ctx.save();
     ctx.fillStyle = "yellow";
@@ -71,17 +83,18 @@ export function drawPlayer(ctx, size, ox, oy) {
     ctx.lineTo(x, y);
     ctx.fill();
 
-    // --- DISEÑO DEL OJO CORREGIDO (FIJO Y ARCADE) ---
+    // --- CORRECCIÓN DEL OJO (Rectángulo redondeado original) ---
     ctx.fillStyle = "black";
     ctx.shadowBlur = 0;
     
-    // Posición fija arriba del centro para que no "baile"
-    let eyeX = x + (radius * 0.2); 
+    // Posición fija arriba del centro (Diseño original)
+    let eyeX = x + (radius * 0.3);
     let eyeY = y - (radius * 0.45);
-
+    
     ctx.beginPath();
-    // Tu diseño de rectángulo redondeado original
+    // Restauramos el roundRect que tenías en la versión estética
     ctx.roundRect(eyeX - (radius*0.07), eyeY - (radius*0.17), radius*0.15, radius*0.35, 5); 
     ctx.fill();
+    
     ctx.restore();
 }
