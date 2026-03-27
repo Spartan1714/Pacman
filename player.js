@@ -1,7 +1,14 @@
-import { map, TILE_SIZE } from "./map.js";
-import { powerMode } from "./ghosts.js";
+import { map } from "./map.js";
 
-export let pacman = { x: 1, y: 1, vX: 1, vY: 1, dirX: 0, dirY: 0, nextDX: 0, nextDY: 0 };
+export let pacman = {
+    x: 1,
+    y: 1,
+    dirX: 0,
+    dirY: 0,
+    nextDX: 0,
+    nextDY: 0,
+    speed: 5
+};
 
 export function setDirection(dx, dy) {
     pacman.nextDX = dx;
@@ -9,74 +16,52 @@ export function setDirection(dx, dy) {
 }
 
 export function resetPlayer() {
-    pacman.x = 1; pacman.y = 1;
-    pacman.vX = 1; pacman.vY = 1;
-    pacman.dirX = 0; pacman.dirY = 0;
-    pacman.nextDX = 0; pacman.nextDY = 0;
+    pacman.x = 1;
+    pacman.y = 1;
+    pacman.dirX = 0;
+    pacman.dirY = 0;
 }
 
-export function updatePlayer(score, onPowerUp, dt) {
-    const lerpSpeed = 15; // Velocidad de suavizado ajustable
+export function updatePlayer(score, onPower, dt) {
+    let cx = Math.floor(pacman.x + 0.5);
+    let cy = Math.floor(pacman.y + 0.5);
 
-    if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
-        pacman.vX = pacman.x;
-        pacman.vY = pacman.y;
-
-        if (map[Math.round(pacman.y + pacman.nextDY)]?.[Math.round(pacman.x + pacman.nextDX)] !== 1) {
-            pacman.dirX = pacman.nextDX;
-            pacman.dirY = pacman.nextDY;
-        }
-        if (map[Math.round(pacman.y + pacman.dirY)]?.[Math.round(pacman.x + pacman.dirX)] === 1) {
-            pacman.dirX = 0; pacman.dirY = 0;
-        }
-        pacman.x += pacman.dirX;
-        pacman.y += pacman.dirY;
+    // cambiar dirección si es posible
+    if (map[cy + pacman.nextDY]?.[cx + pacman.nextDX] !== 1) {
+        pacman.dirX = pacman.nextDX;
+        pacman.dirY = pacman.nextDY;
     }
 
-    pacman.vX += (pacman.x - pacman.vX) * lerpSpeed * dt;
-    pacman.vY += (pacman.y - pacman.vY) * lerpSpeed * dt;
+    // bloquear si hay pared
+    if (map[cy + pacman.dirY]?.[cx + pacman.dirX] === 1) {
+        pacman.dirX = 0;
+        pacman.dirY = 0;
+    }
 
-    let mx = Math.round(pacman.x);
-    let my = Math.round(pacman.y);
+    // movimiento REAL (no interpolación)
+    pacman.x += pacman.dirX * pacman.speed * dt;
+    pacman.y += pacman.dirY * pacman.speed * dt;
+
+    let mx = Math.floor(pacman.x + 0.5);
+    let my = Math.floor(pacman.y + 0.5);
 
     if (map[my]?.[mx] === 2) {
         map[my][mx] = 0;
         score.value += 10;
-    } else if (map[my]?.[mx] === 3) {
+    }
+
+    if (map[my]?.[mx] === 3) {
         map[my][mx] = 0;
-        if (onPowerUp) onPowerUp(); 
+        onPower();
     }
 }
 
 export function drawPlayer(ctx, size, ox, oy) {
-    let x = ox + pacman.vX * size + size / 2;
-    let y = oy + pacman.vY * size + size / 2;
-    let radius = powerMode ? size * 0.70 : size * 0.45;
+    let x = ox + pacman.x * size;
+    let y = oy + pacman.y * size;
 
-    ctx.save();
     ctx.fillStyle = "yellow";
-    if (powerMode) {
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = "yellow";
-    }
-
-    let mouth = (Math.sin(Date.now() * 0.015) + 1) * 0.2;
-    let angle = 0;
-    if (pacman.dirX === -1) angle = Math.PI;
-    else if (pacman.dirY === 1) angle = Math.PI/2;
-    else if (pacman.dirY === -1) angle = -Math.PI/2;
-
     ctx.beginPath();
-    ctx.arc(x, y, radius, angle + mouth, angle + Math.PI * 2 - mouth);
-    ctx.lineTo(x, y);
+    ctx.arc(x + size / 2, y + size / 2, size / 2.2, 0, Math.PI * 2);
     ctx.fill();
-
-    ctx.fillStyle = "black";
-    ctx.shadowBlur = 0;
-    let eyeX = (pacman.dirX === -1) ? x - (radius * 0.3) : x + (radius * 0.3);
-    let eyeY = y - (radius * 0.45);
-    ctx.beginPath();
-    ctx.roundRect(eyeX - (radius*0.07), eyeY - (radius*0.17), radius*0.15, radius*0.35, 5); 
-    ctx.fill();
-    ctx.restore();
 }
