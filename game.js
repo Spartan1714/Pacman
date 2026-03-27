@@ -5,44 +5,28 @@ import { updateGhosts, drawGhosts, spawnGhosts, allGhostsDead, activatePower } f
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-let score = { value: 0 };
-let lives = { value: 3 };
-let level = 1;
+let score = { value: 0 }, lives = { value: 3 }, level = 1, lastTime = 0;
 
 function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 }
-window.onresize = resize;
-resize();
+window.onresize = resize; resize();
 
-// --- FUNCIÓN DE LA CEREZA ESTILIZADA ---
 function drawCherry(ctx, x, y) {
-    let s = TILE_SIZE;
-    let cx = x + s / 2;
-    let cy = y + s / 2;
-
+    let s = TILE_SIZE; let cx = x + s / 2; let cy = y + s / 2;
     ctx.save();
-    // 1. Cerezas rojas
-    ctx.fillStyle = "#ff0000";
-    ctx.beginPath();
+    ctx.fillStyle = "#ff0000"; ctx.beginPath();
     ctx.arc(cx - s * 0.15, cy + s * 0.15, s * 0.2, 0, Math.PI * 2);
     ctx.arc(cx + s * 0.15, cy - s * 0.10, s * 0.2, 0, Math.PI * 2);
     ctx.fill();
-
-    // 2. Tallos verdes
-    ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
+    ctx.strokeStyle = "#00ff00"; ctx.lineWidth = 2; ctx.beginPath();
     ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
     ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.15, cy + s * 0.15);
-    ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
-    ctx.lineTo(cx + s * 0.15, cy - s * 0.10);
-    ctx.stroke();
-    ctx.restore();
+    ctx.moveTo(cx + s * 0.05, cy - s * 0.3); ctx.lineTo(cx + s * 0.15, cy - s * 0.10);
+    ctx.stroke(); ctx.restore();
 }
 
-function gameLoop() {
+function gameLoop(timestamp) {
     if (lives.value <= 0) {
         ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white"; ctx.font = "40px Courier New"; ctx.textAlign = "center";
@@ -50,57 +34,49 @@ function gameLoop() {
         return;
     }
 
-    // ACTUALIZACIÓN
-    updatePlayer(score, () => activatePower());
-    updateGhosts(lives, score);
+    const dt = (timestamp - lastTime) / 1000 || 0;
+    lastTime = timestamp;
+
+    updatePlayer(score, () => activatePower(), dt);
+    updateGhosts(lives, score, dt);
     
-    // Ver ganar nivel
     if (!map.some(row => row.includes(2)) || allGhostsDead()) {
         level++;
         map.forEach((row, y) => row.forEach((t, x) => { if(t === 0) map[y][x] = 2; }));
         resetPlayer(); spawnGhosts(level); spawnCherry(level);
     }
 
-    // DIBUJO
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+    ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
     const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
     const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2);
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * TILE_SIZE, ry = offsetY + y * TILE_SIZE;
-            if (tile === 1) { // Muros Neón
+            if (tile === 1) { 
                 ctx.strokeStyle = "#00ffff"; ctx.lineWidth = 1.5;
                 ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
-            } else if (tile === 2) { // Puntos
-                ctx.fillStyle = "#ff00ff";
-                ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
-            } else if (tile === 3) { 
-                // --- CAMBIO AQUÍ: LLAMAMOS A TU FUNCIÓN ---
-                drawCherry(ctx, rx, ry); 
-            }
+            } else if (tile === 2) { 
+                ctx.fillStyle = "#ff00ff"; ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
+            } else if (tile === 3) { drawCherry(ctx, rx, ry); }
         });
     });
 
     drawGhosts(ctx, offsetX, offsetY);
     drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
-    ctx.fillStyle = "white"; ctx.font = "16px Courier New";
+    ctx.fillStyle = "white"; ctx.font = "16px Courier New"; ctx.textAlign = "left";
     ctx.fillText(`PTS: ${score.value}  VIDAS: ${lives.value}  LVL: ${level}`, offsetX, offsetY - 10);
 
     requestAnimationFrame(gameLoop);
 }
 
 document.onkeydown = (e) => {
-    if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) e.preventDefault();
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
     if (e.key === "ArrowRight") setDirection(1, 0);
 };
 
-spawnGhosts(level);
-spawnCherry(level);
-gameLoop();
+spawnGhosts(level); spawnCherry(level);
+requestAnimationFrame(gameLoop);

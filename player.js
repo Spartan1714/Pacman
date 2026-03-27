@@ -1,5 +1,5 @@
 import { map, TILE_SIZE } from "./map.js";
-import { powerMode } from "./ghosts.js"; // Importamos para saber cuándo crecer
+import { powerMode } from "./ghosts.js";
 
 export let pacman = { x: 1, y: 1, vX: 1, vY: 1, dirX: 0, dirY: 0, nextDX: 0, nextDY: 0 };
 
@@ -15,7 +15,9 @@ export function resetPlayer() {
     pacman.nextDX = 0; pacman.nextDY = 0;
 }
 
-export function updatePlayer(score, onPowerUp) {
+export function updatePlayer(score, onPowerUp, dt) {
+    const lerpSpeed = 15; // Velocidad de suavizado ajustable
+
     if (Math.abs(pacman.x - pacman.vX) < 0.1 && Math.abs(pacman.y - pacman.vY) < 0.1) {
         pacman.vX = pacman.x;
         pacman.vY = pacman.y;
@@ -25,15 +27,14 @@ export function updatePlayer(score, onPowerUp) {
             pacman.dirY = pacman.nextDY;
         }
         if (map[Math.round(pacman.y + pacman.dirY)]?.[Math.round(pacman.x + pacman.dirX)] === 1) {
-            pacman.dirX = 0;
-            pacman.dirY = 0;
+            pacman.dirX = 0; pacman.dirY = 0;
         }
         pacman.x += pacman.dirX;
         pacman.y += pacman.dirY;
     }
 
-    pacman.vX += (pacman.x - pacman.vX) * 0.3;
-    pacman.vY += (pacman.y - pacman.vY) * 0.3;
+    pacman.vX += (pacman.x - pacman.vX) * lerpSpeed * dt;
+    pacman.vY += (pacman.y - pacman.vY) * lerpSpeed * dt;
 
     let mx = Math.round(pacman.x);
     let my = Math.round(pacman.y);
@@ -46,24 +47,20 @@ export function updatePlayer(score, onPowerUp) {
         if (onPowerUp) onPowerUp(); 
     }
 }
+
 export function drawPlayer(ctx, size, ox, oy) {
     let x = ox + pacman.vX * size + size / 2;
     let y = oy + pacman.vY * size + size / 2;
-    let radius = powerMode ? size * 0.75 : size * 0.45;
+    let radius = powerMode ? size * 0.70 : size * 0.45;
 
     ctx.save();
-
-    // 1. CUERPO (Círculo Amarillo)
     ctx.fillStyle = "yellow";
     if (powerMode) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = "yellow";
     }
 
-    // Animación de boca
-    let mouth = (Math.sin(Date.now() * 0.02) + 1) * 0.2;
-    
-    // Rotación de la BOCA (Solo la boca)
+    let mouth = (Math.sin(Date.now() * 0.015) + 1) * 0.2;
     let angle = 0;
     if (pacman.dirX === -1) angle = Math.PI;
     else if (pacman.dirY === 1) angle = Math.PI/2;
@@ -74,30 +71,12 @@ export function drawPlayer(ctx, size, ox, oy) {
     ctx.lineTo(x, y);
     ctx.fill();
 
-    // 2. EL OJO (Dibujo Manual - No se voltea nunca)
     ctx.fillStyle = "black";
     ctx.shadowBlur = 0;
-
-    // Calculamos dónde debe ir el ojo según la dirección
-    // Queremos que siempre esté ARRIBA de la boca
-    let eyeX = x;
-    let eyeY = y - (radius * 0.45); // Siempre arriba del centro
-
-    if (pacman.dirX === -1) {
-        eyeX = x - (radius * 0.3); // A la izquierda si mira a la izquierda
-    } else {
-        eyeX = x + (radius * 0.3); // A la derecha en los demás casos
-    }
-
-    // Dibujamos un ÓVALO / RECTÁNGULO VERTICAL (Estilo Arcade)
-    // Usamos fillRect para asegurar que sea un bloque y no un punto
-    let eyeW = radius * 0.15; // Ancho del ojo
-    let eyeH = radius * 0.35; // Alto del ojo (¡Aquí está el estilo!)
-
-    // Dibujamos el ojo centrado en eyeX, eyeY
+    let eyeX = (pacman.dirX === -1) ? x - (radius * 0.3) : x + (radius * 0.3);
+    let eyeY = y - (radius * 0.45);
     ctx.beginPath();
-    ctx.roundRect(eyeX - eyeW/2, eyeY - eyeH/2, eyeW, eyeH, 5); 
+    ctx.roundRect(eyeX - (radius*0.07), eyeY - (radius*0.17), radius*0.15, radius*0.35, 5); 
     ctx.fill();
-
     ctx.restore();
 }
