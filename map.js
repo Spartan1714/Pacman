@@ -1,25 +1,25 @@
-export const TILE_SIZE = 20;
+export const TILE_SIZE = 25;
 export let map = [];
 
 export function generarMapaAleatorio() {
-    const rows = 10;
+    const rows = 15;
     const cols = 20;
     map = [];
-    
     for (let y = 0; y < rows; y++) {
         let row = [];
         for (let x = 0; x < cols; x++) {
-            // Bordes siempre son muros (1)
+            // Bordes siempre muros
             if (y === 0 || y === rows - 1 || x === 0 || x === cols - 1) {
                 row.push(1);
             } else {
-                // Generación aleatoria de muros (30% probabilidad)
-                row.push(Math.random() < 0.3 ? 1 : 2); // 1: Muro, 2: Punto
+                // 25% de muros, el resto puntos
+                row.push(Math.random() < 0.25 ? 1 : 2);
             }
         }
         map.push(row);
     }
-    // Asegurar que Pac-Man y los Fantasmas tengan espacio
-    map[1][1] = 0; // Inicio Pac-Man
-    map[4][9] = 0; // Casa Fantasmas
-}   
+    // Espacio libre para inicio
+    map[1][1] = 0; 
+    map[7][9] = 0; // Centro
+    map[7][10] = 0;
+}

@@ -1,47 +1,53 @@
 import { map, TILE_SIZE, generarMapaAleatorio } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, pacman } from "./player.js";
-import { updateGhosts, drawGhosts, spawnGhosts, activarPowerMode } from "./ghosts.js";
+import { updateGhosts, drawGhosts, spawnGhosts } from "./ghosts.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-let score = { value: 0 }, lives = { value: 3 }, nivel = 1, lastTime = 0, gameOver = false;
+
+let score = { value: 0 };
+let lives = { value: 3 };
+let lastTime = 0;
 
 generarMapaAleatorio();
 spawnGhosts();
 
-// Escuchar cuando Pacman come la cereza
-window.addEventListener("powerup", () => { activarPowerMode(); });
-
 function gameLoop(timestamp) {
-    if (gameOver) return;
     const dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
 
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const ox = (canvas.width - 20 * TILE_SIZE) / 2;
-    const oy = (canvas.height - 10 * TILE_SIZE) / 2;
+    const ox = (canvas.width - map[0].length * TILE_SIZE) / 2;
+    const oy = (canvas.height - map.length * TILE_SIZE) / 2;
 
     updatePlayer(score, dt);
-    updateGhosts(lives, score, dt, pacman);
+    updateGhosts(lives, pacman, dt);
 
     // Dibujar Mapa
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
-            if (tile === 1) { ctx.fillStyle = "blue"; ctx.fillRect(ox + x * TILE_SIZE, oy + y * TILE_SIZE, TILE_SIZE, TILE_SIZE); }
-            else if (tile === 2) { ctx.fillStyle = "white"; ctx.fillRect(ox + x * TILE_SIZE + 8, oy + y * TILE_SIZE + 8, 4, 4); }
-            else if (tile === 4) { ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(ox+x*TILE_SIZE+10, oy+y*TILE_SIZE+10, 6, 0, Math.PI*2); ctx.fill(); }
+            if (tile === 1) {
+                ctx.fillStyle = "blue";
+                ctx.fillRect(ox + x * TILE_SIZE, oy + y * TILE_SIZE, TILE_SIZE - 2, TILE_SIZE - 2);
+            } else if (tile === 2) {
+                ctx.fillStyle = "white";
+                ctx.fillRect(ox + x * TILE_SIZE + TILE_SIZE / 2 - 2, oy + y * TILE_SIZE + TILE_SIZE / 2 - 2, 4, 4);
+            }
         });
     });
 
-    drawGhosts(ctx, ox, oy);
     drawPlayer(ctx, TILE_SIZE, ox, oy);
+    drawGhosts(ctx, TILE_SIZE, ox, oy);
 
-    if (lives.value <= 0) { alert("GAME OVER"); gameOver = true; }
-    if (!map.some(row => row.includes(2))) { nivel++; generarMapaAleatorio(); spawnGhosts(); pacman.x = 1; pacman.y = 1; }
+    // HUD
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText(`Puntos: ${score.value}  Vidas: ${lives.value}`, 20, 30);
 
-    requestAnimationFrame(gameLoop);
+    if (lives.value > 0) requestAnimationFrame(gameLoop);
+    else alert("GAME OVER");
 }
 
 document.onkeydown = (e) => {
@@ -51,5 +57,6 @@ document.onkeydown = (e) => {
     if (e.key === "ArrowRight") setDirection(1, 0);
 };
 
-canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 requestAnimationFrame(gameLoop);
