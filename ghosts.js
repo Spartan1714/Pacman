@@ -11,11 +11,12 @@ export function activatePower() {
 }
 
 export function spawnGhosts(level = 1) {
-    const speed = 2.5 + (level * 0.2);
+const speed = 2.5 + (level * 0.2);
     ghosts = [
-        { x: 18, y: 1, vX: 18, vY: 1, dirX: 0, dirY: 0, color: "red", mode: "berserker", dead: false, lastDx: 0, lastDy: 0, speed: speed },
-        { x: 1, y: 8, vX: 1, vY: 8, dirX: 0, dirY: 0, color: "pink", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed },
-        { x: 18, y: 8, vX: 18, vY: 8, dirX: 0, dirY: 0, color: "cyan", mode: "random", dead: false, lastDx: 0, lastDy: 0, speed: speed }
+        // Añadimos dirX: -1 para que empiecen moviéndose a la izquierda
+        { x: 18, y: 1, vX: 18, vY: 1, dirX: -1, dirY: 0, color: "red", mode: "berserker", dead: false, lastDx: -1, lastDy: 0, speed: speed },
+        { x: 1, y: 8, vX: 1, vY: 8, dirX: 1, dirY: 0, color: "pink", mode: "random", dead: false, lastDx: 1, lastDy: 0, speed: speed },
+        { x: 18, y: 8, vX: 18, vY: 8, dirX: -1, dirY: 0, color: "cyan", mode: "random", dead: false, lastDx: -1, lastDy: 0, speed: speed }
     ];
 }
 
