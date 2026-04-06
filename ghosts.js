@@ -1,5 +1,5 @@
 import { map, TILE_SIZE } from "./map.js";
-import { pacman, resetPlayer } from "./player.js"; 
+import { pacman } from "./player.js";
 
 export let ghosts = [];
 export let powerMode = false;
@@ -11,14 +11,11 @@ export function activatePower() {
 }
 
 export function spawnGhosts(level = 1) {
-    // Aumentamos ligeramente la velocidad por nivel
-    const speed = 2.5 + (level * 0.2);
-    
+    // Posiciones iniciales fijas en el mapa
     ghosts = [
-        // CLAVE: Les damos una dirección inicial (dirX: -1 o 1) para que el motor los mueva desde el segundo 1
-        { x: 18, y: 1, vX: 18, vY: 1, dirX: -1, dirY: 0, color: "red", mode: "berserker", dead: false, lastDx: -1, lastDy: 0, speed: speed },
-        { x: 1, y: 8, vX: 1, vY: 8, dirX: 1, dirY: 0, color: "pink", mode: "random", dead: false, lastDx: 1, lastDy: 0, speed: speed },
-        { x: 18, y: 8, vX: 18, vY: 8, dirX: -1, dirY: 0, color: "cyan", mode: "random", dead: false, lastDx: -1, lastDy: 0, speed: speed }
+        { x: 18, y: 1, vX: 18, vY: 1, color: "red", mode: "berserker", dead: false, lastDx: 0, lastDy: 0 },
+        { x: 1, y: 8, vX: 1, vY: 8, color: "pink", mode: "random", dead: false, lastDx: 0, lastDy: 0 },
+        { x: 18, y: 8, vX: 18, vY: 8, color: "cyan", mode: "random", dead: false, lastDx: 0, lastDy: 0 }
     ];
 }
 
@@ -27,71 +24,67 @@ export function allGhostsDead() {
 }
 
 export function updateGhosts(lives, score, dt) {
-    if (!dt) return; // Evita saltos si el dt es nulo
+    if (!dt) return;
 
     if (powerMode) {
         powerTimer--;
         if (powerTimer <= 0) powerMode = false;
     }
 
+    // Velocidad de movimiento visual (Lerp)
+    const lerpSpeed = powerMode ? 4 : 7; 
+
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        // 1. LÓGICA DE DECISIÓN (Cuando están en el centro de una baldosa)
-        let centerX = Math.round(g.x);
-        let centerY = Math.round(g.y);
+        // Si el fantasma visual ya llegó a su destino lógico, elige el siguiente
+        if (Math.abs(g.x - g.vX) < 0.1 && Math.abs(g.y - g.vY) < 0.1) {
+            g.vX = g.x;
+            g.vY = g.y;
 
-        if (Math.abs(g.x - centerX) < 0.1 && Math.abs(g.y - centerY) < 0.1) {
-            // Buscamos caminos posibles (que no sean muros)
-            let moves = [{dx:1,dy:0},{dx:-1,dy:0},{dx:0,dy:1},{dx:0,dy:-1}].filter(m => 
-                map[centerY + m.dy]?.[centerX + m.dx] !== 1
+            // Buscar caminos posibles (no muros)
+            let moves = [{dx:1,dy:0}, {dx:-1,dy:0}, {dx:0,dy:1}, {dx:0,dy:-1}].filter(m => 
+                map[Math.round(g.y + m.dy)]?.[Math.round(g.x + m.dx)] !== 1
             );
 
-            // Evitamos que el fantasma se dé la vuelta 180° si tiene otras opciones
+            // Evitar que den la vuelta 180 si hay más opciones
             if (moves.length > 1) {
                 moves = moves.filter(m => m.dx !== -g.lastDx || m.dy !== -g.lastDy);
             }
 
             let choice;
             if (g.mode === "berserker" && !powerMode) {
-                // El rojo persigue a Pac-Man buscando la distancia más corta
+                // Persecución: ordenar movimientos por cercanía a Pac-Man
                 choice = moves.sort((a, b) => 
-                    Math.hypot((centerX + a.dx) - pacman.x, (centerY + a.dy) - pacman.y) - 
-                    Math.hypot((centerX + b.dx) - pacman.x, (centerY + b.dy) - pacman.y)
+                    Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
+                    Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
                 )[0];
             } else {
-                // Los demás eligen dirección al azar
+                // Movimiento aleatorio
                 choice = moves[Math.floor(Math.random() * moves.length)];
             }
             
             if (choice) {
-                g.dirX = choice.dx; 
-                g.dirY = choice.dy;
-                g.lastDx = choice.dx; 
+                g.x += choice.dx;
+                g.y += choice.dy;
+                g.lastDx = choice.dx;
                 g.lastDy = choice.dy;
-                g.x = centerX; g.y = centerY; // Ajuste de posición a la rejilla
             }
         }
         
-        // 2. MOVIMIENTO REAL
-        // Si hay powerMode, van a la mitad de velocidad
-        let actualSpeed = powerMode ? g.speed * 0.5 : g.speed;
-        
-        g.x += (g.dirX || 0) * actualSpeed * dt;
-        g.y += (g.dirY || 0) * actualSpeed * dt;
-        
-        // vX y vY se actualizan para que drawGhosts los dibuje en la posición correcta
-        g.vX = g.x; 
-        g.vY = g.y;
+        // Movimiento suave de la posición visual hacia la posición lógica
+        g.vX += (g.x - g.vX) * lerpSpeed * dt;
+        g.vY += (g.y - g.vY) * lerpSpeed * dt;
 
-        // 3. COLISIÓN (La revisamos aquí también)
-        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
+        // Colisión revisada (usamos vX y vY para que coincida con lo que ves)
+        if (Math.hypot(g.vX - pacman.vX, g.vY - pacman.vY) < 0.7) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
             } else {
                 lives.value--;
-                resetPlayer(); // Asegúrate de que player.js exporte esta función
+                // Llamamos a resetPlayer que se importa de player.js
+                import("./player.js").then(m => m.resetPlayer());
             }
         }
     });
