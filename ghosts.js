@@ -11,8 +11,8 @@ export function activatePower() {
 }
 
 export function spawnGhosts(level = 1) {
-    const speed = 2.0 + (level * 0.2);
-    // Posiciones iniciales exactas en el centro de la baldosa
+    const speed = 2.5 + (level * 0.2);
+    // Posiciones iniciales exactas
     ghosts = [
         { x: 18, y: 1, vX: 18, vY: 1, dirX: -1, dirY: 0, color: "red", mode: "berserker", dead: false, speed: speed },
         { x: 1, y: 8, vX: 1, vY: 8, dirX: 1, dirY: 0, color: "pink", mode: "random", dead: false, speed: speed },
@@ -25,7 +25,7 @@ export function allGhostsDead() {
 }
 
 export function updateGhosts(lives, score, dt) {
-    if (!dt || dt > 0.1) return; // Ignorar saltos grandes de tiempo
+    if (!dt) return;
 
     if (powerMode) {
         powerTimer--;
@@ -36,71 +36,62 @@ export function updateGhosts(lives, score, dt) {
         if (g.dead) return;
 
         let actualSpeed = powerMode ? g.speed * 0.5 : g.speed;
-
-        // 1. ALINEACIÓN DE EJE (Evita que se detengan por rozar paredes laterales)
-        if (g.dirX !== 0) g.y = Math.round(g.y);
-        if (g.dirY !== 0) g.x = Math.round(g.x);
-
-        // 2. MOVIMIENTO
+        
+        // 1. INTENTAR MOVER
         let nextX = g.x + g.dirX * actualSpeed * dt;
         let nextY = g.y + g.dirY * actualSpeed * dt;
 
-        // 3. DETECCIÓN DE INTERSECCIÓN (¿Cruzamos el centro de una baldosa?)
-        if (Math.floor(g.x) !== Math.floor(nextX) || Math.floor(g.y) !== Math.floor(nextY)) {
-            let gridX = Math.round(nextX);
-            let gridY = Math.round(nextY);
+        // 2. ¿HAY UN MURO EN LA DIRECCIÓN ACTUAL?
+        // Revisamos un poco más allá de la posición actual (0.4 de margen)
+        let checkX = nextX + g.dirX * 0.4;
+        let checkY = nextY + g.dirY * 0.4;
 
-            // Buscar todas las direcciones posibles excepto volver atrás
+        if (map[Math.round(checkY)]?.[Math.round(checkX)] === 1) {
+            // Si hay muro, nos detenemos justo en el centro de la baldosa actual
+            g.x = Math.round(g.x);
+            g.y = Math.round(g.y);
+            
+            // Y forzamos a buscar una nueva dirección
             let options = [
-                {dx: 1, dy: 0}, {dx: -1, dy: 0}, 
-                {dx: 0, dy: 1}, {dx: 0, dy: -1}
-            ].filter(opt => {
-                let tx = gridX + opt.dx;
-                let ty = gridY + opt.dy;
-                // No es muro y no es dirección opuesta
-                return map[ty]?.[tx] !== 1 && (opt.dx !== -g.dirX || opt.dy !== -g.dirY);
-            });
+                {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
+            ].filter(opt => map[g.y + opt.dy]?.[g.x + opt.dx] !== 1);
 
-            // Si es un callejón sin salida, permitir volver atrás
-            if (options.length === 0) {
-                options = [{dx: -g.dirX, dy: -g.dirY}];
-            }
-
-            let choice;
-            if (g.mode === "berserker" && !powerMode) {
-                choice = options.sort((a, b) => 
-                    Math.hypot((gridX + a.dx) - pacman.x, (gridY + a.dy) - pacman.y) - 
-                    Math.hypot((gridX + b.dx) - pacman.x, (gridY + b.dy) - pacman.y)
-                )[0];
-            } else {
-                choice = options[Math.floor(Math.random() * options.length)];
-            }
-
-            if (choice) {
+            if (options.length > 0) {
+                let choice = options[Math.floor(Math.random() * options.length)];
                 g.dirX = choice.dx;
                 g.dirY = choice.dy;
-                g.x = gridX; // Snap a la rejilla
-                g.y = gridY;
             }
         } else {
-            // Si no hay cambio de celda, simplemente avanzamos
+            // Si no hay muro, seguimos avanzando
             g.x = nextX;
             g.y = nextY;
         }
 
-        // Actualizar visuales
-        g.vX = g.x;
-        g.vY = g.y;
-
-        // Colisión con Pac-Man
-        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.6) {
-            if (powerMode) {
-                g.dead = true;
-                score.value += 500;
-            } else {
-                lives.value--;
-                resetPlayer();
+        // 3. LÓGICA DE INTERSECCIÓN (Girar aunque no haya muro enfrente)
+        // Si estamos muy cerca del centro, hay una pequeña probabilidad de girar en cruces
+        if (Math.abs(g.x - Math.round(g.x)) < 0.1 && Math.abs(g.y - Math.round(g.y)) < 0.1) {
+            if (Math.random() < 0.2) { // 20% de probabilidad de evaluar giro en cada cruce
+                let gridX = Math.round(g.x);
+                let gridY = Math.round(g.y);
+                let options = [
+                    {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
+                ].filter(opt => map[gridY + opt.dy]?.[gridX + opt.dx] !== 1 && (opt.dx !== -g.dirX || opt.dy !== -g.dirY));
+                
+                if (options.length > 0) {
+                    let choice = options[Math.floor(Math.random() * options.length)];
+                    g.x = gridX; g.y = gridY; // Snap al centro
+                    g.dirX = choice.dx; g.dirY = choice.dy;
+                }
             }
+        }
+
+        // Sincronizar visual
+        g.vX = g.x; g.vY = g.y;
+
+        // Colisión
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
+            if (powerMode) { g.dead = true; score.value += 500; }
+            else { lives.value--; resetPlayer(); }
         }
     });
 }
@@ -112,7 +103,6 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.save();
         ctx.fillStyle = powerMode ? "#2121ff" : g.color;
         ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle;
-        
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.5, Math.PI, 0);
         ctx.lineTo(x + s*0.85, y + s*0.9);
@@ -121,12 +111,9 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.lineTo(x + s*0.35, y + s*0.75);
         ctx.lineTo(x + s*0.15, y + s*0.9);
         ctx.fill();
-        
         ctx.fillStyle = "white"; ctx.shadowBlur = 0;
-        ctx.beginPath();
-        ctx.arc(x + s*0.35, y + s*0.4, s*0.1, 0, 7);
-        ctx.arc(x + s*0.65, y + s*0.4, s*0.1, 0, 7);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(x + s*0.35, y + s*0.4, s*0.1, 0, 7); 
+        ctx.arc(x + s*0.65, y + s*0.4, s*0.1, 0, 7); ctx.fill();
         ctx.restore();
     });
 }
