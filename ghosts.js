@@ -12,7 +12,7 @@ export function activatePower() {
 
 export function spawnGhosts(level = 1) {
     const speed = 2.0 + (level * 0.2);
-    // IMPORTANTE: Posiciones iniciales exactas y direcciones distintas a 0
+    // Posiciones iniciales exactas en el centro de la baldosa
     ghosts = [
         { x: 18, y: 1, vX: 18, vY: 1, dirX: -1, dirY: 0, color: "red", mode: "berserker", dead: false, speed: speed },
         { x: 1, y: 8, vX: 1, vY: 8, dirX: 1, dirY: 0, color: "pink", mode: "random", dead: false, speed: speed },
@@ -25,7 +25,7 @@ export function allGhostsDead() {
 }
 
 export function updateGhosts(lives, score, dt) {
-    if (!dt) return;
+    if (!dt || dt > 0.1) return; // Ignorar saltos grandes de tiempo
 
     if (powerMode) {
         powerTimer--;
@@ -37,43 +37,37 @@ export function updateGhosts(lives, score, dt) {
 
         let actualSpeed = powerMode ? g.speed * 0.5 : g.speed;
 
-        // Guardamos la posición antes de mover
-        let prevX = g.x;
-        let prevY = g.y;
+        // 1. ALINEACIÓN DE EJE (Evita que se detengan por rozar paredes laterales)
+        if (g.dirX !== 0) g.y = Math.round(g.y);
+        if (g.dirY !== 0) g.x = Math.round(g.x);
 
-        // Movemos
-        g.x += g.dirX * actualSpeed * dt;
-        g.y += g.dirY * actualSpeed * dt;
+        // 2. MOVIMIENTO
+        let nextX = g.x + g.dirX * actualSpeed * dt;
+        let nextY = g.y + g.dirY * actualSpeed * dt;
 
-        // DETECCIÓN DE CRUCE DE CELDA:
-        // Si al movernos hemos cruzado la frontera de un número entero, 
-        // significa que estamos parados justo sobre una baldosa.
-        if (Math.floor(prevX) !== Math.floor(g.x) || Math.floor(prevY) !== Math.floor(g.y) || (g.dirX === 0 && g.dirY === 0)) {
-            
-            // Forzamos posición exacta en la rejilla para evitar errores acumulados
-            let gridX = Math.round(g.x);
-            let gridY = Math.round(g.y);
+        // 3. DETECCIÓN DE INTERSECCIÓN (¿Cruzamos el centro de una baldosa?)
+        if (Math.floor(g.x) !== Math.floor(nextX) || Math.floor(g.y) !== Math.floor(nextY)) {
+            let gridX = Math.round(nextX);
+            let gridY = Math.round(nextY);
 
-            // Buscamos opciones de movimiento
+            // Buscar todas las direcciones posibles excepto volver atrás
             let options = [
                 {dx: 1, dy: 0}, {dx: -1, dy: 0}, 
                 {dx: 0, dy: 1}, {dx: 0, dy: -1}
             ].filter(opt => {
-                // No puede ser un muro
-                if (map[gridY + opt.dy]?.[gridX + opt.dx] === 1) return false;
-                // No puede darse la vuelta 180 grados si hay más opciones
-                if (opt.dx === -g.dirX && opt.dy === -g.dirY) return false;
-                return true;
+                let tx = gridX + opt.dx;
+                let ty = gridY + opt.dy;
+                // No es muro y no es dirección opuesta
+                return map[ty]?.[tx] !== 1 && (opt.dx !== -g.dirX || opt.dy !== -g.dirY);
             });
 
-            // Si llegamos a un rincón sin salida (solo puede volver atrás)
+            // Si es un callejón sin salida, permitir volver atrás
             if (options.length === 0) {
                 options = [{dx: -g.dirX, dy: -g.dirY}];
             }
 
             let choice;
             if (g.mode === "berserker" && !powerMode) {
-                // Ordenar por distancia Euclidiana a Pac-Man
                 choice = options.sort((a, b) => 
                     Math.hypot((gridX + a.dx) - pacman.x, (gridY + a.dy) - pacman.y) - 
                     Math.hypot((gridX + b.dx) - pacman.x, (gridY + b.dy) - pacman.y)
@@ -85,19 +79,21 @@ export function updateGhosts(lives, score, dt) {
             if (choice) {
                 g.dirX = choice.dx;
                 g.dirY = choice.dy;
-                // Alineamos perfectamente al fantasma en la baldosa al decidir
-                g.x = gridX;
+                g.x = gridX; // Snap a la rejilla
                 g.y = gridY;
             }
+        } else {
+            // Si no hay cambio de celda, simplemente avanzamos
+            g.x = nextX;
+            g.y = nextY;
         }
 
-        // Actualizar posición visual
+        // Actualizar visuales
         g.vX = g.x;
         g.vY = g.y;
 
-        // Colisión: Distancia menor a 0.7 baldosas
-        let dist = Math.hypot(g.x - pacman.x, g.y - pacman.y);
-        if (dist < 0.7) {
+        // Colisión con Pac-Man
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.6) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
@@ -117,7 +113,6 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.fillStyle = powerMode ? "#2121ff" : g.color;
         ctx.shadowBlur = 10; ctx.shadowColor = ctx.fillStyle;
         
-        // Cuerpo estilizado
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.5, Math.PI, 0);
         ctx.lineTo(x + s*0.85, y + s*0.9);
@@ -127,7 +122,6 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.lineTo(x + s*0.15, y + s*0.9);
         ctx.fill();
         
-        // Ojos
         ctx.fillStyle = "white"; ctx.shadowBlur = 0;
         ctx.beginPath();
         ctx.arc(x + s*0.35, y + s*0.4, s*0.1, 0, 7);
