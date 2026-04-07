@@ -42,6 +42,7 @@ function drawCherry(ctx, x, y) {
     ctx.restore();
 }
 
+function gameLoop(timestamp) {
 if (lives.value <= 0) {
 
     if (!gameOverPlayed) {
@@ -63,6 +64,7 @@ if (lives.value <= 0) {
 
     return;
 }
+    }
 
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
