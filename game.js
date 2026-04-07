@@ -72,10 +72,10 @@ function gameLoop(timestamp) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = "white";
-        ctx.font = "40px Courier New";
-        ctx.textAlign = "center";
-        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+       ctx.fillStyle = "#ff0033";
+       ctx.font = "28px 'Press Start 2P'";
+       ctx.textAlign = "center";
+       ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
 
         return; // 🔥 detiene todo
     }
@@ -132,11 +132,21 @@ function gameLoop(timestamp) {
     drawGhosts(ctx, offsetX, offsetY);
     drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
-    ctx.fillStyle = "white";
-    ctx.font = "16px Courier New";
-    ctx.textAlign = "left";
-    ctx.fillText(`PTS: ${score.value}  VIDAS: ${lives.value}  LVL: ${level}`, offsetX, offsetY - 10);
+  // SCORE
+ctx.fillStyle = "#00ffff";
+ctx.font = "14px 'Press Start 2P'";
+ctx.fillText(`SCORE: ${score.value}`, offsetX, offsetY - 20);
 
+// LEVEL
+ctx.fillStyle = "#ffff00";
+ctx.fillText(`LVL: ${level}`, offsetX + 250, offsetY - 20);
+
+// VIDAS (❤️)
+for (let i = 0; i < lives.value; i++) {
+    ctx.fillStyle = "red";
+    ctx.font = "20px Arial"; // emojis funcionan mejor así
+    ctx.fillText("❤️", offsetX + i * 25, offsetY - 50);
+}
     requestAnimationFrame(gameLoop);
 }
 
