@@ -132,20 +132,21 @@ function gameLoop(timestamp) {
     drawGhosts(ctx, offsetX, offsetY);
     drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
-  // SCORE
+const hudY = offsetY - 10;
+
+// SCORE
 ctx.fillStyle = "#00ffff";
 ctx.font = "14px 'Press Start 2P'";
-ctx.fillText(`SCORE: ${score.value}`, offsetX, offsetY - 20);
+ctx.fillText(`SCORE: ${score.value}`, offsetX, hudY);
 
 // LEVEL
 ctx.fillStyle = "#ffff00";
-ctx.fillText(`LVL: ${level}`, offsetX + 250, offsetY - 20);
+ctx.fillText(`LVL: ${level}`, offsetX + 250, hudY);
 
-// VIDAS (❤️)
+// VIDAS (corazones)
 for (let i = 0; i < lives.value; i++) {
-    ctx.fillStyle = "red";
-    ctx.font = "20px Arial"; // emojis funcionan mejor así
-    ctx.fillText("❤️", offsetX + i * 25, offsetY - 50);
+    ctx.font = "20px Arial";
+    ctx.fillText("❤️", offsetX + i * 30, hudY + 20);
 }
     requestAnimationFrame(gameLoop);
 }
