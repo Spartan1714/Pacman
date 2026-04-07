@@ -66,6 +66,7 @@ function gameLoop(timestamp) {
         level++;
 resetMap(); // ← ESTA LÍNEA ES LA CLAVE  
         resetPlayer(); 
+        generarMapaRandom();
         spawnGhosts(level); 
         spawnCherry(level);
     }
