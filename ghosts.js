@@ -12,11 +12,10 @@ export function activatePower() {
 
 export function spawnGhosts(level = 1) {
     const speed = 2.0 + (level * 0.2);
-    // IMPORTANTE: Empezar en el centro exacto de la baldosa
     ghosts = [
-        { x: 18, y: 1, dirX: -1, dirY: 0, color: "red", mode: "berserker", dead: false, speed: speed },
-        { x: 1, y: 8, dirX: 1, dirY: 0, color: "pink", mode: "random", dead: false, speed: speed },
-        { x: 18, y: 8, dirX: -1, dirY: 0, color: "cyan", mode: "random", dead: false, speed: speed }
+        { x: 18, y: 1, dirX: -1, dirY: 0, color: "red", dead: false, speed: speed },
+        { x: 1, y: 8, dirX: 1, dirY: 0, color: "pink", dead: false, speed: speed },
+        { x: 18, y: 8, dirX: -1, dirY: 0, color: "cyan", dead: false, speed: speed }
     ];
 }
 
@@ -33,42 +32,41 @@ export function updateGhosts(lives, score, dt) {
 
         let actualSpeed = powerMode ? g.speed * 0.5 : g.speed;
 
-        // 1. EFECTO RIEL (IGUAL QUE EL PLAYER)
-        // Si se mueve horizontal, forzamos Y a ser entero. Si se mueve vertical, forzamos X.
-        if (Math.abs(g.dirX) > 0) g.y = Math.round(g.y);
-        if (Math.abs(g.dirY) > 0) g.x = Math.round(g.x);
+        // 1. ALINEACIÓN (Como rieles de tren)
+        if (g.dirX !== 0) g.y = Math.round(g.y);
+        if (g.dirY !== 0) g.x = Math.round(g.x);
 
-        // 2. PREDECIR MOVIMIENTO
+        // 2. MOVER
         let nextX = g.x + g.dirX * actualSpeed * dt;
         let nextY = g.y + g.dirY * actualSpeed * dt;
 
-        // 3. DETECTAR INTERSECCIÓN O MURO
-        // ¿Estamos pasando por el centro de una baldosa?
-        let gx = Math.round(g.x);
-        let gy = Math.round(g.y);
-        
-        // Distancia al centro
-        let distToCenter = Math.hypot(g.x - gx, g.y - gy);
+        // 3. CHEQUEAR MURO (Simple: ¿la baldosa a la que voy es 1?)
+        // Miramos un poquito hacia adelante (0.4) para no entrar en el muro
+        let checkX = Math.round(nextX + g.dirX * 0.4);
+        let checkY = Math.round(nextY + g.dirY * 0.4);
 
-        // Si estamos muy cerca del centro, evaluamos si podemos girar o si hay muro
-        if (distToCenter < 0.1) {
-            // Revisar si el camino de enfrente está bloqueado
-            let wallAhead = map[Math.round(gy + g.dirY)]?.[Math.round(gx + g.dirX)] === 1;
-            
-            // Si hay muro ENFRENTE o si es una INTERSECCIÓN, buscamos nueva ruta
-            if (wallAhead || esInterseccion(gx, gy)) {
-                g.x = gx; // Snap al centro para que el giro sea perfecto
-                g.y = gy;
-                decidirRuta(g, gx, gy);
+        if (map[checkY]?.[checkX] !== 1) {
+            // Si está libre, avanzamos
+            g.x = nextX;
+            g.y = nextY;
+        } else {
+            // Si hay muro, nos pegamos al centro y buscamos dirección
+            g.x = Math.round(g.x);
+            g.y = Math.round(g.y);
+
+            let opciones = [
+                {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
+            ].filter(o => map[g.y + o.dy]?.[g.x + o.dx] !== 1);
+
+            if (opciones.length > 0) {
+                let nueva = opciones[Math.floor(Math.random() * opciones.length)];
+                g.dirX = nueva.dx;
+                g.dirY = nueva.dy;
             }
         }
 
-        // Aplicar movimiento final
-        g.x += g.dirX * actualSpeed * dt;
-        g.y += g.dirY * actualSpeed * dt;
-
         // 4. COLISIÓN CON PACMAN
-        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.6) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
@@ -80,66 +78,14 @@ export function updateGhosts(lives, score, dt) {
     });
 }
 
-// Función para saber si estamos en un cruce (más de 2 caminos disponibles)
-function esInterseccion(x, y) {
-    let paths = 0;
-    if (map[y][x+1] !== 1) paths++;
-    if (map[y][x-1] !== 1) paths++;
-    if (map[y+1][x] !== 1) paths++;
-    if (map[y-1][x] !== 1) paths++;
-    return paths > 2;
-}
-
-function decidirRuta(g, x, y) {
-    let options = [
-        {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
-    ].filter(opt => {
-        // No puede ser muro
-        if (map[y + opt.dy]?.[x + opt.dx] === 1) return false;
-        // No puede ser la dirección opuesta (para que no vibren)
-        if (opt.dx === -g.dirX && opt.dy === -g.dirY) return false;
-        return true;
-    });
-
-    if (options.length === 0) {
-        // Si es callejón sin salida, media vuelta
-        g.dirX *= -1;
-        g.dirY *= -1;
-        return;
-    }
-
-    let choice;
-    if (g.mode === "berserker" && !powerMode) {
-        // LÓGICA BERSERKER: Elegir la opción que reduzca la distancia a Pac-Man
-        options.sort((a, b) => {
-            let distA = Math.hypot((x + a.dx) - pacman.x, (y + a.dy) - pacman.y);
-            let distB = Math.hypot((x + b.dx) - pacman.x, (y + b.dy) - pacman.y);
-            return distA - distB;
-        });
-        choice = options[0];
-    } else {
-        // RANDOM: Para los demás fantasmas
-        choice = options[Math.floor(Math.random() * options.length)];
-    }
-
-    g.dirX = choice.dx;
-    g.dirY = choice.dy;
-}
-
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
-        let drawX = ox + g.x * TILE_SIZE;
-        let drawY = oy + g.y * TILE_SIZE;
-        let s = TILE_SIZE;
-
-        ctx.save();
-        ctx.fillStyle = powerMode ? "#2121ff" : g.color;
+        let x = ox + g.x * TILE_SIZE;
+        let y = oy + g.y * TILE_SIZE;
+        ctx.fillStyle = powerMode ? "blue" : g.color;
         ctx.beginPath();
-        ctx.arc(drawX + s/2, drawY + s/2, s/2.5, Math.PI, 0);
-        ctx.lineTo(drawX + s*0.8, drawY + s*0.9);
-        ctx.lineTo(drawX + s*0.2, drawY + s*0.9);
+        ctx.arc(x + TILE_SIZE/2, y + TILE_SIZE/2, TILE_SIZE/2, 0, Math.PI * 2);
         ctx.fill();
-        ctx.restore();
     });
 }
