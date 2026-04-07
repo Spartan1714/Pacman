@@ -10,6 +10,7 @@ export const sfx = {
     death: new Audio("./sounds/death.wav"),
     gameover: new Audio("./sounds/gameover.wav"),
     levelup: new Audio("./sounds/levelup.wav"),
+    cherry: new Audio("./sounds/cherry.wav"),
 };
 
 // volumen efectos
