@@ -43,15 +43,27 @@ function drawCherry(ctx, x, y) {
 }
 
 function gameLoop(timestamp) {
-    if (lives.value <= 0) {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "40px Courier New";
-        ctx.textAlign = "center";
-        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-        return;
+if (lives.value <= 0) {
+
+    if (!gameOverPlayed) {
+        bgMusic.pause();          // 🔥 detener música
+        bgMusic.currentTime = 0;  // opcional: reiniciar
+
+        playSfx(sfx.gameover);    // 🔥 sonido game over
+
+        gameOverPlayed = true;
     }
+
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "white";
+    ctx.font = "40px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+
+    return;
+}
 
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
