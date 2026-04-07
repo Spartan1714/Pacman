@@ -1,26 +1,29 @@
 import { map, TILE_SIZE } from "./map.js";
 import { pacman, resetPlayer } from "./player.js"; 
 
+// --- ESTADO GLOBAL ---
 export let ghosts = [];
 export let powerMode = false;
 let powerTimer = 0;
 
+// --- EXPORTS DE CONTROL (Requeridos por game.js) ---
 export function activatePower() {
     powerMode = true;
     powerTimer = 450; 
 }
 
 export function allGhostsDead() {
-    if (ghosts.length === 0) return false;
-    return ghosts.every(g => g.dead);
+    return ghosts.length > 0 && ghosts.every(g => g.dead);
 }
 
+// --- FÍSICA Y COMPORTAMIENTO ---
 export function spawnGhosts(level = 1) {
-    const speed = 2.2 + (level * 0.2);
+    const speed = 2.1 + (level * 0.15);
+    // Definición de entidades con sus propiedades visuales y de IA originales
     ghosts = [
-        { x: 18, y: 1, dirX: -1, dirY: 0, color: "#FF0000", mode: "berserker", dead: false, speed: speed }, // Blinky
-        { x: 1, y: 8, dirX: 1, dirY: 0, color: "#FFB8FF", mode: "random", dead: false, speed: speed },    // Pinky
-        { x: 18, y: 8, dirX: -1, dirY: 0, color: "#00FFFF", mode: "random", dead: false, speed: speed }   // Inky
+        { x: 18, y: 1, dirX: -1, dirY: 0, color: "#FF0000", mode: "berserker", dead: false, speed: speed },
+        { x: 1, y: 8, dirX: 1, dirY: 0, color: "#FFB8FF", mode: "random", dead: false, speed: speed },
+        { x: 18, y: 8, dirX: -1, dirY: 0, color: "#00FFFF", mode: "random", dead: false, speed: speed }
     ];
 }
 
@@ -35,36 +38,37 @@ export function updateGhosts(lives, score, dt) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        let actualSpeed = powerMode ? g.speed * 0.5 : g.speed;
+        let currentSpeed = powerMode ? g.speed * 0.6 : g.speed;
 
-        // 1. EFECTO RIEL: Alineación automática de ejes
+        // 1. SISTEMA DE RIEL (Corrección de deriva decimal)
+        // Forzamos al fantasma al centro del pasillo en el eje en el que no se desplaza
         if (g.dirX !== 0) g.y = Math.round(g.y);
         if (g.dirY !== 0) g.x = Math.round(g.x);
 
-        // 2. LÓGICA DE INTERSECCIÓN (Decisión inteligente)
-        // Si el fantasma está casi centrado en una baldosa, decide su próximo movimiento
+        // 2. DETECCIÓN DE INTERSECCIÓN (Lógica de Decisión Predictiva)
         let gx = Math.round(g.x);
         let gy = Math.round(g.y);
-        let distToCenter = Math.hypot(g.x - gx, g.y - gy);
-
-        if (distToCenter < 0.1) {
-            // Revisar si el camino de enfrente es un muro
+        
+        // Calculamos si el fantasma está lo suficientemente cerca del centro para girar
+        if (Math.abs(g.x - gx) < 0.1 && Math.abs(g.y - gy) < 0.1) {
+            
+            // Verificamos si hay un muro inmediatamente adelante
             let wallAhead = map[Math.round(gy + g.dirY)]?.[Math.round(gx + g.dirX)] === 1;
             
-            // Si hay muro o estamos en un cruce, buscamos nueva ruta
             if (wallAhead || esCruce(gx, gy)) {
-                g.x = gx; 
+                // Ajuste de precisión antes del giro
+                g.x = gx;
                 g.y = gy;
-                cambiarDireccionIA(g);
+                ejecutarIA(g);
             }
         }
 
-        // 3. APLICAR MOVIMIENTO
-        g.x += g.dirX * actualSpeed * dt;
-        g.y += g.dirY * actualSpeed * dt;
+        // 3. INTEGRACIÓN DE MOVIMIENTO
+        g.x += g.dirX * currentSpeed * dt;
+        g.y += g.dirY * currentSpeed * dt;
 
-        // 4. COLISIÓN CON PAC-MAN
-        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
+        // 4. SISTEMA DE COLISIONES (Capa de lógica de juego)
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.75) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
@@ -76,22 +80,25 @@ export function updateGhosts(lives, score, dt) {
     });
 }
 
+// --- SUB-SISTEMAS AUXILIARES ---
+
 function esCruce(x, y) {
     let pasillos = 0;
-    if (map[y][x+1] !== 1) pasillos++;
-    if (map[y][x-1] !== 1) pasillos++;
-    if (map[y+1][x] !== 1) pasillos++;
-    if (map[y-1][x] !== 1) pasillos++;
+    if (map[y][x + 1] !== 1) pasillos++;
+    if (map[y][x - 1] !== 1) pasillos++;
+    if (map[y + 1][x] !== 1) pasillos++;
+    if (map[y - 1][x] !== 1) pasillos++;
     return pasillos > 2;
 }
 
-function cambiarDireccionIA(g) {
+function ejecutarIA(g) {
     let opciones = [
-        {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
+        { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
     ].filter(opt => {
-        if (map[Math.round(g.y + opt.dy)]?.[Math.round(g.x + opt.dx)] === 1) return false;
-        if (opt.dx === -g.dirX && opt.dy === -g.dirY) return false; // No volver atrás
-        return true;
+        let tx = Math.round(g.x + opt.dx);
+        let ty = Math.round(g.y + opt.dy);
+        // Regla: No muros y no dirección opuesta (evita vibración)
+        return map[ty]?.[tx] !== 1 && (opt.dx !== -g.dirX || opt.dy !== -g.dirY);
     });
 
     if (opciones.length === 0) {
@@ -100,45 +107,49 @@ function cambiarDireccionIA(g) {
     }
 
     if (g.mode === "berserker" && !powerMode) {
-        // IA Persecución: Elegir la opción más cercana a Pac-Man
-        opciones.sort((a, b) => {
-            let distA = Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y);
-            let distB = Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y);
-            return distA - distB;
-        });
+        // Algoritmo de persecución: Ordenar por distancia euclidiana a Pacman
+        opciones.sort((a, b) => 
+            Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
+            Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
+        );
         g.dirX = opciones[0].dx;
         g.dirY = opciones[0].dy;
     } else {
-        // IA Patrulla: Azar
-        let choice = opciones[Math.floor(Math.random() * opciones.length)];
-        g.dirX = choice.dx;
-        g.dirY = choice.dy;
+        // Comportamiento de patrulla aleatoria
+        let seleccion = opciones[Math.floor(Math.random() * opciones.length)];
+        g.dirX = seleccion.dx;
+        g.dirY = seleccion.dy;
     }
 }
 
+// --- CAPA DE RENDERIZADO (Restauración de activos visuales) ---
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
-        let x = ox + g.x * TILE_SIZE, y = oy + g.y * TILE_SIZE, s = TILE_SIZE;
+        let px = ox + g.x * TILE_SIZE;
+        let py = oy + g.y * TILE_SIZE;
+        let s = TILE_SIZE;
 
         ctx.save();
-        // ESTÉTICA RECUPERADA: Color neón y forma de fantasma
+        
+        // Estilo de Producción: Sombras y Neón
         ctx.fillStyle = powerMode ? "#2121ff" : g.color;
         ctx.shadowBlur = 15;
         ctx.shadowColor = ctx.fillStyle;
 
-        // Cuerpo
+        // Cuerpo (Forma clásica)
         ctx.beginPath();
-        ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
-        ctx.lineTo(x + s*0.8, y + s*0.9);
-        ctx.lineTo(x + s*0.2, y + s*0.9);
+        ctx.arc(px + s/2, py + s/2, s/2.2, Math.PI, 0);
+        ctx.lineTo(px + s*0.85, py + s*0.9);
+        ctx.lineTo(px + s*0.15, py + s*0.9);
         ctx.fill();
 
-        // Ojos
+        // Ojos (Detalle visual original)
+        ctx.shadowBlur = 0; 
         ctx.fillStyle = "white";
         ctx.beginPath();
-        ctx.arc(x + s*0.35, y + s*0.45, s*0.12, 0, Math.PI*2);
-        ctx.arc(x + s*0.65, y + s*0.45, s*0.12, 0, Math.PI*2);
+        ctx.arc(px + s*0.35, py + s*0.45, s*0.12, 0, Math.PI*2);
+        ctx.arc(px + s*0.65, py + s*0.45, s*0.12, 0, Math.PI*2);
         ctx.fill();
 
         ctx.restore();
