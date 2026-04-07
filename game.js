@@ -15,6 +15,7 @@ let lastTime = 0;
 
 let gameOver = false;
 let levelChanging = false;
+let scoreSaved = false;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -52,13 +53,13 @@ function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
 
-    // 🔥 lógica solo si no está en game over
+    // lógica
     if (!gameOver) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
     }
 
-    // 🔥 GAME OVER
+    // 🔥 GAME OVER + GUARDADO
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
 
@@ -66,6 +67,29 @@ function gameLoop(timestamp) {
         bgMusic.currentTime = 0;
 
         playSfx(sfx.gameover);
+
+        // guardar score UNA sola vez
+        if (!scoreSaved) {
+            scoreSaved = true;
+
+            try {
+                const user = getCurrentUser();
+
+                let username = "Guest";
+
+                if (user && user.email) {
+                    username = user.email.split("@")[0];
+                }
+
+                saveScore(username, score.value);
+                window.lastPlayer = username;
+
+                console.log("Guardado:", username, score.value);
+
+            } catch (e) {
+                console.error("Error Firebase:", e);
+            }
+        }
     }
 
     // 🔥 RENDER GAME OVER
@@ -73,37 +97,20 @@ function gameLoop(timestamp) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-       ctx.fillStyle = "#ff0033";
-       ctx.font = "28px 'Press Start 2P'";
-       ctx.textAlign = "center";
-       ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+        ctx.fillStyle = "#ff0033";
+        ctx.font = "28px 'Press Start 2P'";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
 
-        return; // 🔥 detiene todo
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "12px 'Press Start 2P'";
+        ctx.fillText(`PLAYER: ${window.lastPlayer || "UNKNOWN"}`, canvas.width / 2, canvas.height / 2 + 40);
+        ctx.fillText(`SCORE: ${score.value}`, canvas.width / 2, canvas.height / 2 + 70);
+
+        return;
     }
 
-    if (gameOver && !scoreSaved) {
-    scoreSaved = true;
-
-    try {
-        const user = getCurrentUser();
-
-        let username = "Guest";
-
-        if (user && user.email) {
-            username = user.email.split("@")[0];
-        }
-
-        saveScore(username, score.value);
-
-        window.lastPlayer = username;
-
-    } catch (e) {
-        console.error("Error Firebase:", e);
-    }
-}
-    
-
-    // 🔥 CAMBIO DE NIVEL SEGURO
+    // 🔥 CAMBIO DE NIVEL
     if (!map.flat().includes(2) && !levelChanging) {
         levelChanging = true;
 
@@ -125,14 +132,13 @@ function gameLoop(timestamp) {
         }, 800);
     }
 
-    // 🔥 render normal
+    // render normal
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
     const HUD_HEIGHT = 60;
-
-const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 2;
+    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 2;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
@@ -157,26 +163,25 @@ const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 
     drawGhosts(ctx, offsetX, offsetY);
     drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
-const hudY = 30;
+    // HUD
+    const hudY = 30;
 
-// SCORE
-ctx.fillStyle = "#00ffff";
-ctx.font = "14px 'Press Start 2P'";
-ctx.fillText(`SCORE: ${score.value}`, 20, hudY);
+    ctx.fillStyle = "#00ffff";
+    ctx.font = "14px 'Press Start 2P'";
+    ctx.fillText(`SCORE: ${score.value}`, 20, hudY);
 
-// LEVEL
-ctx.fillStyle = "#ffff00";
-ctx.fillText(`LVL: ${level}`, canvas.width - 150, hudY);
+    ctx.fillStyle = "#ffff00";
+    ctx.fillText(`LVL: ${level}`, canvas.width - 150, hudY);
 
-// VIDAS ❤️
-for (let i = 0; i < lives.value; i++) {
-    ctx.font = "20px Arial";
-    ctx.fillText("❤️", 20 + i * 30, hudY + 25);
-}
+    for (let i = 0; i < lives.value; i++) {
+        ctx.font = "20px Arial";
+        ctx.fillText("❤️", 20 + i * 30, hudY + 25);
+    }
+
     requestAnimationFrame(gameLoop);
 }
 
-// 🎮 controles
+// controles
 document.onkeydown = (e) => {
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
@@ -188,7 +193,7 @@ document.onkeydown = (e) => {
     }
 };
 
-// 🚀 inicio
+// inicio
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
