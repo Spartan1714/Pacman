@@ -5,11 +5,14 @@ import { bgMusic, sfx, playSfx } from "./audio.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+
+
 // estado del juego
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
 let lastTime = 0;
+let gameOver = false;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -43,26 +46,15 @@ function drawCherry(ctx, x, y) {
 }
 
 function gameLoop(timestamp) {
-if (lives.value <= 0) {
+if (lives.value <= 0 && !gameOver) {
 
-    if (!gameOverPlayed) {
-        bgMusic.pause();          // 🔥 detener música
-        bgMusic.currentTime = 0;  // opcional: reiniciar
+    gameOver = true;
 
-        playSfx(sfx.gameover);    // 🔥 sonido game over
+    bgMusic.pause();
+    bgMusic.currentTime = 0;
 
-        gameOverPlayed = true;
-    }
+    playSfx(sfx.gameover);
 
-    ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "white";
-    ctx.font = "40px Courier New";
-    ctx.textAlign = "center";
-    ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-
-    return;
 }
 
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
