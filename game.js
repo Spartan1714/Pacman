@@ -116,7 +116,8 @@ document.onkeydown = (e) => {
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
     if (e.key === "ArrowRight") setDirection(1, 0);
-    bgMusic.play().catch(() => {});
+    if (bgMusic.paused) { bgMusic.play().catch(() => {});
+}
 };
 
 // inicio
