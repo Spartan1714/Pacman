@@ -5,6 +5,7 @@ export let ghosts = [];
 export let powerMode = false;
 let powerTimer = 0;
 
+// Requeridos para que game.js no explote
 export function activatePower() {
     powerMode = true;
     powerTimer = 450; 
@@ -14,9 +15,9 @@ export function allGhostsDead() {
     return ghosts.length > 0 && ghosts.every(g => g.dead);
 }
 
+// 1. INICIALIZACIÓN LIMPIA
 export function spawnGhosts(level = 1) {
     const speed = 2.0 + (level * 0.2);
-    // Posiciones iniciales exactas en el centro de las baldosas del mapa
     ghosts = [
         { x: 18, y: 1, dirX: -1, dirY: 0, color: "#FF0000", mode: "berserker", dead: false, speed: speed },
         { x: 1, y: 8, dirX: 1, dirY: 0, color: "#FFB8FF", mode: "random", dead: false, speed: speed },
@@ -24,6 +25,7 @@ export function spawnGhosts(level = 1) {
     ];
 }
 
+// 2. BUCLE PRINCIPAL
 export function updateGhosts(lives, score, dt) {
     if (!dt || ghosts.length === 0) return;
 
@@ -35,38 +37,36 @@ export function updateGhosts(lives, score, dt) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        let speed = powerMode ? g.speed * 0.5 : g.speed;
+        let v = powerMode ? g.speed * 0.5 : g.speed;
 
-        // 1. ELIMINAR DERIVA: Forzar al fantasma al carril
+        // --- MOVIMIENTO CON SNAP-TO-GRID ---
+        // Esto obliga al fantasma a estar EXACTAMENTE en el medio del pasillo
         if (g.dirX !== 0) g.y = Math.round(g.y);
         if (g.dirY !== 0) g.x = Math.round(g.x);
 
-        // 2. CALCULAR SIGUIENTE POSICIÓN
-        let nextX = g.x + g.dirX * speed * dt;
-        let nextY = g.y + g.dirY * speed * dt;
+        let nextX = g.x + g.dirX * v * dt;
+        let nextY = g.y + g.dirY * v * dt;
 
-        // 3. DETECTAR CENTRO DE BALDOSA (Punto de decisión)
+        // 3. DETECCIÓN DE INTERSECCIÓN O MURO
+        // Solo tomamos decisiones cuando el fantasma cruza el "centro" de una baldosa
         let gx = Math.round(g.x);
         let gy = Math.round(g.y);
         
-        // Si estamos llegando al centro de la baldosa, decidimos qué hacer
         if (Math.hypot(g.x - gx, g.y - gy) < 0.1) {
-            // ¿Hay un muro justo enfrente?
+            // ¿El camino que sigo está bloqueado?
             let wallAhead = map[Math.round(gy + g.dirY)]?.[Math.round(gx + g.dirX)] === 1;
-
-            if (wallAhead || esInterseccion(gx, gy)) {
-                // Hacemos un "Snap" al centro para que el giro sea perfecto
-                g.x = gx;
+            
+            if (wallAhead || esCruce(gx, gy)) {
+                g.x = gx; // Snap al centro antes de girar
                 g.y = gy;
-                buscarNuevaDireccion(g);
+                cambiarDireccion(g);
             }
         }
 
-        // 4. APLICAR MOVIMIENTO FINAL
-        g.x += g.dirX * speed * dt;
-        g.y += g.dirY * speed * dt;
+        g.x += g.dirX * v * dt;
+        g.y += g.dirY * v * dt;
 
-        // 5. COLISIÓN CON PACMAN (Ajustada para ser justa)
+        // 4. COLISIÓN CON PACMAN
         if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
             if (powerMode) {
                 g.dead = true;
@@ -79,7 +79,8 @@ export function updateGhosts(lives, score, dt) {
     });
 }
 
-function esInterseccion(x, y) {
+// 5. LÓGICA DE NAVEGACIÓN (IA)
+function esCruce(x, y) {
     let pasillos = 0;
     if (map[y]?.[x + 1] !== 1) pasillos++;
     if (map[y]?.[x - 1] !== 1) pasillos++;
@@ -88,24 +89,25 @@ function esInterseccion(x, y) {
     return pasillos > 2;
 }
 
-function buscarNuevaDireccion(g) {
+function cambiarDireccion(g) {
     let gx = Math.round(g.x);
     let gy = Math.round(g.y);
 
     let opciones = [
         { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
     ].filter(o => {
-        // No puede ser muro ni la dirección de la que viene (para que no vibre)
-        return map[gy + o.dy]?.[gx + o.dx] !== 1 && (o.dx !== -g.dirX || o.dy !== -g.dirY);
+        // No puede ser un muro y NO puede ser la dirección contraria (para no vibrar)
+        let esMuro = map[gy + o.dy]?.[gx + o.dx] === 1;
+        let esOpuesta = (o.dx === -g.dirX && o.dy === -g.dirY);
+        return !esMuro && !esOpuesta;
     });
 
     if (opciones.length === 0) {
-        // Si es un callejón, media vuelta obligatoria
-        g.dirX *= -1;
-        g.dirY *= -1;
+        // Callejón sin salida: única vez que se permite dar la vuelta
+        g.dirX *= -1; g.dirY *= -1;
     } else {
         if (g.mode === "berserker" && !powerMode) {
-            // IA Rojo: Ordenar opciones por distancia a Pacman
+            // Persecución: elegir la opción que reduzca la distancia a Pac-Man
             opciones.sort((a, b) => 
                 Math.hypot((gx + a.dx) - pacman.x, (gy + a.dy) - pacman.y) - 
                 Math.hypot((gx + b.dx) - pacman.x, (gy + b.dy) - pacman.y)
@@ -113,7 +115,7 @@ function buscarNuevaDireccion(g) {
             g.dirX = opciones[0].dx;
             g.dirY = opciones[0].dy;
         } else {
-            // IA Resto: Elección aleatoria
+            // Azar
             let sel = opciones[Math.floor(Math.random() * opciones.length)];
             g.dirX = sel.dx;
             g.dirY = sel.dy;
@@ -121,6 +123,7 @@ function buscarNuevaDireccion(g) {
     }
 }
 
+// 6. DIBUJO PROFESIONAL
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
@@ -131,7 +134,7 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = ctx.fillStyle;
 
-        // Cuerpo clásico neón
+        // Cuerpo
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
         ctx.lineTo(x + s*0.8, y + s*0.9);
