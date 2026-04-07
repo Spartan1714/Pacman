@@ -60,22 +60,13 @@ function gameLoop(timestamp) {
 
     // 🔥 GAME OVER
     if (lives.value <= 0 && !gameOver) {
-const user = getCurrentUser();
+        gameOver = true;
 
-let username = "Guest";
+        bgMusic.pause();
+        bgMusic.currentTime = 0;
 
-if (user && user.email) {
-    username = user.email.split("@")[0]; // más limpio
-}
-
-saveScore(username, score.value);
-
-window.lastPlayer = username;
-}
-
-saveScore(username, score.value);
-
-window.lastPlayer = username;
+        playSfx(sfx.gameover);
+    }
 
     // 🔥 RENDER GAME OVER
     if (gameOver) {
@@ -89,6 +80,28 @@ window.lastPlayer = username;
 
         return; // 🔥 detiene todo
     }
+
+    if (gameOver && !scoreSaved) {
+    scoreSaved = true;
+
+    try {
+        const user = getCurrentUser();
+
+        let username = "Guest";
+
+        if (user && user.email) {
+            username = user.email.split("@")[0];
+        }
+
+        saveScore(username, score.value);
+
+        window.lastPlayer = username;
+
+    } catch (e) {
+        console.error("Error Firebase:", e);
+    }
+}
+    
 
     // 🔥 CAMBIO DE NIVEL SEGURO
     if (!map.flat().includes(2) && !levelChanging) {
