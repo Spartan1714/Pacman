@@ -2,6 +2,7 @@ import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
+import { saveScore, getCurrentUser } from "./firebase.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -59,13 +60,17 @@ function gameLoop(timestamp) {
 
     // 🔥 GAME OVER
     if (lives.value <= 0 && !gameOver) {
-        gameOver = true;
+  const user = getCurrentUser();
 
-        bgMusic.pause();
-        bgMusic.currentTime = 0;
+let username = "Guest";
 
-        playSfx(sfx.gameover);
-    }
+if (user && user.email) {
+    username = user.email.split("@")[0]; // más limpio
+}
+
+saveScore(username, score.value);
+
+window.lastPlayer = username;
 
     // 🔥 RENDER GAME OVER
     if (gameOver) {
