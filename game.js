@@ -61,19 +61,17 @@ function gameLoop(timestamp) {
     updateGhosts(lives, score, dt);
 
     // 🔥 CAMBIO DE NIVEL (MAPA NUEVO)
-    if (score.value >= 1000) {
-        console.log("CAMBIANDO MAPA");
+if (!map.flat().includes(2)) {
+    console.log("NIVEL COMPLETADO");
 
-        level++;
+    level++;
 
-        generarMapaRandom(); // ← aquí cambia el laberinto
+    generarMapaRandom();
 
-        resetPlayer();
-        spawnGhosts(level);
-        spawnCherry(level);
-
-        score.value = 0;
-    }
+    resetPlayer(); 
+    spawnGhosts(level); 
+    spawnCherry(level);
+}
 
     // render
     ctx.fillStyle = "black";
