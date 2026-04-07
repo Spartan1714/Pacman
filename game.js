@@ -1,7 +1,7 @@
 import { map, TILE_SIZE, spawnCherry } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, allGhostsDead, activatePower } from "./ghosts.js";
-
+import { resetMap } from "./map.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -64,10 +64,7 @@ function gameLoop(timestamp) {
     // Lógica de cambio de nivel: se activa al comer todo o matar fantasmas
     if (!map.some(row => row.includes(2)) || allGhostsDead()) {
         level++;
-        // Rellenamos el mapa para el siguiente nivel
-        map.forEach((row, y) => row.forEach((t, x) => { 
-            if(t === 0) map[y][x] = 2; 
-        }));
+resetMap(); // ← ESTA LÍNEA ES LA CLAVE  
         resetPlayer(); 
         spawnGhosts(level); 
         spawnCherry(level);
