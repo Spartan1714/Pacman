@@ -49,29 +49,55 @@ export function generarMapaRandom() {
     const width = 20;
     const height = 10;
 
-    let nuevoMapa = [];
+    // iniciar todo como muros
+    let nuevoMapa = Array.from({ length: height }, () =>
+        Array.from({ length: width }, () => 1)
+    );
 
-    for (let y = 0; y < height; y++) {
-        let row = [];
-
-        for (let x = 0; x < width; x++) {
-
-            if (y === 0 || y === height - 1 || x === 0 || x === width - 1) {
-                row.push(1);
-            } else {
-                row.push(Math.random() < 0.3 ? 1 : 2);
-            }
-        }
-
-        nuevoMapa.push(row);
+    function shuffle(arr) {
+        return arr.sort(() => Math.random() - 0.5);
     }
 
-    // asegurar spawn
+    function carve(x, y) {
+        const dirs = shuffle([
+            [1,0], [-1,0], [0,1], [0,-1]
+        ]);
+
+        for (let [dx, dy] of dirs) {
+            let nx = x + dx * 2;
+            let ny = y + dy * 2;
+
+            if (
+                ny > 0 && ny < height - 1 &&
+                nx > 0 && nx < width - 1 &&
+                nuevoMapa[ny][nx] === 1
+            ) {
+                nuevoMapa[y + dy][x + dx] = 2; // camino
+                nuevoMapa[ny][nx] = 2;
+                carve(nx, ny);
+            }
+        }
+    }
+
+    // punto inicial
+    nuevoMapa[1][1] = 2;
+    carve(1, 1);
+
+    // 🔥 abrir más caminos (evita laberinto demasiado cerrado)
+    for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+            if (nuevoMapa[y][x] === 1 && Math.random() < 0.15) {
+                nuevoMapa[y][x] = 2;
+            }
+        }
+    }
+
+    // asegurar spawn limpio
     nuevoMapa[1][1] = 2;
     nuevoMapa[1][2] = 2;
     nuevoMapa[2][1] = 2;
 
-    // aplicar mapa (sin romper referencia)
+    // aplicar sin romper referencia
     map.length = 0;
     nuevoMapa.forEach(row => map.push([...row]));
 }
