@@ -10,14 +10,13 @@ export function activatePower() {
     powerTimer = 450; 
 }
 
-// Requerido por game.js para evitar el SyntaxError y permitir que cargue el sonido/DB
 export function allGhostsDead() {
-    if (!ghosts || ghosts.length === 0) return false;
-    return ghosts.every(g => g.dead);
+    return ghosts.length > 0 && ghosts.every(g => g.dead);
 }
 
 export function spawnGhosts(level = 1) {
-    const speed = 2.1 + (level * 0.15);
+    const speed = 2.0 + (level * 0.2);
+    // Posiciones iniciales exactas en el centro de las baldosas del mapa
     ghosts = [
         { x: 18, y: 1, dirX: -1, dirY: 0, color: "#FF0000", mode: "berserker", dead: false, speed: speed },
         { x: 1, y: 8, dirX: 1, dirY: 0, color: "#FFB8FF", mode: "random", dead: false, speed: speed },
@@ -36,31 +35,39 @@ export function updateGhosts(lives, score, dt) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        let actualSpeed = powerMode ? g.speed * 0.55 : g.speed;
+        let speed = powerMode ? g.speed * 0.5 : g.speed;
 
-        // --- SISTEMA DE RIEL (ESTABILIDAD DE PRODUCCIÓN) ---
+        // 1. ELIMINAR DERIVA: Forzar al fantasma al carril
         if (g.dirX !== 0) g.y = Math.round(g.y);
         if (g.dirY !== 0) g.x = Math.round(g.x);
 
+        // 2. CALCULAR SIGUIENTE POSICIÓN
+        let nextX = g.x + g.dirX * speed * dt;
+        let nextY = g.y + g.dirY * speed * dt;
+
+        // 3. DETECTAR CENTRO DE BALDOSA (Punto de decisión)
         let gx = Math.round(g.x);
         let gy = Math.round(g.y);
+        
+        // Si estamos llegando al centro de la baldosa, decidimos qué hacer
+        if (Math.hypot(g.x - gx, g.y - gy) < 0.1) {
+            // ¿Hay un muro justo enfrente?
+            let wallAhead = map[Math.round(gy + g.dirY)]?.[Math.round(gx + g.dirX)] === 1;
 
-        // Si estamos en el centro de la baldosa, evaluamos giro
-        if (Math.abs(g.x - gx) < 0.1 && Math.abs(g.y - gy) < 0.1) {
-            let nextTileWall = map[Math.round(gy + g.dirY)]?.[Math.round(gx + g.dirX)] === 1;
-            
-            if (nextTileWall || isCruce(gx, gy)) {
+            if (wallAhead || esInterseccion(gx, gy)) {
+                // Hacemos un "Snap" al centro para que el giro sea perfecto
                 g.x = gx;
                 g.y = gy;
-                decidirCamino(g);
+                buscarNuevaDireccion(g);
             }
         }
 
-        g.x += g.dirX * actualSpeed * dt;
-        g.y += g.dirY * actualSpeed * dt;
+        // 4. APLICAR MOVIMIENTO FINAL
+        g.x += g.dirX * speed * dt;
+        g.y += g.dirY * speed * dt;
 
-        // Colisión con Pac-Man
-        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.75) {
+        // 5. COLISIÓN CON PACMAN (Ajustada para ser justa)
+        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.7) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
@@ -72,64 +79,70 @@ export function updateGhosts(lives, score, dt) {
     });
 }
 
-function isCruce(x, y) {
+function esInterseccion(x, y) {
     let pasillos = 0;
-    if (map[y][x+1] !== 1) pasillos++;
-    if (map[y][x-1] !== 1) pasillos++;
-    if (map[y+1][x] !== 1) pasillos++;
-    if (map[y-1][x] !== 1) pasillos++;
+    if (map[y]?.[x + 1] !== 1) pasillos++;
+    if (map[y]?.[x - 1] !== 1) pasillos++;
+    if (map[y + 1]?.[x] !== 1) pasillos++;
+    if (map[y - 1]?.[x] !== 1) pasillos++;
     return pasillos > 2;
 }
 
-function decidirCamino(g) {
+function buscarNuevaDireccion(g) {
+    let gx = Math.round(g.x);
+    let gy = Math.round(g.y);
+
     let opciones = [
-        {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
-    ].filter(opt => {
-        let tx = Math.round(g.x + opt.dx);
-        let ty = Math.round(g.y + opt.dy);
-        return map[ty]?.[tx] !== 1 && (opt.dx !== -g.dirX || opt.dy !== -g.dirY);
+        { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
+    ].filter(o => {
+        // No puede ser muro ni la dirección de la que viene (para que no vibre)
+        return map[gy + o.dy]?.[gx + o.dx] !== 1 && (o.dx !== -g.dirX || o.dy !== -g.dirY);
     });
 
     if (opciones.length === 0) {
-        g.dirX *= -1; g.dirY *= -1;
-        return;
-    }
-
-    if (g.mode === "berserker" && !powerMode) {
-        opciones.sort((a, b) => 
-            Math.hypot((g.x + a.dx) - pacman.x, (g.y + a.dy) - pacman.y) - 
-            Math.hypot((g.x + b.dx) - pacman.x, (g.y + b.dy) - pacman.y)
-        );
-        g.dirX = opciones[0].dx;
-        g.dirY = opciones[0].dy;
+        // Si es un callejón, media vuelta obligatoria
+        g.dirX *= -1;
+        g.dirY *= -1;
     } else {
-        let c = opciones[Math.floor(Math.random() * opciones.length)];
-        g.dirX = c.dx; g.dirY = c.dy;
+        if (g.mode === "berserker" && !powerMode) {
+            // IA Rojo: Ordenar opciones por distancia a Pacman
+            opciones.sort((a, b) => 
+                Math.hypot((gx + a.dx) - pacman.x, (gy + a.dy) - pacman.y) - 
+                Math.hypot((gx + b.dx) - pacman.x, (gy + b.dy) - pacman.y)
+            );
+            g.dirX = opciones[0].dx;
+            g.dirY = opciones[0].dy;
+        } else {
+            // IA Resto: Elección aleatoria
+            let sel = opciones[Math.floor(Math.random() * opciones.length)];
+            g.dirX = sel.dx;
+            g.dirY = sel.dy;
+        }
     }
 }
 
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
-        let px = ox + g.x * TILE_SIZE, py = oy + g.y * TILE_SIZE, s = TILE_SIZE;
+        let x = ox + g.x * TILE_SIZE, y = oy + g.y * TILE_SIZE, s = TILE_SIZE;
+
         ctx.save();
         ctx.fillStyle = powerMode ? "#2121ff" : g.color;
         ctx.shadowBlur = 15;
         ctx.shadowColor = ctx.fillStyle;
 
-        // Cuerpo
+        // Cuerpo clásico neón
         ctx.beginPath();
-        ctx.arc(px + s/2, py + s/2, s/2.2, Math.PI, 0);
-        ctx.lineTo(px + s*0.85, py + s*0.9);
-        ctx.lineTo(px + s*0.15, py + s*0.9);
+        ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
+        ctx.lineTo(x + s*0.8, y + s*0.9);
+        ctx.lineTo(x + s*0.2, y + s*0.9);
         ctx.fill();
 
         // Ojos
-        ctx.shadowBlur = 0;
         ctx.fillStyle = "white";
         ctx.beginPath();
-        ctx.arc(px + s*0.35, py + s*0.45, s*0.12, 0, Math.PI*2);
-        ctx.arc(px + s*0.65, py + s*0.45, s*0.12, 0, Math.PI*2);
+        ctx.arc(x + s*0.35, y + s*0.45, s*0.12, 0, Math.PI*2);
+        ctx.arc(x + s*0.65, y + s*0.45, s*0.12, 0, Math.PI*2);
         ctx.fill();
         ctx.restore();
     });
