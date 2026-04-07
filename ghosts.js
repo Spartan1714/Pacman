@@ -19,38 +19,69 @@ export function allGhostsDead() {
 
 export function spawnGhosts(level = 1) {
     const cantidad = 3;
-    const speed = 2.5; // tiles por segundo (constante real)
+    const speed = 2.5;
 
     ghosts = [];
     spawnTimer = 60;
 
-    const esquinas = [
-        {x: 1, y: 1},
-        {x: 18, y: 1},
-        {x: 1, y: 8},
-        {x: 18, y: 8}
-    ];
+    const usadas = [];
 
     for (let i = 0; i < cantidad; i++) {
-        ghosts.push({
-            gridX: esquinas[i].x,
-            gridY: esquinas[i].y,
 
-            x: esquinas[i].x,
-            y: esquinas[i].y,
+        let pos = obtenerPosicionValida(usadas);
+
+        usadas.push(pos);
+
+        ghosts.push({
+            gridX: pos.x,
+            gridY: pos.y,
+
+            x: pos.x,
+            y: pos.y,
 
             dirX: 0,
             dirY: 0,
 
-            progress: 0, // progreso entre tiles (0 → 1)
+            progress: 0,
 
             speed: speed,
             color: COLORS[i % COLORS.length],
-            dead: false
+            dead: false,
+
+            tipo: i === 0 ? "berserk" : "normal"
         });
 
         elegirDireccion(ghosts[i]);
     }
+}
+
+function obtenerPosicionValida(usadas) {
+    let intentos = 0;
+
+    while (intentos < 100) {
+
+        let x = Math.floor(Math.random() * map[0].length);
+        let y = Math.floor(Math.random() * map.length);
+
+        let tile = map[y]?.[x];
+
+        let esMuro = tile === 1;
+
+        let cercaDePacman =
+            Math.abs(x - Math.round(pacman.x)) < 3 &&
+            Math.abs(y - Math.round(pacman.y)) < 3;
+
+        let repetido = usadas.some(p => p.x === x && p.y === y);
+
+        if (tile !== undefined && !esMuro && !cercaDePacman && !repetido) {
+            return { x, y };
+        }
+
+        intentos++;
+    }
+
+    // fallback seguro
+    return { x: 18, y: 8 };
 }
 
 export function updateGhosts(lives, score, dt) {
@@ -68,10 +99,9 @@ export function updateGhosts(lives, score, dt) {
 
         let speed = powerMode ? g.speed * 0.6 : g.speed;
 
-        // avanzar progreso
+        // movimiento progresivo
         g.progress += speed * dt;
 
-        // cuando llega al siguiente tile
         if (g.progress >= 1) {
             g.progress = 0;
 
@@ -81,11 +111,11 @@ export function updateGhosts(lives, score, dt) {
             elegirDireccion(g);
         }
 
-        // interpolación visual (fluidez real)
+        // interpolación (fluidez real)
         g.x = g.gridX + g.dirX * g.progress;
         g.y = g.gridY + g.dirY * g.progress;
 
-        // colisión real (grid)
+        // colisión en grid
         if (
             g.gridX === Math.round(pacman.x) &&
             g.gridY === Math.round(pacman.y)
@@ -120,11 +150,20 @@ function elegirDireccion(g) {
         return;
     }
 
-    // IA simple pero estable
-    opciones.sort((a,b) =>
-        Math.hypot(g.gridX+a.dx - pacman.x, g.gridY+a.dy - pacman.y) -
-        Math.hypot(g.gridX+b.dx - pacman.x, g.gridY+b.dy - pacman.y)
-    );
+    // 🔥 BERSERK (fantasma rojo)
+    if (g.tipo === "berserk" && !powerMode) {
+        opciones.sort((a,b) =>
+            Math.hypot(g.gridX+a.dx - pacman.x, g.gridY+a.dy - pacman.y) -
+            Math.hypot(g.gridX+b.dx - pacman.x, g.gridY+b.dy - pacman.y)
+        );
+
+        g.dirX = opciones[0].dx;
+        g.dirY = opciones[0].dy;
+        return;
+    }
+
+    // fantasmas normales (random)
+    opciones.sort(() => Math.random() - 0.5);
 
     g.dirX = opciones[0].dx;
     g.dirY = opciones[0].dy;
@@ -144,11 +183,11 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = ctx.fillStyle;
 
-        // Cabeza
+        // cabeza
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
 
-        // Base tipo fantasma
+        // base
         ctx.lineTo(x + s*0.8, y + s*0.9);
         ctx.lineTo(x + s*0.6, y + s*0.75);
         ctx.lineTo(x + s*0.4, y + s*0.9);
@@ -157,7 +196,7 @@ export function drawGhosts(ctx, ox, oy) {
 
         ctx.fill();
 
-        // Ojos
+        // ojos
         ctx.shadowBlur = 0;
         ctx.fillStyle = "white";
 
