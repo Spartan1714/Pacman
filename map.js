@@ -94,5 +94,4 @@ export function generarMapaRandom() {
 
     // 🔥 CLAVE: NO reemplazar, sino actualizar el array existente
     map.length = 0;
-    nuevoMapa.forEach(row => map.push(row));
-}
+nuevoMapa.forEach(row => map.push([...row]));}
