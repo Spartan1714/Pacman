@@ -121,7 +121,7 @@ if (!map.flat().includes(2)) {
     ctx.fillText(`PTS: ${score.value}  VIDAS: ${lives.value}  LVL: ${level}`, offsetX, offsetY - 10);
 
     requestAnimationFrame(gameLoop);
-}
+
 
 // controles
 document.onkeydown = (e) => {
