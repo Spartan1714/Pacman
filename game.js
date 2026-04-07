@@ -42,6 +42,11 @@ function drawCherry(ctx, x, y) {
 }
 
 function gameLoop(timestamp) {
+    if (level === 1) {
+    console.log("GENERANDO NUEVO MAPA");
+    generarMapaRandom();
+    level = 2;
+}
     if (lives.value <= 0) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
