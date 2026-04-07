@@ -134,21 +134,21 @@ const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 
     drawGhosts(ctx, offsetX, offsetY);
     drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
-const hudY = offsetY - 10;
+const hudY = 30;
 
 // SCORE
 ctx.fillStyle = "#00ffff";
 ctx.font = "14px 'Press Start 2P'";
-ctx.fillText(`SCORE: ${score.value}`, offsetX, hudY);
+ctx.fillText(`SCORE: ${score.value}`, 20, hudY);
 
 // LEVEL
 ctx.fillStyle = "#ffff00";
-ctx.fillText(`LVL: ${level}`, offsetX + 250, hudY);
+ctx.fillText(`LVL: ${level}`, canvas.width - 150, hudY);
 
-// VIDAS (corazones)
+// VIDAS ❤️
 for (let i = 0; i < lives.value; i++) {
     ctx.font = "20px Arial";
-    ctx.fillText("❤️", offsetX + i * 30, hudY + 20);
+    ctx.fillText("❤️", 20 + i * 30, hudY + 25);
 }
     requestAnimationFrame(gameLoop);
 }
