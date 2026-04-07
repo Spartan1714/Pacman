@@ -107,7 +107,9 @@ function gameLoop(timestamp) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
-    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2);
+    const HUD_HEIGHT = 60;
+
+const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 2;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
