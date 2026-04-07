@@ -60,22 +60,13 @@ function gameLoop(timestamp) {
 
     // 🔥 GAME OVER
     if (lives.value <= 0 && !gameOver) {
-const user = getCurrentUser();
+        gameOver = true;
 
-let username = "Guest";
+        bgMusic.pause();
+        bgMusic.currentTime = 0;
 
-if (user && user.email) {
-    username = user.email.split("@")[0]; // más limpio
-}
-
-saveScore(username, score.value);
-
-window.lastPlayer = username;
-}
-
-saveScore(username, score.value);
-
-window.lastPlayer = username;
+        playSfx(sfx.gameover);
+    }
 
     // 🔥 RENDER GAME OVER
     if (gameOver) {
