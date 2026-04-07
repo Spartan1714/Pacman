@@ -1,15 +1,15 @@
-import { map, TILE_SIZE, spawnCherry } from "./map.js";
+import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, allGhostsDead, activatePower } from "./ghosts.js";
-import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-import { map } from "./map.js";
 
-// Mantenemos tus variables de estado originales
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// estado del juego
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
-let lastTime = 0; 
+let lastTime = 0;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -18,7 +18,7 @@ function resize() {
 window.onresize = resize;
 resize();
 
-// Tu función de cereza estilizada intacta
+// 🍒 dibujo de cereza
 function drawCherry(ctx, x, y) {
     let s = TILE_SIZE;
     let cx = x + s / 2;
@@ -31,8 +31,8 @@ function drawCherry(ctx, x, y) {
     ctx.arc(cx + s * 0.15, cy - s * 0.10, s * 0.2, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.strokeStyle = "#00ff00"; 
-    ctx.lineWidth = 2; 
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
     ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.15, cy + s * 0.15);
@@ -43,11 +43,6 @@ function drawCherry(ctx, x, y) {
 }
 
 function gameLoop(timestamp) {
-    if (level === 1) {
-    console.log("GENERANDO NUEVO MAPA");
-    generarMapaRandom();
-    level = 2;
-}
     if (lives.value <= 0) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -58,28 +53,29 @@ function gameLoop(timestamp) {
         return;
     }
 
-    // Cálculo de Delta Time para fluidez máxima
-    const dt = Math.min((timestamp - lastTime) / 1000, 0.1); 
+    const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
 
-    // Actualización lógica pasando el diferencial de tiempo
+    // lógica
     updatePlayer(score, () => activatePower(), dt);
     updateGhosts(lives, score, dt);
-    
-    // Lógica de cambio de nivel: se activa al comer todo o matar fantasmas
-if (score.value >= 1000) {
-    level++;
 
-    generarMapaRandom(); // 🔥 mapa nuevo
+    // 🔥 CAMBIO DE NIVEL (MAPA NUEVO)
+    if (score.value >= 1000) {
+        console.log("CAMBIANDO MAPA");
 
-    resetPlayer(); 
-    spawnGhosts(level); 
-    spawnCherry(level);
+        level++;
 
-    score.value = 0; // reinicia puntos
-}
+        generarMapaRandom(); // ← aquí cambia el laberinto
 
-    // Renderizado con tu diseño Neón
+        resetPlayer();
+        spawnGhosts(level);
+        spawnCherry(level);
+
+        score.value = 0;
+    }
+
+    // render
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -88,36 +84,35 @@ if (score.value >= 1000) {
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
-            let rx = offsetX + x * TILE_SIZE, ry = offsetY + y * TILE_SIZE;
-            if (tile === 1) { 
-                // Muros Neón Cian
-                ctx.strokeStyle = "#00ffff"; 
+            let rx = offsetX + x * TILE_SIZE;
+            let ry = offsetY + y * TILE_SIZE;
+
+            if (tile === 1) {
+                ctx.strokeStyle = "#00ffff";
                 ctx.lineWidth = 1.5;
                 ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
-            } else if (tile === 2) { 
-                // Puntos Fucsia
+            } 
+            else if (tile === 2) {
                 ctx.fillStyle = "#ff00ff";
                 ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
-            } else if (tile === 3) { 
-                drawCherry(ctx, rx, ry); 
+            } 
+            else if (tile === 3) {
+                drawCherry(ctx, rx, ry);
             }
         });
     });
 
-    // Dibujamos personajes
     drawGhosts(ctx, offsetX, offsetY);
     drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
-    // Interfaz de usuario
     ctx.fillStyle = "white";
     ctx.font = "16px Courier New";
-    ctx.textAlign = "left";
     ctx.fillText(`PTS: ${score.value}  VIDAS: ${lives.value}  LVL: ${level}`, offsetX, offsetY - 10);
 
     requestAnimationFrame(gameLoop);
 }
 
-// Control de entrada
+// controles
 document.onkeydown = (e) => {
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
@@ -125,7 +120,7 @@ document.onkeydown = (e) => {
     if (e.key === "ArrowRight") setDirection(1, 0);
 };
 
-// Inicialización del juego
+// inicio
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
