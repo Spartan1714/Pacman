@@ -19,7 +19,7 @@ export function allGhostsDead() {
 
 export function spawnGhosts(level = 1) {
     const cantidad = 3;
-    const speed = 6; // tiles por segundo (constante real)
+    const speed = 2.5; // tiles por segundo (constante real)
 
     ghosts = [];
     spawnTimer = 60;
@@ -138,12 +138,34 @@ export function drawGhosts(ctx, ox, oy) {
         let y = oy + g.y * TILE_SIZE;
         let s = TILE_SIZE;
 
-        ctx.fillStyle = powerMode ? "#2121ff" : g.color;
+        ctx.save();
 
+        ctx.fillStyle = powerMode ? "#2121ff" : g.color;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = ctx.fillStyle;
+
+        // Cabeza
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
+
+        // Base tipo fantasma
         ctx.lineTo(x + s*0.8, y + s*0.9);
-        ctx.lineTo(x + s*0.2, y + s*0.9);
+        ctx.lineTo(x + s*0.6, y + s*0.75);
+        ctx.lineTo(x + s*0.4, y + s*0.9);
+        ctx.lineTo(x + s*0.2, y + s*0.75);
+        ctx.closePath();
+
         ctx.fill();
+
+        // Ojos
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "white";
+
+        ctx.beginPath();
+        ctx.arc(x + s*0.35, y + s*0.45, s*0.12, 0, Math.PI*2);
+        ctx.arc(x + s*0.65, y + s*0.45, s*0.12, 0, Math.PI*2);
+        ctx.fill();
+
+        ctx.restore();
     });
 }
