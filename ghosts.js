@@ -1,11 +1,14 @@
 import { map, TILE_SIZE } from "./map.js";
 import { pacman, resetPlayer } from "./player.js"; 
 
+// --- ESTADO DEL MÓDULO ---
 export let ghosts = [];
 export let powerMode = false;
 let powerTimer = 0;
 
-// Requeridos para que game.js no explote
+// Colores para los fantasmas aleatorios
+const GHOST_COLORS = ["#FF0000", "#FFB8FF", "#00FFFF", "#FFB852", "#FF00FF", "#00FF00"];
+
 export function activatePower() {
     powerMode = true;
     powerTimer = 450; 
@@ -15,17 +18,36 @@ export function allGhostsDead() {
     return ghosts.length > 0 && ghosts.every(g => g.dead);
 }
 
-// 1. INICIALIZACIÓN LIMPIA
+// --- GENERADOR DE NIVEL DINÁMICO ---
 export function spawnGhosts(level = 1) {
-    const speed = 2.0 + (level * 0.2);
-    ghosts = [
-        { x: 18, y: 1, dirX: -1, dirY: 0, color: "#FF0000", mode: "berserker", dead: false, speed: speed },
-        { x: 1, y: 8, dirX: 1, dirY: 0, color: "#FFB8FF", mode: "random", dead: false, speed: speed },
-        { x: 18, y: 8, dirX: -1, dirY: 0, color: "#00FFFF", mode: "random", dead: false, speed: speed }
+    // Decidimos cuántos fantasmas habrá en este nivel (mínimo 2, máximo 4)
+    const numGhosts = Math.floor(Math.random() * 3) + 2; 
+    const speed = 2.0 + (level * 0.15);
+    
+    ghosts = [];
+    
+    // Posiciones seguras de inicio (puedes ajustar estas coordenadas según tu mapa)
+    const spawnPoints = [
+        { x: 18, y: 1 }, { x: 1, y: 8 }, { x: 18, y: 8 }, { x: 1, y: 1 }
     ];
+
+    for (let i = 0; i < numGhosts; i++) {
+        const point = spawnPoints[i % spawnPoints.length];
+        ghosts.push({
+            x: point.x,
+            y: point.y,
+            dirX: i % 2 === 0 ? 1 : -1,
+            dirY: 0,
+            color: GHOST_COLORS[i % GHOST_COLORS.length],
+            speed: speed,
+            dead: false,
+            // IA: El primero siempre es Berserker (rojo), los demás aleatorios
+            mode: i === 0 ? "berserker" : "random"
+        });
+    }
 }
 
-// 2. BUCLE PRINCIPAL
+// --- MOTOR DE FÍSICA Y MOVIMIENTO ---
 export function updateGhosts(lives, score, dt) {
     if (!dt || ghosts.length === 0) return;
 
@@ -39,30 +61,29 @@ export function updateGhosts(lives, score, dt) {
 
         let v = powerMode ? g.speed * 0.5 : g.speed;
 
-        // --- MOVIMIENTO CON SNAP-TO-GRID ---
-        // Esto obliga al fantasma a estar EXACTAMENTE en el medio del pasillo
+        // 1. ALINEACIÓN (SNAP)
+        // Forzamos al fantasma a estar en el centro del pasillo opuesto a su movimiento
         if (g.dirX !== 0) g.y = Math.round(g.y);
         if (g.dirY !== 0) g.x = Math.round(g.x);
 
-        let nextX = g.x + g.dirX * v * dt;
-        let nextY = g.y + g.dirY * v * dt;
-
-        // 3. DETECCIÓN DE INTERSECCIÓN O MURO
-        // Solo tomamos decisiones cuando el fantasma cruza el "centro" de una baldosa
+        // 2. DETECCIÓN DE INTERSECCIÓN (Punto de decisión)
         let gx = Math.round(g.x);
         let gy = Math.round(g.y);
-        
-        if (Math.hypot(g.x - gx, g.y - gy) < 0.1) {
-            // ¿El camino que sigo está bloqueado?
-            let wallAhead = map[Math.round(gy + g.dirY)]?.[Math.round(gx + g.dirX)] === 1;
+
+        // Solo evaluamos giros cuando el fantasma está centrado en una baldosa
+        if (Math.abs(g.x - gx) < 0.1 && Math.abs(g.y - gy) < 0.1) {
             
-            if (wallAhead || esCruce(gx, gy)) {
-                g.x = gx; // Snap al centro antes de girar
+            // ¿El camino actual está bloqueado?
+            let isBlocked = map[Math.round(gy + g.dirY)]?.[Math.round(gx + g.dirX)] === 1;
+            
+            if (isBlocked || esCruce(gx, gy)) {
+                g.x = gx; // Snap al centro exacto antes de decidir
                 g.y = gy;
-                cambiarDireccion(g);
+                cambiarDireccionIA(g);
             }
         }
 
+        // 3. APLICAR MOVIMIENTO
         g.x += g.dirX * v * dt;
         g.y += g.dirY * v * dt;
 
@@ -79,35 +100,34 @@ export function updateGhosts(lives, score, dt) {
     });
 }
 
-// 5. LÓGICA DE NAVEGACIÓN (IA)
 function esCruce(x, y) {
     let pasillos = 0;
-    if (map[y]?.[x + 1] !== 1) pasillos++;
-    if (map[y]?.[x - 1] !== 1) pasillos++;
-    if (map[y + 1]?.[x] !== 1) pasillos++;
-    if (map[y - 1]?.[x] !== 1) pasillos++;
+    if (map[y]?.[x+1] !== 1) pasillos++;
+    if (map[y]?.[x-1] !== 1) pasillos++;
+    if (map[y+1]?.[x] !== 1) pasillos++;
+    if (map[y-1]?.[x] !== 1) pasillos++;
     return pasillos > 2;
 }
 
-function cambiarDireccion(g) {
-    let gx = Math.round(g.x);
-    let gy = Math.round(g.y);
+function cambiarDireccionIA(g) {
+    const gx = Math.round(g.x);
+    const gy = Math.round(g.y);
 
+    // Buscamos direcciones válidas (que no sean muros y no sean la vuelta atrás)
     let opciones = [
         { dx: 1, dy: 0 }, { dx: -1, dy: 0 }, { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
     ].filter(o => {
-        // No puede ser un muro y NO puede ser la dirección contraria (para no vibrar)
-        let esMuro = map[gy + o.dy]?.[gx + o.dx] === 1;
-        let esOpuesta = (o.dx === -g.dirX && o.dy === -g.dirY);
-        return !esMuro && !esOpuesta;
+        let isWall = map[gy + o.dy]?.[gx + o.dx] === 1;
+        let isOpposite = (o.dx === -g.dirX && o.dy === -g.dirY);
+        return !isWall && !isOpposite;
     });
 
     if (opciones.length === 0) {
-        // Callejón sin salida: única vez que se permite dar la vuelta
+        // Callejón sin salida: única opción es dar la vuelta
         g.dirX *= -1; g.dirY *= -1;
     } else {
         if (g.mode === "berserker" && !powerMode) {
-            // Persecución: elegir la opción que reduzca la distancia a Pac-Man
+            // IA de Persecución (Blinky): Elige el camino que lo acerque más a Pacman
             opciones.sort((a, b) => 
                 Math.hypot((gx + a.dx) - pacman.x, (gy + a.dy) - pacman.y) - 
                 Math.hypot((gx + b.dx) - pacman.x, (gy + b.dy) - pacman.y)
@@ -115,7 +135,7 @@ function cambiarDireccion(g) {
             g.dirX = opciones[0].dx;
             g.dirY = opciones[0].dy;
         } else {
-            // Azar
+            // IA Aleatoria
             let sel = opciones[Math.floor(Math.random() * opciones.length)];
             g.dirX = sel.dx;
             g.dirY = sel.dy;
@@ -123,7 +143,7 @@ function cambiarDireccion(g) {
     }
 }
 
-// 6. DIBUJO PROFESIONAL
+// --- DIBUJO ---
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
@@ -134,7 +154,7 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = ctx.fillStyle;
 
-        // Cuerpo
+        // Forma de fantasma profesional
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
         ctx.lineTo(x + s*0.8, y + s*0.9);
