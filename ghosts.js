@@ -16,32 +16,40 @@ export function allGhostsDead() {
     return ghosts.length > 0 && ghosts.every(g => g.dead);
 }
 
-// 1. Generación Aleatoria (2 a 4)
+// 1. SPAWN ALEATORIO Y SEGURO (2 a 4 fantasmas)
 export function spawnGhosts(level = 1) {
     const cantidad = Math.floor(Math.random() * 3) + 2; 
-    const velocidadBase = 0.05 + (level * 0.01); // Velocidad por celda
+    // Velocidad reducida un poco para que sea controlable al inicio
+    const vBase = 0.04 + (level * 0.01); 
     ghosts = [];
 
-    // Esquinas seguras del mapa
-    const puntos = [{x:1, y:1}, {x:18, y:1}, {x:1, y:17}, {x:18, y:17}];
+    // PUNTOS DE SPAWN: Lejos del centro (Pac-Man suele estar en 9, 15)
+    // Esquinas del mapa según tu map.js
+    const puntosSeguros = [
+        {x: 1, y: 1},   // Arriba Izquierda
+        {x: 18, y: 1},  // Arriba Derecha
+        {x: 1, y: 17},  // Abajo Izquierda
+        {x: 18, y: 17}  // Abajo Derecha
+    ];
 
     for (let i = 0; i < cantidad; i++) {
         ghosts.push({
-            x: puntos[i].x,
-            y: puntos[i].y,
+            x: puntosSeguros[i].x,
+            y: puntosSeguros[i].y,
             dirX: 0,
             dirY: 0,
             color: COLORS[i],
-            speed: velocidadBase,
+            speed: vBase,
             dead: false,
-            tipo: i === 0 ? "perseguidor" : "al azar"
+            // El primero es Berserker, los otros aleatorios
+            inteligencia: i === 0 ? "pro" : "random"
         });
-        // Forzamos una dirección inicial válida
-        decidirNuevaDireccion(ghosts[i]);
+        // Forzar una dirección inicial para que no se queden quietos
+        actualizarRuta(ghosts[i]);
     }
 }
 
-// 2. El Motor de Movimiento (Lógica de Pixeles vs Celdas)
+// 2. MOTOR DE MOVIMIENTO FLUIDO
 export function updateGhosts(lives, score, dt) {
     if (ghosts.length === 0) return;
 
@@ -53,82 +61,87 @@ export function updateGhosts(lives, score, dt) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        // Mover el fantasma según su dirección
-        let v = powerMode ? g.speed * 0.6 : g.speed;
+        let v = powerMode ? g.speed * 0.5 : g.speed;
         
+        // Movimiento continuo
         g.x += g.dirX * v;
         g.y += g.dirY * v;
 
-        // --- EL TRUCO DEL IMÁN ---
-        // Si el fantasma está muy cerca del centro de una celda (ej: 5.02 o 4.98)
-        // lo "ajustamos" al centro exacto (5.0) y decidimos nueva dirección.
-        let centerX = Math.round(g.x);
-        let centerY = Math.round(g.y);
+        // --- SISTEMA DE REJILLA ---
+        let gx = Math.round(g.x);
+        let gy = Math.round(g.y);
 
-        if (Math.abs(g.x - centerX) < v && Math.abs(g.y - centerY) < v) {
-            g.x = centerX;
-            g.y = centerY;
+        // Si el fantasma llega al centro de una baldosa
+        if (Math.abs(g.x - gx) < v && Math.abs(g.y - gy) < v) {
+            g.x = gx;
+            g.y = gy;
 
-            // ¿Hay un muro adelante o estamos en un cruce?
-            let muroEnFrente = map[Math.round(g.y + g.dirY)]?.[Math.round(g.x + g.dirX)] === 1;
+            // ¿Hay muro enfrente o es un cruce?
+            let muro = map[Math.round(g.y + g.dirY)]?.[Math.round(g.x + g.dirX)] === 1;
             
-            if (muroEnFrente || esInterseccion(g.x, g.y)) {
-                decidirNuevaDireccion(g);
+            if (muro || esCruce(gx, gy)) {
+                actualizarRuta(g);
             }
         }
 
-        // Colisión con Pacman
-        if (Math.hypot(g.x - pacman.x, g.y - pacman.y) < 0.8) {
+        // --- COLISIÓN CRÍTICA (Evita el GameOver instantáneo) ---
+        // Solo chequeamos colisión si Pac-Man tiene vidas y el fantasma no está muerto
+        let distancia = Math.hypot(g.x - pacman.x, g.y - pacman.y);
+        
+        if (distancia < 0.8) {
             if (powerMode) {
                 g.dead = true;
                 score.value += 500;
             } else {
-                lives.value--;
-                resetPlayer();
+                // Solo restamos vida si lives.value es mayor a 0
+                if (lives.value > 0) {
+                    lives.value--;
+                    resetPlayer(); 
+                    // Resetear fantasmas a sus esquinas para dar respiro al jugador
+                    spawnGhosts(); 
+                }
             }
         }
     });
 }
 
-function esInterseccion(x, y) {
-    let opciones = 0;
-    if (map[Math.round(y)]?.[Math.round(x + 1)] !== 1) opciones++;
-    if (map[Math.round(y)]?.[Math.round(x - 1)] !== 1) opciones++;
-    if (map[Math.round(y + 1)]?.[Math.round(x)] !== 1) opciones++;
-    if (map[Math.round(y - 1)]?.[Math.round(x)] !== 1) opciones++;
-    return opciones > 2;
+function esCruce(x, y) {
+    let pasillos = 0;
+    if (map[y]?.[x+1] !== 1) pasillos++;
+    if (map[y]?.[x-1] !== 1) pasillos++;
+    if (map[y+1]?.[x] !== 1) pasillos++;
+    if (map[y-1]?.[x] !== 1) pasillos++;
+    return pasillos > 2;
 }
 
-function decidirNuevaDireccion(g) {
+function actualizarRuta(g) {
     let x = Math.round(g.x);
     let y = Math.round(g.y);
 
-    let posibles = [
+    let opciones = [
         {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1}
-    ].filter(dir => {
-        // No puede ser muro ni la dirección opuesta (para que no vibre)
-        let esMuro = map[y + dir.dy]?.[x + dir.dx] === 1;
-        let esOpuesta = (dir.dx === -g.dirX && dir.dy === -g.dirY);
-        return !esMuro && !esOpuesta;
+    ].filter(d => {
+        let muro = map[y + d.dy]?.[x + d.dx] === 1;
+        let opuesta = (d.dx === -g.dirX && d.dy === -g.dirY);
+        return !muro && !opuesta;
     });
 
-    if (posibles.length === 0) {
-        // Callejón sin salida
+    if (opciones.length === 0) {
         g.dirX *= -1; g.dirY *= -1;
     } else {
-        if (g.tipo === "perseguidor" && !powerMode) {
-            // IA: Elige la dirección que lo acerca más a Pacman
-            posibles.sort((a, b) => 
-                Math.hypot((x + a.dx) - pacman.x, (y + a.dy) - pacman.y) - 
-                Math.hypot((x + b.dx) - pacman.x, (y + b.dy) - pacman.y)
+        if (g.inteligencia === "pro" && !powerMode) {
+            // Persecución inteligente
+            opciones.sort((a, b) => 
+                Math.hypot((x+a.dx)-pacman.x, (y+a.dy)-pacman.y) - 
+                Math.hypot((x+b.dx)-pacman.x, (y+b.dy)-pacman.y)
             );
-            g.dirX = posibles[0].dx;
-            g.dirY = posibles[0].dy;
+            g.dirX = opciones[0].dx;
+            g.dirY = opciones[0].dy;
         } else {
-            // IA: Al azar
-            let choice = posibles[Math.floor(Math.random() * posibles.length)];
-            g.dirX = choice.dx;
-            g.dirY = choice.dy;
+            // Movimiento random
+            let sel = opciones[Math.floor(Math.random() * opciones.length)];
+            g.dirX = sel.dx;
+            g.dirY = sel.dy;
         }
     }
 }
@@ -136,12 +149,17 @@ function decidirNuevaDireccion(g) {
 export function drawGhosts(ctx, ox, oy) {
     ghosts.forEach(g => {
         if (g.dead) return;
-        let drawX = ox + g.x * TILE_SIZE;
-        let drawY = oy + g.y * TILE_SIZE;
+        let dx = ox + g.x * TILE_SIZE;
+        let dy = oy + g.y * TILE_SIZE;
         
+        ctx.save();
         ctx.fillStyle = powerMode ? "#2121ff" : g.color;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = ctx.fillStyle;
+        
         ctx.beginPath();
-        ctx.arc(drawX + TILE_SIZE/2, drawY + TILE_SIZE/2, TILE_SIZE/2.2, 0, Math.PI * 2);
+        ctx.arc(dx + TILE_SIZE/2, dy + TILE_SIZE/2, TILE_SIZE/2.2, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
     });
 }
