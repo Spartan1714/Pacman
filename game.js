@@ -1,8 +1,7 @@
 import { map, TILE_SIZE, spawnCherry } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, allGhostsDead, activatePower } from "./ghosts.js";
-import { resetMap } from "./map.js";
-const canvas = document.getElementById("gameCanvas");
+import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 // Mantenemos tus variables de estado originales
