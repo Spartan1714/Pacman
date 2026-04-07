@@ -1,18 +1,19 @@
 import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
-import { updateGhosts, drawGhosts, spawnGhosts, allGhostsDead, activatePower } from "./ghosts.js";
+import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
-
 
 // estado del juego
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
 let lastTime = 0;
+
 let gameOver = false;
+let levelChanging = false;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -46,38 +47,62 @@ function drawCherry(ctx, x, y) {
 }
 
 function gameLoop(timestamp) {
-if (lives.value <= 0 && !gameOver) {
-
-    gameOver = true;
-
-    bgMusic.pause();
-    bgMusic.currentTime = 0;
-
-    playSfx(sfx.gameover);
-
-}
 
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
 
-    // lógica
-    updatePlayer(score, () => activatePower(), dt);
-    updateGhosts(lives, score, dt);
+    // 🔥 lógica solo si no está en game over
+    if (!gameOver) {
+        updatePlayer(score, () => activatePower(), dt);
+        updateGhosts(lives, score, dt);
+    }
 
-    // 🔥 CAMBIO DE NIVEL (MAPA NUEVO)
-if (!map.flat().includes(2)) {
-    console.log("NIVEL COMPLETADO");
+    // 🔥 GAME OVER
+    if (lives.value <= 0 && !gameOver) {
+        gameOver = true;
 
-    level++;
+        bgMusic.pause();
+        bgMusic.currentTime = 0;
 
-    generarMapaRandom();
+        playSfx(sfx.gameover);
+    }
 
-    resetPlayer(); 
-    spawnGhosts(level); 
-    spawnCherry(level);
-}
+    // 🔥 RENDER GAME OVER
+    if (gameOver) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // render
+        ctx.fillStyle = "white";
+        ctx.font = "40px Courier New";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+
+        return; // 🔥 detiene todo
+    }
+
+    // 🔥 CAMBIO DE NIVEL SEGURO
+    if (!map.flat().includes(2) && !levelChanging) {
+        levelChanging = true;
+
+        bgMusic.pause();
+        playSfx(sfx.levelup);
+
+        setTimeout(() => {
+            level++;
+
+            generarMapaRandom();
+
+            resetPlayer();
+            spawnGhosts(level);
+            spawnCherry(level);
+
+            bgMusic.play().catch(() => {});
+
+            levelChanging = false;
+        }, 800);
+    }
+
+    // 🔥 render normal
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -109,22 +134,25 @@ if (!map.flat().includes(2)) {
 
     ctx.fillStyle = "white";
     ctx.font = "16px Courier New";
+    ctx.textAlign = "left";
     ctx.fillText(`PTS: ${score.value}  VIDAS: ${lives.value}  LVL: ${level}`, offsetX, offsetY - 10);
 
     requestAnimationFrame(gameLoop);
 }
 
-// controles
+// 🎮 controles
 document.onkeydown = (e) => {
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
     if (e.key === "ArrowRight") setDirection(1, 0);
-    if (bgMusic.paused) { bgMusic.play().catch(() => {});
-}
+
+    if (bgMusic.paused && !gameOver) {
+        bgMusic.play().catch(() => {});
+    }
 };
 
-// inicio
+// 🚀 inicio
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
