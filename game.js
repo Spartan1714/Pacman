@@ -62,14 +62,17 @@ function gameLoop(timestamp) {
     updateGhosts(lives, score, dt);
     
     // Lógica de cambio de nivel: se activa al comer todo o matar fantasmas
-    if (!map.some(row => row.includes(2)) || allGhostsDead()) {
-        level++;
-resetMap(); // ← ESTA LÍNEA ES LA CLAVE  
-        resetPlayer(); 
-        generarMapaRandom();
-        spawnGhosts(level); 
-        spawnCherry(level);
-    }
+if (score.value >= 1000) {
+    level++;
+
+    generarMapaRandom(); // 🔥 mapa nuevo
+
+    resetPlayer(); 
+    spawnGhosts(level); 
+    spawnCherry(level);
+
+    score.value = 0; // reinicia puntos
+}
 
     // Renderizado con tu diseño Neón
     ctx.fillStyle = "black";
