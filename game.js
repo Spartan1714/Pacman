@@ -1,7 +1,7 @@
 import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, allGhostsDead, activatePower } from "./ghosts.js";
-import { sounds, playSound } from "./audio.js";
+import { bgMusic } from "./audio.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
