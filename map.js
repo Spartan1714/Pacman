@@ -49,30 +49,38 @@ export function generarMapaRandom() {
     const width = 20;
     const height = 10;
 
-    let nuevoMapa = Array.from({ length: height }, () =>
-        Array.from({ length: width }, () => 1)
-    );
+    let nuevoMapa = [];
 
-    function carve(x, y) {
-        const dirs = [
-            [1,0], [-1,0], [0,1], [0,-1]
-        ].sort(() => Math.random() - 0.5);
+    for (let y = 0; y < height; y++) {
+        let row = [];
 
-        for (let [dx, dy] of dirs) {
-            let nx = x + dx * 2;
-            let ny = y + dy * 2;
+        for (let x = 0; x < width; x++) {
 
-            if (
-                ny > 0 && ny < height - 1 &&
-                nx > 0 && nx < width - 1 &&
-                nuevoMapa[ny][nx] === 1
-            ) {
-                nuevoMapa[y + dy][x + dx] = 2;
-                nuevoMapa[ny][nx] = 2;
-                carve(nx, ny);
+            // bordes siempre muro
+            if (y === 0 || y === height - 1 || x === 0 || x === width - 1) {
+                row.push(1);
+            } 
+            else {
+                // 🔥 random real (30% muros)
+                let wall = Math.random() < 0.3 ? 1 : 2;
+                row.push(wall);
             }
         }
+
+        nuevoMapa.push(row);
     }
+
+    // 🔥 asegurar spawn libre
+    nuevoMapa[1][1] = 2;
+
+    // 🔥 limpiar alrededor del spawn
+    nuevoMapa[1][2] = 2;
+    nuevoMapa[2][1] = 2;
+
+    // 🔥 aplicar al mapa real (IMPORTANTE)
+    map.length = 0;
+    nuevoMapa.forEach(row => map.push([...row]));
+}
 
     // punto inicial (spawn seguro)
     nuevoMapa[1][1] = 2;
