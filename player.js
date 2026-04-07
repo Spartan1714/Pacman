@@ -1,5 +1,6 @@
 import { map, TILE_SIZE } from "./map.js";
 import { powerMode } from "./ghosts.js";
+import { sfx, playSfx } from "./audio.js";
 
 export let pacman = { 
     x: 1, y: 1, vX: 1, vY: 1, 
@@ -48,8 +49,11 @@ export function updatePlayer(score, onPowerUp, dt) {
     if (map[my]?.[mx] === 2) {
         map[my][mx] = 0;
         score.value += 10;
+        //playSfx(sfx.eat); // 🔥 sonido masticar
     } else if (map[my]?.[mx] === 3) {
         map[my][mx] = 0;
+            playSfx(sfx.cherry); // puedes cambiar luego por otro sonido
+
         if (onPowerUp) onPowerUp(); 
     }
 }
