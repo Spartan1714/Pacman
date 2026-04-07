@@ -1,5 +1,6 @@
 import { map, TILE_SIZE } from "./map.js";
 import { pacman, resetPlayer } from "./player.js"; 
+import { sfx, playSfx } from "./audio.js";
 
 export let ghosts = [];
 export let powerMode = false;
@@ -124,6 +125,7 @@ export function updateGhosts(lives, score, dt) {
                 g.dead = true;
                 score.value += 500;
             } else if (spawnTimer <= 0) {
+                playSfx(sfx.death); // 🔥 AQUÍ VA EL SONIDO
                 lives.value--;
                 resetPlayer();
                 spawnGhosts();
