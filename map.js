@@ -14,25 +14,25 @@ const baseMap = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-// Inicializar mapa
+// inicializar mapa
 map = JSON.parse(JSON.stringify(baseMap));
 
 export function spawnCherry(level) {
-    // limpiar cerezas viejas
-    map.forEach((row, y) => 
-        row.forEach((c, x) => { 
-            if (c === 3) map[y][x] = 2; 
+    // limpiar cerezas anteriores
+    map.forEach((row, y) =>
+        row.forEach((c, x) => {
+            if (c === 3) map[y][x] = 2;
         })
     );
 
     let emptyCells = [];
 
-    map.forEach((row, y) => 
-        row.forEach((c, x) => { 
-            if (c === 2) emptyCells.push({x, y}); 
+    map.forEach((row, y) =>
+        row.forEach((c, x) => {
+            if (c === 2) emptyCells.push({ x, y });
         })
     );
-    
+
     if (emptyCells.length > 0) {
         let pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         map[pos.y][pos.x] = 3;
@@ -40,10 +40,11 @@ export function spawnCherry(level) {
 }
 
 export function resetMap() {
-    map = JSON.parse(JSON.stringify(baseMap));
+    map.length = 0;
+    baseMap.forEach(row => map.push([...row]));
 }
 
-// 🔥 GENERADOR DE MAPAS RANDOM
+// 🔥 GENERADOR DE MAPAS RANDOM (CORREGIDO)
 export function generarMapaRandom() {
     const width = 20;
     const height = 10;
@@ -91,5 +92,7 @@ export function generarMapaRandom() {
     // asegurar spawn libre
     nuevoMapa[1][1] = 2;
 
-    map = nuevoMapa;
+    // 🔥 CLAVE: NO reemplazar, sino actualizar el array existente
+    map.length = 0;
+    nuevoMapa.forEach(row => map.push(row));
 }
