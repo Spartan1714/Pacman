@@ -19,34 +19,35 @@ export function allGhostsDead() {
 
 export function spawnGhosts(level = 1) {
     const cantidad = 3;
-    const speed = 2.5; // tiles por segundo (constante real)
+    const speed = 2.5;
 
     ghosts = [];
     spawnTimer = 60;
 
-    const esquinas = [
-        {x: 1, y: 1},
-        {x: 18, y: 1},
-        {x: 1, y: 8},
-        {x: 18, y: 8}
-    ];
+    const posicionesUsadas = [];
 
     for (let i = 0; i < cantidad; i++) {
-        ghosts.push({
-            gridX: esquinas[i].x,
-            gridY: esquinas[i].y,
+        let pos = obtenerPosicionValida(posicionesUsadas);
 
-            x: esquinas[i].x,
-            y: esquinas[i].y,
+        posicionesUsadas.push(pos);
+
+        ghosts.push({
+            gridX: pos.x,
+            gridY: pos.y,
+
+            x: pos.x,
+            y: pos.y,
 
             dirX: 0,
             dirY: 0,
 
-            progress: 0, // progreso entre tiles (0 → 1)
+            progress: 0,
 
             speed: speed,
             color: COLORS[i % COLORS.length],
-            dead: false
+            dead: false,
+
+            tipo: i === 0 ? "berserk" : "normal"
         });
 
         elegirDireccion(ghosts[i]);
