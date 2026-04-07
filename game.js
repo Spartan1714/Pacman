@@ -60,12 +60,17 @@ function gameLoop(timestamp) {
 
     // 🔥 GAME OVER
     if (lives.value <= 0 && !gameOver) {
-  const user = getCurrentUser();
+const user = getCurrentUser();
 
 let username = "Guest";
 
 if (user && user.email) {
     username = user.email.split("@")[0]; // más limpio
+}
+
+saveScore(username, score.value);
+
+window.lastPlayer = username;
 }
 
 saveScore(username, score.value);
