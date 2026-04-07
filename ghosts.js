@@ -18,13 +18,12 @@ export function allGhostsDead() {
 }
 
 export function spawnGhosts(level = 1) {
-    const cantidad = Math.floor(Math.random() * 3) + 2;
-    const vBase = 1.8 + (level * 0.2); 
+    const cantidad = 3;
+    const speed = 6; // tiles por segundo (constante real)
 
     ghosts = [];
-    spawnTimer = 90;
+    spawnTimer = 60;
 
-    // 🔥 CORREGIDO (mapa de 10 filas)
     const esquinas = [
         {x: 1, y: 1},
         {x: 18, y: 1},
@@ -34,21 +33,28 @@ export function spawnGhosts(level = 1) {
 
     for (let i = 0; i < cantidad; i++) {
         ghosts.push({
+            gridX: esquinas[i].x,
+            gridY: esquinas[i].y,
+
             x: esquinas[i].x,
             y: esquinas[i].y,
+
             dirX: 0,
             dirY: 0,
+
+            progress: 0, // progreso entre tiles (0 → 1)
+
+            speed: speed,
             color: COLORS[i % COLORS.length],
-            speed: vBase,
-            dead: false,
-            personalidad: i === 0 ? "pro" : (i === 1 ? "random" : "ambicioso")
+            dead: false
         });
-        decidirDireccion(ghosts[i]);
+
+        elegirDireccion(ghosts[i]);
     }
 }
 
 export function updateGhosts(lives, score, dt) {
-    if (!dt || ghosts.length === 0) return;
+    if (!dt) return;
 
     if (powerMode) {
         powerTimer--;
@@ -60,32 +66,29 @@ export function updateGhosts(lives, score, dt) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        let speed = powerMode ? g.speed * 0.5 : g.speed;
+        let speed = powerMode ? g.speed * 0.6 : g.speed;
 
-        // 🔥 MOVIMIENTO CONTINUO REAL
-        g.x += g.dirX * speed * dt;
-        g.y += g.dirY * speed * dt;
+        // avanzar progreso
+        g.progress += speed * dt;
 
-        let gx = Math.round(g.x);
-        let gy = Math.round(g.y);
+        // cuando llega al siguiente tile
+        if (g.progress >= 1) {
+            g.progress = 0;
 
-        // 🔥 SNAP PRECISO (SIN VIBRACIÓN)
-        if (Math.abs(g.x - gx) < 0.05 && Math.abs(g.y - gy) < 0.05) {
+            g.gridX += g.dirX;
+            g.gridY += g.dirY;
 
-            g.x = gx;
-            g.y = gy;
-
-            let muro = map[gy + g.dirY]?.[gx + g.dirX] === 1;
-
-            if (muro || esCruce(gx, gy)) {
-                decidirDireccion(g);
-            }
+            elegirDireccion(g);
         }
 
-        // 🔥 COLISIÓN CONSISTENTE (GRID)
+        // interpolación visual (fluidez real)
+        g.x = g.gridX + g.dirX * g.progress;
+        g.y = g.gridY + g.dirY * g.progress;
+
+        // colisión real (grid)
         if (
-            Math.round(g.x) === Math.round(pacman.x) &&
-            Math.round(g.y) === Math.round(pacman.y)
+            g.gridX === Math.round(pacman.x) &&
+            g.gridY === Math.round(pacman.y)
         ) {
             if (powerMode) {
                 g.dead = true;
@@ -99,26 +102,14 @@ export function updateGhosts(lives, score, dt) {
     });
 }
 
-function esCruce(x, y) {
-    let p = 0;
-    if (map[y]?.[x+1] !== 1) p++;
-    if (map[y]?.[x-1] !== 1) p++;
-    if (map[y+1]?.[x] !== 1) p++;
-    if (map[y-1]?.[x] !== 1) p++;
-    return p > 2;
-}
-
-function decidirDireccion(g) {
-    let gx = Math.round(g.x);
-    let gy = Math.round(g.y);
-
+function elegirDireccion(g) {
     let opciones = [
         {dx: 1, dy: 0},
         {dx: -1, dy: 0},
         {dx: 0, dy: 1},
         {dx: 0, dy: -1}
     ].filter(o => {
-        let muro = map[gy + o.dy]?.[gx + o.dx] === 1;
+        let muro = map[g.gridY + o.dy]?.[g.gridX + o.dx] === 1;
         let atras = (o.dx === -g.dirX && o.dy === -g.dirY);
         return !muro && !atras;
     });
@@ -129,19 +120,11 @@ function decidirDireccion(g) {
         return;
     }
 
-    if (g.personalidad === "pro" && !powerMode) {
-        opciones.sort((a,b) =>
-            Math.hypot(gx+a.dx - pacman.x, gy+a.dy - pacman.y) -
-            Math.hypot(gx+b.dx - pacman.x, gy+b.dy - pacman.y)
-        );
-    } else if (g.personalidad === "ambicioso" && !powerMode) {
-        opciones.sort((a,b) =>
-            Math.hypot(gx+a.dx - (pacman.x+1), gy+a.dy - (pacman.y+1)) -
-            Math.hypot(gx+b.dx - (pacman.x+1), gy+b.dy - (pacman.y+1))
-        );
-    } else {
-        opciones.sort(() => Math.random() - 0.5);
-    }
+    // IA simple pero estable
+    opciones.sort((a,b) =>
+        Math.hypot(g.gridX+a.dx - pacman.x, g.gridY+a.dy - pacman.y) -
+        Math.hypot(g.gridX+b.dx - pacman.x, g.gridY+b.dy - pacman.y)
+    );
 
     g.dirX = opciones[0].dx;
     g.dirY = opciones[0].dy;
@@ -155,25 +138,12 @@ export function drawGhosts(ctx, ox, oy) {
         let y = oy + g.y * TILE_SIZE;
         let s = TILE_SIZE;
 
-        ctx.save();
-        ctx.globalAlpha = (spawnTimer > 0 && Math.floor(Date.now()/100)%2) ? 0.3 : 1;
         ctx.fillStyle = powerMode ? "#2121ff" : g.color;
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = ctx.fillStyle;
 
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
         ctx.lineTo(x + s*0.8, y + s*0.9);
         ctx.lineTo(x + s*0.2, y + s*0.9);
         ctx.fill();
-
-        ctx.shadowBlur = 0;
-        ctx.fillStyle = "white";
-        ctx.beginPath();
-        ctx.arc(x + s*0.35, y + s*0.45, s*0.12, 0, Math.PI*2);
-        ctx.arc(x + s*0.65, y + s*0.45, s*0.12, 0, Math.PI*2);
-        ctx.fill();
-
-        ctx.restore();
     });
 }
