@@ -5,33 +5,27 @@
     <title>Pacman Arcade</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* Regresamos al CSS más simple posible para no interferir con game.js */
-        body {
-            margin: 0; background: black;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; font-family: 'Press Start 2P', cursive;
-        }
-        #gameCanvas {
-            border: 3px solid #ffe600;
-            display: block;
-        }
-        /* El modal solo aparece si es estrictamente necesario */
+        body { margin: 0; background: #000; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        /* El marco amarillo que tenías */
+        #gameCanvas { border: 5px solid #ffe600; box-shadow: 0 0 20px #ffe600; background: #000; }
+        
         #usernameModal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: black; z-index: 9999;
-            display: none; align-items: center; justify-content: center;
+            background: black; z-index: 10000; display: none;
+            align-items: center; justify-content: center; font-family: 'Press Start 2P', cursive;
         }
     </style>
 </head>
 <body>
 
-    <canvas id="gameCanvas"></canvas>
+    <canvas id="gameCanvas" width="600" height="800"></canvas>
 
     <div id="usernameModal">
-        <div style="text-align: center; border: 2px solid yellow; padding: 20px;">
-            <h2 style="color: yellow; font-size: 14px;">NICKNAME:</h2>
-            <input type="text" id="nicknameInput" style="margin: 10px; padding: 5px;">
-            <button id="saveNicknameBtn" style="padding: 10px; cursor: pointer;">START</button>
+        <div style="border: 2px solid yellow; padding: 40px; text-align: center;">
+            <p>NICKNAME:</p>
+            <input type="text" id="nicknameInput" style="margin: 20px; padding: 10px;">
+            <br>
+            <button id="saveNicknameBtn" style="padding: 10px; cursor: pointer; font-family: 'Press Start 2P';">START</button>
         </div>
     </div>
 
@@ -39,6 +33,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
+        // Config de Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
             authDomain: "pacman-game-e602a.firebaseapp.com",
@@ -48,33 +43,30 @@
         initializeApp(firebaseConfig);
         const auth = getAuth();
 
-        const modal = document.getElementById('usernameModal');
-        
         onAuthStateChanged(auth, (user) => {
             if (!user) {
                 window.location = "login.html";
             } else {
                 const nick = localStorage.getItem('pacmanNickname');
-                if (!nick) {
-                    modal.style.display = 'flex';
+                if (nick) {
+                    cargarMotor();
                 } else {
-                    // SI YA TIENE NICK, CARGAMOS EL JUEGO NORMAL
-                    cargarJuego();
+                    document.getElementById('usernameModal').style.display = 'flex';
                 }
             }
         });
 
         document.getElementById('saveNicknameBtn').onclick = () => {
-            const val = document.getElementById('nicknameInput').value;
-            if(val) {
+            const val = document.getElementById('nicknameInput').value.trim();
+            if (val) {
                 localStorage.setItem('pacmanNickname', val);
-                modal.style.display = 'none';
-                cargarJuego();
+                document.getElementById('usernameModal').style.display = 'none';
+                cargarMotor();
             }
         };
 
-        function cargarJuego() {
-            // Esta es la forma más limpia de cargar el JS sin que se rompa
+        function cargarMotor() {
+            console.log("Cargando game.js ahora mismo...");
             const script = document.createElement('script');
             script.type = 'module';
             script.src = 'game.js';
