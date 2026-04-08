@@ -2,7 +2,7 @@ import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
-import { saveScore, currentUser, logout } from "./firebase.js";
+import { saveScore, currentUser } from "./firebase.js";
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -15,18 +15,16 @@ let lastTime = 0;
 
 let gameOver = false;
 let levelChanging = false;
-let scoreSaved = false;
+let scoreSaved = false; // 🔥 control firebase
 
-// 🔥 FIX logout (sin romper si no existe)
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-    logoutBtn.onclick = () => {
-        logout();
-        window.location = "login.html";
-    };
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 }
+window.onresize = resize;
+resize();
 
-// 🍒 dibujo de cereza (igual)
+// 🍒 dibujo de cereza
 function drawCherry(ctx, x, y) {
     let s = TILE_SIZE;
     let cx = x + s / 2;
@@ -34,7 +32,6 @@ function drawCherry(ctx, x, y) {
 
     ctx.save();
     ctx.fillStyle = "#ff0000";
-
     ctx.beginPath();
     ctx.arc(cx - s * 0.15, cy + s * 0.15, s * 0.2, 0, Math.PI * 2);
     ctx.arc(cx + s * 0.15, cy - s * 0.10, s * 0.2, 0, Math.PI * 2);
@@ -42,14 +39,12 @@ function drawCherry(ctx, x, y) {
 
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = 2;
-
     ctx.beginPath();
     ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
     ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.15, cy + s * 0.15);
     ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
     ctx.lineTo(cx + s * 0.15, cy - s * 0.10);
     ctx.stroke();
-
     ctx.restore();
 }
 
@@ -64,7 +59,7 @@ function gameLoop(timestamp) {
         updateGhosts(lives, score, dt);
     }
 
-    // 🔥 GAME OVER + GUARDADO
+    // 🔥 GAME OVER + FIREBASE
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
 
@@ -73,26 +68,24 @@ function gameLoop(timestamp) {
 
         playSfx(sfx.gameover);
 
+        // 🔥 GUARDAR SCORE UNA SOLA VEZ
         if (!scoreSaved) {
             scoreSaved = true;
 
-            try {
-                let username = "Guest";
+            let username = "Guest";
 
-                if (currentUser && currentUser.email) {
-                    username = currentUser.email.split("@")[0];
-                }
-
-                saveScore(username, score.value);
-                window.lastPlayer = username;
-
-            } catch (e) {
-                console.error("Firebase error:", e);
+            if (currentUser && currentUser.email) {
+                username = currentUser.email.split("@")[0];
             }
+
+            saveScore(username, score.value);
+            window.lastPlayer = username;
+
+            console.log("Guardado:", username, score.value);
         }
     }
 
-    // 🔴 GAME OVER RENDER
+    // 🔴 RENDER GAME OVER
     if (gameOver) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -131,38 +124,27 @@ function gameLoop(timestamp) {
         }, 800);
     }
 
-    // 🔥 RENDER (ESCALA CORREGIDA)
+    // render normal (NO TOCADO)
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const scale = Math.min(
-        canvas.width / (20 * TILE_SIZE),
-        (canvas.height - 80) / (10 * TILE_SIZE)
-    );
-
-    const scaledTile = TILE_SIZE * scale;
-
-    const offsetX = (canvas.width - 20 * scaledTile) / 2;
-    const offsetY = (canvas.height - 10 * scaledTile) / 2 + 40;
+    const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
+    const HUD_HEIGHT = 60;
+    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 2;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
-
-            let rx = offsetX + x * scaledTile;
-            let ry = offsetY + y * scaledTile;
+            let rx = offsetX + x * TILE_SIZE;
+            let ry = offsetY + y * TILE_SIZE;
 
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
                 ctx.lineWidth = 1.5;
-                ctx.strokeRect(rx + 4, ry + 4, scaledTile - 8, scaledTile - 8);
+                ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
             } 
             else if (tile === 2) {
                 ctx.fillStyle = "#ff00ff";
-                ctx.fillRect(
-                    rx + scaledTile/2 - 1,
-                    ry + scaledTile/2 - 1,
-                    2, 2
-                );
+                ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
             } 
             else if (tile === 3) {
                 drawCherry(ctx, rx, ry);
@@ -171,7 +153,7 @@ function gameLoop(timestamp) {
     });
 
     drawGhosts(ctx, offsetX, offsetY);
-    drawPlayer(ctx, scaledTile, offsetX, offsetY);
+    drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
     // HUD
     const hudY = 30;
@@ -191,7 +173,7 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
-// controles (igual)
+// controles
 document.onkeydown = (e) => {
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
@@ -203,7 +185,7 @@ document.onkeydown = (e) => {
     }
 };
 
-// inicio (igual)
+// inicio
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
