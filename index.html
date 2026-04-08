@@ -2,97 +2,132 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pacman</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pacman Arcade - Recuperado</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* Estilos para los botones laterales según tu lógica */
-        .top-controls {
-            position: absolute;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .top-controls button {
-            font-family: 'Press Start 2P';
-            font-size: 10px;
-            padding: 15px;
-            width: 120px;
-            cursor: pointer;
-            background: #222;
-            color: white;
-            border: 2px solid #ffe600;
-            box-shadow: 0 0 10px rgba(255, 230, 0, 0.3);
-        }
-        .top-controls button:hover {
-            background: #ffe600;
-            color: black;
+        /* --- ESTILOS CSS PARA RECREAR EL DISEÑO --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        /* Pantallas superpuestas */
-        .menu-overlay {
-            display: none; 
-            position: absolute; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.9); 
-            color: white; 
-            z-index: 2000; 
-            text-align: center; 
-            font-family: 'Press Start 2P';
-            flex-direction: column;
+        body {
+            /* Todo negro alrededor, como en las imágenes */
+            background-color: #000; 
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
             justify-content: center;
             align-items: center;
+            min-height: 100vh;
+            overflow: hidden; /* Evitamos barras de desplazamiento */
         }
 
-        .menu-btn {
-            font-family: 'Press Start 2P';
-            padding: 15px;
-            width: 250px;
-            margin: 10px;
-            cursor: pointer;
-            border: 2px solid white;
-            background: black;
-            color: white;
+        /* Contenedor principal Grid para el diseño lateral */
+        .game-wrapper {
+            display: grid;
+            /* La primera columna (área de juego) es flexible.
+               La segunda columna (botones) tiene un ancho fijo. */
+            grid-template-columns: 1fr 200px; 
+            gap: 20px;
+            width: 90vw; /* Ajusta el ancho total del layout */
+            max-width: 1400px;
+            align-items: start; /* Alinea los elementos al inicio verticalmente */
+            padding: 20px;
         }
-        #exitToLoginBtn { background: #ff3333; border: none; }
+
+        /* Área de juego negra con borde amarillo */
+        .game-area {
+            grid-column: 1; /* Primera columna */
+            background-color: #000;
+            border: 5px solid #ff0; /* Borde amarillo grueso, como en la imagen */
+            box-shadow: 0 0 15px #ff0; /* Efecto de brillo sutil */
+            aspect-ratio: 4 / 3; /* Mantiene una proporción de juego clásica */
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative; /* Para el texto del juego */
+        }
+
+        /* Lienzo del juego (canvas) */
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Contenedor de botones a la derecha */
+        .button-sidebar {
+            grid-column: 2; /* Segunda columna */
+            display: flex;
+            flex-direction: column;
+            gap: 15px; /* Espaciado entre botones */
+            padding-top: 10px; /* Alineación vertical con el borde superior del juego */
+        }
+
+        /* Estilo de los botones, como en la imagen */
+        .arcade-btn {
+            background-color: #000;
+            color: #ff0; /* Texto amarillo */
+            border: 3px solid #ff0; /* Borde amarillo, igual que el área de juego */
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            padding: 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s; /* Pequeña animación */
+        }
+
+        /* Efecto al pasar el ratón */
+        .arcade-btn:hover {
+            background-color: #ff0;
+            color: #000;
+        }
+
+        /* --- ESTILOS PARA LOS TEXTOS DEL JUEGO (COMO EN IMAGE_2.PNG) --- */
+        .overlay-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 1.5;
+            color: #fff;
+        }
+
+        .game-over-title {
+            font-size: 30px;
+            color: #f00; /* GAME OVER en rojo */
+            margin-bottom: 20px;
+        }
+
+        .game-stat {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
     </style>
 </head>
 <body>
 
 <div class="game-wrapper">
-    <canvas id="gameCanvas"></canvas>
-
-    <div class="top-controls">
-        <button id="pauseBtn">PAUSE</button>
-        <button id="menuBtn">MENU</button>
-    </div>
-
-    <div id="menuScreen" class="menu-overlay">
-        <h1 style="color: yellow; margin-bottom: 30px;">GAME MENU</h1>
-        <button id="resumeBtn" class="menu-btn">CONTINUE</button>
-        <button id="leaderBtn" class="menu-btn">TOP 10</button>
-        <button id="exitToLoginBtn" class="menu-btn">EXIT TO LOGIN</button>
-    </div>
-
-    <div id="confirmModal" class="menu-overlay" style="background: rgba(255,0,0,0.2);">
-        <div style="background: black; border: 2px solid white; padding: 40px;">
-            <p>QUIT TO MAIN MENU?</p><br>
-            <button id="confirmYes" style="color: red; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none;">YES</button>
-            <button id="confirmNo" style="margin-left: 30px; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none; color: white;">NO</button>
+    
+    <div class="game-area">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="overlay-text">
+            <h1 class="game-over-title">GAME OVER</h1>
+            <p class="game-stat">PLAYER: javierriveraaguilera504</p>
+            <p class="game-stat">SCORE: 460</p>
         </div>
     </div>
 
-    <div id="gameOverScreen" class="game-over hidden">
-        </div>
-</div>
-<div id="gameOverUI" class="menu-overlay" style="background: rgba(0,0,0,0.7); display: none; flex-direction: column;">
-    <button id="btnRestart" class="menu-btn" style="background: #00ff00; color: black; border: none; font-size: 18px;">RESTART</button>
-    <button id="btnExit" class="menu-btn" style="background: #ff3333; color: white; border: none;">EXIT</button>
+    <div class="button-sidebar">
+        <button id="pauseBtn" class="arcade-btn">PAUSE</button>
+        <button id="menuBtn" class="arcade-btn">MENU</button>
+    </div>
+
 </div>
 
 <script type="module">
@@ -100,17 +135,21 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
     const firebaseConfig = {
-        apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
-        authDomain: "pacman-game-e602a.firebaseapp.com",
-        projectId: "pacman-game-e602a",
-        appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
+      apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
+      authDomain: "pacman-game-e602a.firebaseapp.com",
+      projectId: "pacman-game-e602a",
+      storageBucket: "pacman-game-e602a.firebasestorage.app",
+      messagingSenderId: "316960307396",
+      appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
     onAuthStateChanged(auth, (user) => {
-        if (!user) window.location = "login.html";
+        if (!user) {
+            window.location = "login.html";
+        }
     });
 </script>
 
