@@ -2,70 +2,97 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pacman Arcade</title>
+    <title>Pacman</title>
+    <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background-color: #000;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            font-family: 'Press Start 2P', cursive;
-        }
-
-        .game-wrapper {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-
-        /* Tu marco amarillo original */
-        .game-area {
-            border: 4px solid #ffe600;
-            box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
-            background: #000;
-            width: 600px; 
-            height: 800px;
-            position: relative;
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .side-controls {
+        /* Estilos para los botones laterales según tu lógica */
+        .top-controls {
+            position: absolute;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            z-index: 1000;
             display: flex;
             flex-direction: column;
             gap: 15px;
         }
-
-        .arcade-btn {
-            background: #000;
-            color: #ffe600;
-            border: 2px solid #ffe600;
-            padding: 15px;
+        .top-controls button {
             font-family: 'Press Start 2P';
             font-size: 10px;
+            padding: 15px;
+            width: 120px;
             cursor: pointer;
+            background: #222;
+            color: white;
+            border: 2px solid #ffe600;
+            box-shadow: 0 0 10px rgba(255, 230, 0, 0.3);
         }
+        .top-controls button:hover {
+            background: #ffe600;
+            color: black;
+        }
+
+        /* Pantallas superpuestas */
+        .menu-overlay {
+            display: none; 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            background: rgba(0, 0, 0, 0.9); 
+            color: white; 
+            z-index: 2000; 
+            text-align: center; 
+            font-family: 'Press Start 2P';
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .menu-btn {
+            font-family: 'Press Start 2P';
+            padding: 15px;
+            width: 250px;
+            margin: 10px;
+            cursor: pointer;
+            border: 2px solid white;
+            background: black;
+            color: white;
+        }
+        #exitToLoginBtn { background: #ff3333; border: none; }
     </style>
 </head>
 <body>
 
 <div class="game-wrapper">
-    <div class="game-area">
-        <canvas id="gameCanvas" width="600" height="800"></canvas>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="top-controls">
+        <button id="pauseBtn">PAUSE</button>
+        <button id="menuBtn">MENU</button>
     </div>
 
-    <div class="side-controls">
-        <button id="pauseBtn" class="arcade-btn">PAUSE</button>
-        <button id="menuBtn" class="arcade-btn">MENU</button>
+    <div id="menuScreen" class="menu-overlay">
+        <h1 style="color: yellow; margin-bottom: 30px;">GAME MENU</h1>
+        <button id="resumeBtn" class="menu-btn">CONTINUE</button>
+        <button id="leaderBtn" class="menu-btn">TOP 10</button>
+        <button id="exitToLoginBtn" class="menu-btn">EXIT TO LOGIN</button>
     </div>
+
+    <div id="confirmModal" class="menu-overlay" style="background: rgba(255,0,0,0.2);">
+        <div style="background: black; border: 2px solid white; padding: 40px;">
+            <p>QUIT TO MAIN MENU?</p><br>
+            <button id="confirmYes" style="color: red; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none;">YES</button>
+            <button id="confirmNo" style="margin-left: 30px; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none; color: white;">NO</button>
+        </div>
+    </div>
+
+    <div id="gameOverScreen" class="game-over hidden">
+        </div>
+</div>
+<div id="gameOverUI" class="menu-overlay" style="background: rgba(0,0,0,0.7); display: none; flex-direction: column;">
+    <button id="btnRestart" class="menu-btn" style="background: #00ff00; color: black; border: none; font-size: 18px;">RESTART</button>
+    <button id="btnExit" class="menu-btn" style="background: #ff3333; color: white; border: none;">EXIT</button>
 </div>
 
 <script type="module">
@@ -79,16 +106,11 @@
         appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
     };
 
-    initializeApp(firebaseConfig);
-    const auth = getAuth();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
     onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            window.location = "login.html";
-        } else {
-            console.log("Sesión activa, cargando motor...");
-            // Si hay sesión, el juego cargado abajo debería funcionar solo.
-        }
+        if (!user) window.location = "login.html";
     });
 </script>
 
