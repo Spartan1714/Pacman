@@ -82,4 +82,23 @@ canvas {
     justify-content: center; align-items: center;
     z-index: 20;
 }
+
+.login-container.hidden {
+    display: none !important;
+}
+
+/* Esta clase la pondremos solo cuando confirmemos que NO hay usuario */
+.login-container.show {
+    display: flex !important; /* Mantiene tu diseño original */
+}
+
+/* El modal de Nickname también empieza oculto */
+#usernameModal.hidden {
+    display: none !important;
+}
+
+/* Solo se mostrará cuando el JS le añada esta clase específica */
+.auth-needed {
+    display: flex !important;
+}
 .hidden { display: none !important; }

@@ -43,29 +43,35 @@ function ocultarInterfazLogin() {
 
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
-    
+    const loginContainer = document.querySelector(".login-container");
+    const modal = document.getElementById("usernameModal");
+
     if (user) {
+        // --- SI HAY USUARIO ---
         const userRef = ref(dbRealtime, `users/${user.uid}`);
         const snapshot = await get(userRef);
 
         if (!snapshot.exists() || !snapshot.val().username) {
-            // Caso: Falta Nickname -> Mostrar Modal
-            const modal = document.getElementById("usernameModal");
+            // No tiene nickname: mostramos el modal (el login sigue oculto)
             if (modal) {
                 modal.classList.remove("hidden");
                 modal.style.display = "flex";
                 configurarBotonNickname(user);
             }
         } else {
-            // Caso: Todo OK -> Ocultar login DE INMEDIATO
-            ocultarInterfazLogin();
+            // YA TIENE TODO: Nos aseguramos de que el login esté oculto
+            if (loginContainer) {
+                loginContainer.classList.add("hidden");
+                loginContainer.classList.remove("show");
+            }
+            console.log("Juego listo para el usuario: " + snapshot.val().username);
         }
     } else {
-        // Si NO hay usuario, nos aseguramos de que el login sea visible
-        const loginContainer = document.querySelector(".login-container") || document.getElementById("loginContainer");
+        // --- NO HAY USUARIO (Login inicial) ---
+        // Solo aquí quitamos el 'hidden' y ponemos 'show'
         if (loginContainer) {
             loginContainer.classList.remove("hidden");
-            loginContainer.style.display = "flex";
+            loginContainer.classList.add("show");
         }
     }
 });
