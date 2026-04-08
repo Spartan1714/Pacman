@@ -18,11 +18,12 @@ let levelChanging = false;
 let scoreSaved = false; // 🔥 control firebase
 
 function resize() {
-    // Definimos una resolución interna grande para que al escalar se vea bien
-    // 1200x900 es una buena base para Arcade
+    // Definimos el tamaño del dibujo interno (independiente del monitor)
+    // Usamos números fijos altos para que al escalar no se vea pixelado
     canvas.width = 1200; 
     canvas.height = 900; 
 
+    // Esto evita que al escalar con CSS se vea borroso
     ctx.imageSmoothingEnabled = false;
 }
 
@@ -131,12 +132,11 @@ document.getElementById("gameOverUI").style.display = "flex";
 
     // render normal (NO TOCADO)
     ctx.fillStyle = "black";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+ctx.fillRect(0, 0, canvas.width, canvas.height);
   // Ya no usamos window.innerWidth, usamos las dimensiones del CANVAS
-const offsetX = Math.floor((canvas.width - (20 * TILE_SIZE)) / 2);
-const HUD_HEIGHT = 60; 
-const offsetY = Math.floor((canvas.height - (15 * TILE_SIZE)) / 2) + HUD_HEIGHT;
+const offsetX = Math.floor((canvas.width - (map[0].length * TILE_SIZE)) / 2);
+    const HUD_HEIGHT = 60; // Espacio para Score y Vidas arriba
+    const offsetY = Math.floor((canvas.height - (map.length * TILE_SIZE)) / 2) + HUD_HEIGHT / 2;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
