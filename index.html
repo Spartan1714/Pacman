@@ -15,22 +15,20 @@
         <canvas id="gameCanvas"></canvas>
 
         <div id="menuScreen" class="overlay hidden">
-            <h1 style="color: yellow; font-size: 30px;">PAUSED</h1>
-            <button id="resumeBtn" style="margin-top:20px; padding:10px; font-family:'Press Start 2P'; cursor:pointer;">RESUME</button>
+            <h1 style="color: yellow; margin-bottom: 20px;">PAUSED</h1>
+            <button id="resumeBtn" style="font-family:'Press Start 2P'; padding: 10px; cursor: pointer;">CONTINUE</button>
         </div>
 
         <div id="gameOverScreen" class="overlay hidden">
-            <h1 style="color: red; font-size: 40px;">GAME OVER</h1>
-            <p style="color: white; font-family:'Press Start 2P'; margin-top:20px;">SCORE: <span id="finalScore">0</span></p>
-            <button id="restartBtn" style="margin-top:30px; padding:15px; font-family:'Press Start 2P'; cursor:pointer;">RETRY</button>
+            <h1 style="color: red; margin-bottom: 20px;">GAME OVER</h1>
+            <button id="restartBtn" style="font-family:'Press Start 2P'; padding: 10px; cursor: pointer;">RETRY</button>
         </div>
     </div>
 
     <script type="module">
-        // ... (Tu configuración de Firebase aquí)
+        // Tu configuración de Firebase aquí...
     </script>
-
+    
     <script type="module" src="game.js"></script>
-
 </body>
 </html>
