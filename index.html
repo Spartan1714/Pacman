@@ -15,15 +15,15 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="menuScreen" class="overlay hidden">
-        <h1 style="color: yellow; font-size: 30px; margin-bottom: 20px;">PAUSED</h1>
-        <button id="resumeBtn" style="font-family:'Press Start 2P'; padding: 15px; cursor: pointer;">CONTINUE</button>
-        <button id="exitToLoginBtn" style="font-family:'Press Start 2P'; padding: 15px; cursor: pointer; margin-top: 10px;">EXIT</button>
+        <h1 class="arcade-title">PAUSED</h1>
+        <button id="resumeBtn" style="font-family:'Press Start 2P'; padding:10px; cursor:pointer;">CONTINUE</button>
+        <button id="exitToLoginBtn" style="font-family:'Press Start 2P'; padding:10px; cursor:pointer; margin-top:10px; color:red;">EXIT</button>
     </div>
 
     <div id="gameOverScreen" class="overlay hidden">
-        <h1 style="color: red; font-size: 40px; margin-bottom: 20px;">GAME OVER</h1>
-        <p style="color: white; font-family:'Press Start 2P';">SCORE: <span id="finalScore">0</span></p>
-        <button id="restartBtn" style="font-family:'Press Start 2P'; padding: 15px; cursor: pointer; margin-top: 20px;">RETRY</button>
+        <h1 class="arcade-title" style="color:red;">GAME OVER</h1>
+        <p style="color:white; font-family:'Press Start 2P';">SCORE: <span id="finalScore">0</span></p>
+        <button id="restartBtn" style="font-family:'Press Start 2P'; padding:10px; cursor:pointer; margin-top:20px;">RETRY</button>
     </div>
 </div>
 
@@ -31,6 +31,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
+    // Tu configuración de Firebase (no la cambies)
     const firebaseConfig = {
         apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
         authDomain: "pacman-game-e602a.firebaseapp.com",
@@ -46,5 +47,6 @@
 </script>
 
 <script type="module" src="game.js"></script>
+
 </body>
 </html>
