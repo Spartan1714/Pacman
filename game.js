@@ -77,113 +77,107 @@ function gameLoop(timestamp) {
     }
 
     // 🔥 GAME OVER + FIREBASE
-if (lives.value <= 0 && !gameOver) {
-    gameOver = true;
-    bgMusic.pause();
-    playSfx(sfx.gameover);
-document.getElementById("gameOverUI").style.display = "flex";
-    if (!scoreSaved) {
-        scoreSaved = true;
+    if (lives.value <= 0 && !gameOver) {
+        gameOver = true;
+        bgMusic.pause();
+        playSfx(sfx.gameover);
+        document.getElementById("gameOverUI").style.display = "flex";
+        if (!scoreSaved) {
+            scoreSaved = true;
+            let username = "Guest";
+            if (currentUser && currentUser.email) {
+                username = currentUser.email.split("@")[0];
+            }
+            saveScoreRealtime(username, score.value)
+                .then(() => console.log("Puntaje sincronizado en Realtime"))
+                .catch(err => console.error("Error al sincronizar:", err));
 
-        // Extraemos el nombre del usuario logueado o ponemos "Guest"
-        let username = "Guest";
-        if (currentUser && currentUser.email) {
-            username = currentUser.email.split("@")[0]; // Usa la parte antes del @
+            window.lastPlayer = username;
         }
-
-        // --- AQUÍ ES EL MOMENTO ---
-        // Llamamos a la función de Realtime Database
-        saveScoreRealtime(username, score.value)
-            .then(() => console.log("Puntaje sincronizado en Realtime"))
-            .catch(err => console.error("Error al sincronizar:", err));
-
-        window.lastPlayer = username;
     }
-}
 
     // 🔴 RENDER GAME OVER
     if (gameOver) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "#ff0033";
         ctx.font = "28px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-
         ctx.fillStyle = "#ffffff";
         ctx.font = "12px 'Press Start 2P'";
         ctx.fillText(`PLAYER: ${window.lastPlayer || "UNKNOWN"}`, canvas.width / 2, canvas.height / 2 + 40);
         ctx.fillText(`SCORE: ${score.value}`, canvas.width / 2, canvas.height / 2 + 70);
-
         return;
     }
 
     // 🔵 CAMBIO DE NIVEL
     if (!map.flat().includes(2) && !levelChanging) {
         levelChanging = true;
-
         bgMusic.pause();
         playSfx(sfx.levelup);
-
         setTimeout(() => {
             level++;
-
             generarMapaRandom();
             resetPlayer();
             spawnGhosts(level);
             spawnCherry(level);
-
             bgMusic.play().catch(() => {});
             levelChanging = false;
-
         }, 800);
     }
 
-    // render normal (NO TOCADO)
+    // --- RENDER NORMAL (MODIFICADO PARA ADAPTARSE) ---
     ctx.fillStyle = "black";
-ctx.fillRect(0, 0, canvas.width, canvas.height);
-  // Ya no usamos window.innerWidth, usamos las dimensiones del CANVAS
-const offsetX = Math.floor((canvas.width - (map[0].length * TILE_SIZE)) / 2);
-    const HUD_HEIGHT = 60; // Espacio para Score y Vidas arriba
-    const offsetY = Math.floor((canvas.height - (map.length * TILE_SIZE)) / 2) + HUD_HEIGHT / 2;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 1. Usamos dynamicTileSize para centrar el mapa perfectamente
+    const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
+    const HUD_HEIGHT = 80; 
+    const offsetY = Math.floor((canvas.height - (map.length * dynamicTileSize)) / 2) + HUD_HEIGHT / 2;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
-            let rx = offsetX + x * TILE_SIZE;
-            let ry = offsetY + y * TILE_SIZE;
+            // 2. Multiplicamos por dynamicTileSize en lugar de TILE_SIZE
+            let rx = offsetX + x * dynamicTileSize;
+            let ry = offsetY + y * dynamicTileSize;
 
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
-                ctx.lineWidth = 1.5;
-                ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                ctx.lineWidth = 2;
+                // Dibujamos la pared ajustada al nuevo tamaño
+                ctx.strokeRect(rx + 2, ry + 2, dynamicTileSize - 4, dynamicTileSize - 4);
             } 
             else if (tile === 2) {
                 ctx.fillStyle = "#ff00ff";
-                ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
+                // Centramos el punto en el nuevo tamaño de celda
+                ctx.fillRect(rx + dynamicTileSize/2 - 2, ry + dynamicTileSize/2 - 2, 4, 4);
             } 
             else if (tile === 3) {
-                drawCherry(ctx, rx, ry);
+                // Pasamos dynamicTileSize a la cereza
+                drawCherry(ctx, rx, ry, dynamicTileSize);
             }
         });
     });
 
-    drawGhosts(ctx, offsetX, offsetY);
-    drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
+    // 3. Pasamos el tamaño dinámico a los personajes para que escalen
+    drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
+    drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // HUD
-    const hudY = 30;
-
+    // HUD adaptable
+    const hudY = 40;
     ctx.fillStyle = "#00ffff";
-    ctx.font = "14px 'Press Start 2P'";
-    ctx.fillText(`SCORE: ${score.value}`, 20, hudY);
-
+    ctx.font = "16px 'Press Start 2P'";
+    ctx.textAlign = "left";
+    ctx.fillText(`SCORE: ${score.value}`, 30, hudY);
+    ctx.textAlign = "right";
     ctx.fillStyle = "#ffff00";
-    ctx.fillText(`LVL: ${level}`, canvas.width - 150, hudY);
+    ctx.fillText(`LVL: ${level}`, canvas.width - 30, hudY);
 
+    ctx.textAlign = "left";
     for (let i = 0; i < lives.value; i++) {
-        ctx.font = "20px Arial";
-        ctx.fillText("❤️", 20 + i * 30, hudY + 25);
+        ctx.font = "24px Arial";
+        ctx.fillText("❤️", 30 + i * 35, hudY + 35);
     }
 
     requestAnimationFrame(gameLoop);
