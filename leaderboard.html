@@ -5,54 +5,35 @@
     <title>Pacman Leaderboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body {
-            background: black;
-            color: white;
-            font-family: 'Press Start 2P', cursive;
-            text-align: center;
-            padding: 50px;
-        }
+        body { background: black; color: white; font-family: 'Press Start 2P', cursive; text-align: center; padding: 50px; }
         h1 { color: yellow; text-shadow: 0 0 10px yellow; margin-bottom: 40px; }
-        ol {
-            display: inline-block;
-            text-align: left;
-            font-size: 18px;
-            line-height: 2;
-            color: #00ffff;
-        }
-        li { margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px; }
-        .score-val { color: #ff00ff; float: right; margin-left: 40px; }
-        button {
-            margin-top: 50px;
-            font-family: 'Press Start 2P';
-            padding: 15px 30px;
-            background: #a8a800;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
+        #scoresList { display: inline-block; text-align: left; font-size: 16px; color: #00ffff; list-style: none; padding: 0; min-width: 300px; }
+        li { margin-bottom: 15px; border-bottom: 1px dashed #333; padding: 5px 0; display: flex; justify-content: space-between; }
+        .score-val { color: #ff00ff; margin-left: 20px; }
+        button { margin-top: 50px; font-family: 'Press Start 2P'; padding: 15px 30px; background: #a8a800; color: white; border: none; cursor: pointer; }
         button:hover { background: yellow; color: black; }
     </style>
 </head>
-
 <body>
 
     <h1>TOP 10 PLAYERS</h1>
     
-    <ol id="scoresList">
-        </ol>
+    <ul id="scoresList">
+        <li>LOADING...</li>
+    </ul>
 
     <br>
     <button onclick="window.location='index.html'">BACK TO GAME</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getDatabase, ref, query, orderByChild, limitToLast, onValue } 
+        from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-        // Usamos tu configuración exacta
         const firebaseConfig = {
             apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
             authDomain: "pacman-game-e602a.firebaseapp.com",
+            databaseURL: "https://pacman-game-e602a-default-rtdb.firebaseio.com", // Asegúrate de que esta URL sea correcta
             projectId: "pacman-game-e602a",
             storageBucket: "pacman-game-e602a.firebasestorage.app",
             messagingSenderId: "316960307396",
@@ -60,36 +41,39 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db = getDatabase(app);
 
-        async function loadScores() {
+        function loadScores() {
             const listElement = document.getElementById("scoresList");
-            listElement.innerHTML = "LOADING...";
+            
+            // En Realtime, para el Top 10 de mayor a menor:
+            // 1. Ordenamos por el hijo "score"
+            // 2. Tomamos los últimos 10 (porque ordena de menor a mayor por defecto)
+            const scoresRef = query(ref(db, 'scores'), orderByChild('score'), limitToLast(10));
 
-            try {
-                // Consultamos la colección "scores" ordenada por puntaje de mayor a menor, límite 10
-                const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
-                const querySnapshot = await getDocs(q);
+            onValue(scoresRef, (snapshot) => {
+                listElement.innerHTML = "";
+                const rawData = [];
 
-                listElement.innerHTML = ""; // Limpiamos el mensaje de carga
+                snapshot.forEach((childSnapshot) => {
+                    rawData.push(childSnapshot.val());
+                });
 
-                if (querySnapshot.empty) {
-                    listElement.innerHTML = "NO SCORES YET";
-                    return;
-                }
-
-                querySnapshot.forEach(doc => {
-                    const data = doc.data();
+                // Como limitToLast nos da los más altos pero en orden ASC, 
+                // los invertimos para que el #1 esté arriba.
+                rawData.reverse().forEach(data => {
                     const li = document.createElement("li");
-                    
-                    // Creamos el formato: NOMBRE ...... PUNTAJE
-                    li.innerHTML = `${data.username || "GUEST"} <span class="score-val">${data.score}</span>`;
+                    li.innerHTML = `<span>${data.username || "GUEST"}</span> <span class="score-val">${data.score}</span>`;
                     listElement.appendChild(li);
                 });
-            } catch (error) {
-                console.error("Error cargando puntajes:", error);
-                listElement.innerHTML = "ERROR LOADING DATA";
-            }
+
+                if (rawData.length === 0) {
+                    listElement.innerHTML = "<li>NO SCORES YET</li>";
+                }
+            }, (error) => {
+                console.error(error);
+                listElement.innerHTML = "<li>ERROR LOADING DATA</li>";
+            });
         }
 
         loadScores();
