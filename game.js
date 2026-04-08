@@ -2,12 +2,12 @@ import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
-import { saveScore, currentUser } from "./firebase.js";
-import { logout } from "./firebase.js";
+import { saveScore, currentUser, logout } from "./firebase.js";
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// estado del juego
+// estado
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
@@ -17,6 +17,7 @@ let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
 
+// resize
 function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -24,7 +25,7 @@ function resize() {
 window.onresize = resize;
 resize();
 
-// 🍒 dibujo de cereza
+// 🍒
 function drawCherry(ctx, x, y) {
     let s = TILE_SIZE;
     let cx = x + s / 2;
@@ -32,6 +33,7 @@ function drawCherry(ctx, x, y) {
 
     ctx.save();
     ctx.fillStyle = "#ff0000";
+
     ctx.beginPath();
     ctx.arc(cx - s * 0.15, cy + s * 0.15, s * 0.2, 0, Math.PI * 2);
     ctx.arc(cx + s * 0.15, cy - s * 0.10, s * 0.2, 0, Math.PI * 2);
@@ -39,12 +41,14 @@ function drawCherry(ctx, x, y) {
 
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = 2;
+
     ctx.beginPath();
     ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
     ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.15, cy + s * 0.15);
     ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
     ctx.lineTo(cx + s * 0.15, cy - s * 0.10);
     ctx.stroke();
+
     ctx.restore();
 }
 
@@ -59,7 +63,7 @@ function gameLoop(timestamp) {
         updateGhosts(lives, score, dt);
     }
 
-    // 🔥 GAME OVER + GUARDADO
+    // 🔥 GAME OVER
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
 
@@ -68,17 +72,14 @@ function gameLoop(timestamp) {
 
         playSfx(sfx.gameover);
 
-        // guardar score UNA sola vez
         if (!scoreSaved) {
             scoreSaved = true;
 
             try {
-                const user = getCurrentUser();
-
                 let username = "Guest";
 
-                if (user && user.email) {
-                    username = user.email.split("@")[0];
+                if (currentUser && currentUser.email) {
+                    username = currentUser.email.split("@")[0];
                 }
 
                 saveScore(username, score.value);
@@ -87,12 +88,12 @@ function gameLoop(timestamp) {
                 console.log("Guardado:", username, score.value);
 
             } catch (e) {
-                console.error("Error Firebase:", e);
+                console.error("Firebase error:", e);
             }
         }
     }
 
-    // 🔥 RENDER GAME OVER
+    // 🔴 GAME OVER RENDER
     if (gameOver) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -110,7 +111,7 @@ function gameLoop(timestamp) {
         return;
     }
 
-    // 🔥 CAMBIO DE NIVEL
+    // 🔵 CAMBIO DE NIVEL
     if (!map.flat().includes(2) && !levelChanging) {
         levelChanging = true;
 
@@ -121,24 +122,22 @@ function gameLoop(timestamp) {
             level++;
 
             generarMapaRandom();
-
             resetPlayer();
             spawnGhosts(level);
             spawnCherry(level);
 
             bgMusic.play().catch(() => {});
-
             levelChanging = false;
+
         }, 800);
     }
 
-    // render normal
+    // render
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
-    const HUD_HEIGHT = 60;
-    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 2;
+    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + 30;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
@@ -147,7 +146,6 @@ function gameLoop(timestamp) {
 
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
-                ctx.lineWidth = 1.5;
                 ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
             } 
             else if (tile === 2) {
@@ -164,30 +162,28 @@ function gameLoop(timestamp) {
     drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
 
     // HUD
-    const hudY = 30;
-
     ctx.fillStyle = "#00ffff";
     ctx.font = "14px 'Press Start 2P'";
-    ctx.fillText(`SCORE: ${score.value}`, 20, hudY);
+    ctx.fillText(`SCORE: ${score.value}`, 20, 30);
 
     ctx.fillStyle = "#ffff00";
-    ctx.fillText(`LVL: ${level}`, canvas.width - 150, hudY);
+    ctx.fillText(`LVL: ${level}`, canvas.width - 150, 30);
 
     for (let i = 0; i < lives.value; i++) {
         ctx.font = "20px Arial";
-        ctx.fillText("❤️", 20 + i * 30, hudY + 25);
+        ctx.fillText("❤️", 20 + i * 30, 55);
     }
 
     requestAnimationFrame(gameLoop);
 }
+
+// logout botón
 document.getElementById("logoutBtn").onclick = () => {
     logout();
-
-    // opcional: limpiar usuario visible
     window.lastPlayer = null;
-
     alert("Sesión cerrada");
 };
+
 // controles
 document.onkeydown = (e) => {
     if (e.key === "ArrowUp") setDirection(0, -1);
@@ -199,15 +195,7 @@ document.onkeydown = (e) => {
         bgMusic.play().catch(() => {});
     }
 };
-export function logout() {
-    signOut(auth)
-        .then(() => {
-            console.log("Sesión cerrada");
-        })
-        .catch((error) => {
-            console.error("Error al cerrar sesión:", error);
-        });
-}
+
 // inicio
 spawnGhosts(level);
 spawnCherry(level);
