@@ -2,64 +2,94 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pacman</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Pacman Arcade</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* Estilos para los botones laterales según tu lógica */
-        .top-controls {
+        /* Base y Layout (Diseño Original Reubicado) */
+        html, body {
+            margin: 0; padding: 0; overflow: hidden;
+            background: black; display: flex;
+            justify-content: center; align-items: center;
+            height: 100vh; width: 100vw;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        .game-wrapper {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 95vw;
+            max-height: 95vh;
+        }
+
+        /* Canvas con tu estilo neón original */
+        canvas {
+            background: #000;
+            border: 3px solid #ffe600;
+            box-shadow: 0 0 15px #ffe600;
+            display: block;
+            z-index: 1; /* El Canvas está detrás */
+        }
+
+        /* Botones laterales (PAUSE / MENU) */
+        .side-controls {
             position: absolute;
-            top: 50%;
-            right: 20px;
-            transform: translateY(-50%);
-            z-index: 1000;
+            top: 50px;
+            right: -140px;
             display: flex;
             flex-direction: column;
             gap: 15px;
+            z-index: 10;
         }
-        .top-controls button {
+
+        .side-controls button, .arcade-btn {
             font-family: 'Press Start 2P';
             font-size: 10px;
-            padding: 15px;
-            width: 120px;
+            padding: 12px;
             cursor: pointer;
             background: #222;
             color: white;
             border: 2px solid #ffe600;
-            box-shadow: 0 0 10px rgba(255, 230, 0, 0.3);
+            transition: 0.1s;
         }
-        .top-controls button:hover {
-            background: #ffe600;
-            color: black;
+        .side-controls button:hover, .arcade-btn:hover { background: #ffe600; color: black; }
+
+        /* Pantallas superpuestas (MENU / CONFIRM) */
+        .overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            z-index: 20;
         }
 
-        /* Pantallas superpuestas */
-        .menu-overlay {
-            display: none; 
-            position: absolute; 
-            top: 0; left: 0; 
-            width: 100%; height: 100%; 
-            background: rgba(0, 0, 0, 0.9); 
-            color: white; 
-            z-index: 2000; 
-            text-align: center; 
-            font-family: 'Press Start 2P';
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+        .hidden { display: none !important; }
+
+        /* --- CORRECCIÓN: BOTONES DE GAME OVER EN HTML --- */
+        #gameOverUI {
+            display: none; /* Se activa desde JS */
+            position: absolute;
+            bottom: 60px; /* Posicionado abajo, no sobrepuesto */
+            left: 50%;
+            transform: translateX(-50%);
+            flex-direction: row; /* En línea, no en bloque */
+            gap: 20px;
+            z-index: 50; /* Por encima del canvas, pero abajo en la composición */
         }
 
-        .menu-btn {
+        .btn-large {
             font-family: 'Press Start 2P';
-            padding: 15px;
-            width: 250px;
-            margin: 10px;
+            padding: 15px 30px;
             cursor: pointer;
-            border: 2px solid white;
-            background: black;
-            color: white;
+            border: none;
+            font-size: 14px;
         }
-        #exitToLoginBtn { background: #ff3333; border: none; }
+        #restartBtn { background: #00ff00; color: black; box-shadow: 0 0 10px #00ff00; }
+        #exitBtn { background: #ff3333; color: white; box-shadow: 0 0 10px #ff3333; }
+        #exitToLoginBtn { background: #ff3333; color: white; width: 250px; margin: 10px; border: none; font-family: 'Press Start 2P'; padding: 15px; }
+
     </style>
 </head>
 <body>
@@ -67,32 +97,29 @@
 <div class="game-wrapper">
     <canvas id="gameCanvas"></canvas>
 
-    <div class="top-controls">
+    <div class="side-controls">
         <button id="pauseBtn">PAUSE</button>
         <button id="menuBtn">MENU</button>
     </div>
 
-    <div id="menuScreen" class="menu-overlay">
-        <h1 style="color: yellow; margin-bottom: 30px;">GAME MENU</h1>
-        <button id="resumeBtn" class="menu-btn">CONTINUE</button>
-        <button id="leaderBtn" class="menu-btn">TOP 10</button>
-        <button id="exitToLoginBtn" class="menu-btn">EXIT TO LOGIN</button>
+    <div id="menuScreen" class="overlay hidden">
+        <h1 style="color: yellow; font-size: 30px; margin-bottom: 20px;">GAME MENU</h1>
+        <button id="resumeBtn" class="arcade-btn" style="width: 250px; margin: 10px;">CONTINUE</button>
+        <button id="exitToLoginBtn" class="arcade-btn">EXIT TO LOGIN</button>
     </div>
 
-    <div id="confirmModal" class="menu-overlay" style="background: rgba(255,0,0,0.2);">
-        <div style="background: black; border: 2px solid white; padding: 40px;">
-            <p>QUIT TO MAIN MENU?</p><br>
-            <button id="confirmYes" style="color: red; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none;">YES</button>
-            <button id="confirmNo" style="margin-left: 30px; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none; color: white;">NO</button>
+    <div id="confirmModal" class="overlay hidden" style="background: rgba(255,0,0,0.2);">
+        <div style="background: black; border: 2px solid white; padding: 40px; text-align: center;">
+            <p style="color: white;">QUIT GAME?</p><br>
+            <button id="confirmYes" style="color: red; background: none; border: none; font-family: 'Press Start 2P'; cursor: pointer;">YES</button>
+            <button id="confirmNo" style="margin-left: 30px; color: white; background: none; border: none; font-family: 'Press Start 2P'; cursor: pointer;">NO</button>
         </div>
     </div>
 
-    <div id="gameOverScreen" class="game-over hidden">
-        </div>
-</div>
-<div id="gameOverUI" class="menu-overlay" style="background: rgba(0,0,0,0.7); display: none; flex-direction: column;">
-    <button id="btnRestart" class="menu-btn" style="background: #00ff00; color: black; border: none; font-size: 18px;">RESTART</button>
-    <button id="btnExit" class="menu-btn" style="background: #ff3333; color: white; border: none;">EXIT</button>
+    <div id="gameOverUI">
+        <button id="restartBtn" class="btn-large">RESTART</button>
+        <button id="exitBtn" class="btn-large">EXIT</button>
+    </div>
 </div>
 
 <script type="module">
