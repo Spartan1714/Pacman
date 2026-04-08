@@ -5,6 +5,7 @@ import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScoreRealtime, currentUser } from "./firebase.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+const menuScreen = document.getElementById("menuScreen");
 
 // estado del juego
 let score = { value: 0 };
@@ -17,6 +18,21 @@ let dynamicTileSize = 32;
 let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false; // 🔥 control firebase
+
+function abrirMenuPrincipal() {
+    paused = true;
+    bgMusic.pause();
+    if (menuScreen) menuScreen.classList.remove("hidden");
+    if (pauseBtn) pauseBtn.innerText = "RESUME";
+}
+
+function cerrarMenuPrincipal() {
+    paused = false;
+    if (menuScreen) menuScreen.classList.add("hidden");
+    if (pauseBtn) pauseBtn.innerText = "PAUSE";
+    // Solo reanudar música si el juego no ha terminado
+    if (!gameOver) bgMusic.play().catch(() => {});
+}
 
 function resize() {
     // 1. Le decimos al canvas que su resolución interna sea igual a la de la ventana
@@ -208,14 +224,26 @@ function gameLoop(timestamp) {
 
 // controles
 document.onkeydown = (e) => {
-    // Si el juego está pausado o en Game Over, ignoramos las flechas
+    // 1. Tecla ESC (Funciona aunque esté pausado, pero no si es Game Over)
+    if (e.key === "Escape" && !gameOver) {
+        if (!paused) {
+            abrirMenuPrincipal();
+        } else {
+            cerrarMenuPrincipal();
+        }
+        return; // Salimos para no procesar movimientos
+    }
+
+    // 2. Si el juego está pausado o en Game Over, ignoramos el resto (flechas)
     if (paused || gameOver) return;
 
+    // 3. Movimiento
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
     if (e.key === "ArrowRight") setDirection(1, 0);
 
+    // Música
     if (bgMusic.paused && !gameOver) {
         bgMusic.play().catch(() => {});
     }
@@ -233,33 +261,26 @@ const confirmModal = document.getElementById("confirmModal");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
 
-// 1. Botón PAUSE (Solo congela/descongela sin abrir el menú)
+// --- CONFIGURACIÓN DE EVENTOS DE INTERFAZ ---
+
+// 1. Botón PAUSE (El de la barra lateral)
 pauseBtn.onclick = () => {
-    paused = !paused; // Alterna el estado
-    pauseBtn.innerText = paused ? "RESUME" : "PAUSE";
-    
-    if (paused) {
-        bgMusic.pause();
+    // Si no está pausado, abrimos el menú. Si ya está pausado, lo cerramos.
+    if (!paused) {
+        abrirMenuPrincipal();
     } else {
-        if (!gameOver) bgMusic.play().catch(() => {});
+        cerrarMenuPrincipal();
     }
 };
 
-// 2. Botón MENU (Pausa automáticamente y abre el panel de opciones)
+// 2. Botón MENU (El de la barra lateral - hace lo mismo que Pause)
 menuBtn.onclick = () => {
-    paused = true;
-    // Quitamos la clase que lo esconde
-    menuScreen.classList.remove("hidden"); 
-    bgMusic.pause();
+    abrirMenuPrincipal();
 };
 
-// 3. Botón CONTINUE (Dentro del menú)
+// 3. Botón CONTINUE (El que está DENTRO del menú central)
 resumeBtn.onclick = () => {
-    paused = false;
-    // Volvemos a poner la clase que lo esconde
-    menuScreen.classList.add("hidden"); 
-    pauseBtn.innerText = "PAUSE"; 
-    bgMusic.play().catch(() => {});
+    cerrarMenuPrincipal();
 };
 
 // 4. Salir con Confirmación
@@ -280,6 +301,15 @@ if (leaderBtn) {
     leaderBtn.onclick = () => {
         window.location = "leaderboard.html";
     };
+}
+
+// 6. Botones de Game Over (Restart / Exit)
+if (restartBtn) {
+    restartBtn.onclick = () => location.reload();
+}
+
+if (exitBtn) {
+    exitBtn.onclick = () => window.location = "login.html";
 }
 
 // --- INICIO DEL JUEGO ---
