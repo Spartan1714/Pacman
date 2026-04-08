@@ -18,8 +18,12 @@ let levelChanging = false;
 let scoreSaved = false; // 🔥 control firebase
 
 function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Definimos el tamaño del tablero interno (esto no cambia nunca)
+    // Ajusta estos números al tamaño de tu mapa
+    canvas.width = 800;  // Ejemplo: 20 columnas * 40px
+    canvas.height = 680; // Ejemplo: 15 filas * 40px + HUD
+    
+    ctx.imageSmoothingEnabled = false;
 }
 window.onresize = resize;
 resize();
