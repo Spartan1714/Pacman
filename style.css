@@ -22,20 +22,13 @@ body {
 
 .game-area {
     position: relative;
-    border: 5px solid #ffe600; /* El marco amarillo de tu captura */
-    box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
-    background: #000;
-    /* IMPORTANTE: Estas dimensiones deben ser suficientes para tu mapa */
     width: 600px;  
     height: 800px;
 }
-
 canvas {
     width: 100%;
     height: 100%;
-    display: block;
 }
-
 .button-sidebar {
     display: flex;
     flex-direction: column;
