@@ -55,12 +55,16 @@ function configurarBotonNickname(user) {
         if (nickname.length < 3) return alert("Nickname too short!");
 
         try {
-            // Guardamos la asociación UID -> Username
+            // Guardamos el nickname en la base de datos
             await set(ref(dbRealtime, `users/${user.uid}`), {
                 username: nickname,
                 email: user.email
             });
-            window.location.href = "game.html";
+
+            // 🔥 AQUÍ ES DONDE HACES EL CAMBIO:
+            // Asegúrate de que el nombre del archivo coincida con el tuyo (ej: game.html)
+            window.location.href = "./game.html"; 
+            
         } catch (e) {
             console.error("Error saving nickname:", e);
         }
