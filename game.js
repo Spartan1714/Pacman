@@ -86,13 +86,38 @@ if (exitBtn) exitBtn.onclick = () => window.location = "login.html";
 
 // 6. RENDERIZADO Y LÓGICA
 function resize() {
-    canvas.width = 600;
-    canvas.height = 800;
+    if (!canvas) return;
+
+    // 1. Buscamos el tamaño de la ventana (ventana del navegador)
+    const padding = 40; // Margen para que no toque los bordes
+    const availableW = window.innerWidth - padding;
+    const availableH = window.innerHeight - padding;
+
+    // 2. Definimos cuántas columnas y filas tiene tu mapa
     const cols = map[0].length;
     const rows = map.length;
-    const availableHeight = canvas.height - 120;
-    dynamicTileSize = Math.min(Math.floor(canvas.width / cols), Math.floor(availableHeight / rows));
+
+    // 3. Calculamos cuánto espacio necesita el HUD (Score, Vidas)
+    const hudSpace = 120; 
+    const gameAreaH = availableH - hudSpace;
+
+    // 4. Calculamos el tamaño del Tile para que quepa a lo ancho y a lo alto
+    const tileW = availableW / cols;
+    const tileH = gameAreaH / rows;
+
+    // Usamos el más pequeño de los dos para mantener la proporción cuadrada
+    dynamicTileSize = Math.floor(Math.min(tileW, tileH));
+
+    // 5. Ajustamos el tamaño REAL del canvas al mapa calculado
+    canvas.width = cols * dynamicTileSize;
+    canvas.height = (rows * dynamicTileSize) + hudSpace;
+
+    // Desactivamos el suavizado para mantener el estilo pixel-art
+    ctx.imageSmoothingEnabled = false;
 }
+
+// Aseguramos que se llame al cambiar el tamaño de la ventana
+window.addEventListener('resize', resize);
 
 function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
@@ -107,8 +132,12 @@ function gameLoop(timestamp) {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
-    const offsetY = 110;
+const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
+const offsetY = 110;
+for (let i = 0; i < lives.value; i++) {
+    ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`; 
+    ctx.fillText("❤️", 25 + i * (dynamicTileSize + 5), 90);
+}
 
     // Mapa
     map.forEach((row, y) => {
