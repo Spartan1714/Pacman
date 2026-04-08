@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -19,10 +19,18 @@ const auth = getAuth(app);
 // 🔥 FIRESTORE
 const db = getFirestore(app);
 
-// 👉 obtener usuario actual
-export function getCurrentUser() {
-    return auth.currentUser;
-}
+// 🔥 USUARIO GLOBAL (IMPORTANTE)
+export let currentUser = null;
+
+// 🔥 ESCUCHAR LOGIN REAL
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        currentUser = user;
+        console.log("Usuario listo:", user.email);
+    } else {
+        currentUser = null;
+    }
+});
 
 // 👉 guardar score
 export async function saveScore(username, score) {
