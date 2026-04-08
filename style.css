@@ -49,18 +49,21 @@ canvas {
     min-width: 120px;
 }
 
-.overlay {
+.menu-overlay {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background: rgba(0, 0, 0, 0.9);
-    display: flex;
+    display: flex; /* Se quita/pone con la clase .hidden */
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 1000;
 }
 
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
 
 .menu-btn {
     font-family: 'Press Start 2P';
