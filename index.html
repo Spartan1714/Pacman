@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pacman</title>
+    <title>Pacman Arcade</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
@@ -15,21 +15,22 @@
         <canvas id="gameCanvas"></canvas>
 
         <div id="menuScreen" class="overlay hidden">
-            <h1 style="color:yellow">PAUSED</h1>
-            <button onclick="location.reload()" style="margin-top:20px; font-family:'Press Start 2P'">RESTART</button>
+            <h1 style="color: yellow; font-size: 30px;">PAUSED</h1>
+            <button id="resumeBtn" style="margin-top:20px; padding:10px; font-family:'Press Start 2P'; cursor:pointer;">RESUME</button>
         </div>
 
         <div id="gameOverScreen" class="overlay hidden">
-            <h1 style="color:red">GAME OVER</h1>
-            <button onclick="location.reload()" style="margin-top:20px; font-family:'Press Start 2P'">TRY AGAIN</button>
+            <h1 style="color: red; font-size: 40px;">GAME OVER</h1>
+            <p style="color: white; font-family:'Press Start 2P'; margin-top:20px;">SCORE: <span id="finalScore">0</span></p>
+            <button id="restartBtn" style="margin-top:30px; padding:15px; font-family:'Press Start 2P'; cursor:pointer;">RETRY</button>
         </div>
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        // ... (Tu config aquí)
+        // ... (Tu configuración de Firebase aquí)
     </script>
 
     <script type="module" src="game.js"></script>
+
 </body>
 </html>
