@@ -19,29 +19,28 @@ const dbRealtime = getDatabase(app);
 export let currentUser = null;
 
 // --- NUEVA FUNCIÓN: Oculta el login y muestra el juego ---
+// Función mejorada para ocultar el login sin parpadeos
 function ocultarInterfazLogin() {
     const modal = document.getElementById("usernameModal");
-    // Buscamos el contenedor del login por clase o ID
     const loginContainer = document.querySelector(".login-container") || document.getElementById("loginContainer");
-    const gameUI = document.getElementById("gameUI"); // Si tienes el canvas en un div
-
-    if (modal) {
-        modal.style.display = "none";
-        modal.classList.add("hidden");
-    }
     
-    if (loginContainer) {
-        loginContainer.style.display = "none";
-    }
-
-    if (gameUI) {
-        gameUI.style.display = "block";
-    }
-    
-    console.log("Interfaz de login oculta. ¡A jugar!");
+    // Usamos requestAnimationFrame para asegurar que el navegador esté listo
+    requestAnimationFrame(() => {
+        if (modal) {
+            modal.style.setProperty("display", "none", "important");
+            modal.classList.add("hidden");
+        }
+        if (loginContainer) {
+            loginContainer.style.setProperty("display", "none", "important");
+            loginContainer.classList.add("hidden");
+        }
+        
+        // Si el canvas estaba oculto, lo mostramos aquí
+        const gameCanvas = document.getElementById("gameCanvas");
+        if (gameCanvas) gameCanvas.style.display = "block";
+    });
 }
 
-// Observador del estado de autenticación
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     
@@ -50,7 +49,7 @@ onAuthStateChanged(auth, async (user) => {
         const snapshot = await get(userRef);
 
         if (!snapshot.exists() || !snapshot.val().username) {
-            // Caso A: Logueado pero sin nickname -> Mostrar Modal
+            // Caso: Falta Nickname -> Mostrar Modal
             const modal = document.getElementById("usernameModal");
             if (modal) {
                 modal.classList.remove("hidden");
@@ -58,12 +57,18 @@ onAuthStateChanged(auth, async (user) => {
                 configurarBotonNickname(user);
             }
         } else {
-            // Caso B: Ya tiene nickname -> Entrar directo
+            // Caso: Todo OK -> Ocultar login DE INMEDIATO
             ocultarInterfazLogin();
+        }
+    } else {
+        // Si NO hay usuario, nos aseguramos de que el login sea visible
+        const loginContainer = document.querySelector(".login-container") || document.getElementById("loginContainer");
+        if (loginContainer) {
+            loginContainer.classList.remove("hidden");
+            loginContainer.style.display = "flex";
         }
     }
 });
-
 function configurarBotonNickname(user) {
     const btn = document.getElementById("saveNicknameBtn");
     const input = document.getElementById("nicknameInput");
