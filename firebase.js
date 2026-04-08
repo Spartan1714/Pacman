@@ -1,8 +1,6 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-
+import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 const firebaseConfig = {
   apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
   authDomain: "pacman-game-e602a.firebaseapp.com",
@@ -27,32 +25,37 @@ onAuthStateChanged(auth, (user) => {
 
 // FUNCIÓN PARA GUARDAR EN REALTIME (Asegúrate de que el nombre coincida con tu import en game.js)
 export async function saveScoreRealtime(username, scoreValue) {
-    // Referencia directa al usuario: /scores/nombreUsuario
+    // Referencia al usuario específico: scores/javierrivera...
     const userScoreRef = ref(dbRealtime, `scores/${username}`);
 
-    // Intentamos obtener el puntaje que ya tiene guardado
-    const snapshot = await get(userScoreRef);
-    
-    if (snapshot.exists()) {
-        const currentData = snapshot.val();
-        // 🔥 SOLO ACTUALIZA SI EL NUEVO SCORE ES MAYOR
-        if (scoreValue > currentData.score) {
-            return set(userScoreRef, {
+    try {
+        // Consultamos si ya existe un puntaje para este usuario
+        const snapshot = await get(userScoreRef);
+        
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            // 🔥 Solo actualizamos si el nuevo score es mayor al récord actual
+            if (scoreValue > data.score) {
+                await set(userScoreRef, {
+                    username: username,
+                    score: scoreValue,
+                    timestamp: Date.now()
+                });
+                console.log("¡Nuevo récord personal actualizado!");
+            } else {
+                console.log("Puntaje actual menor al récord. No se actualiza.");
+            }
+        } else {
+            // Si es la primera vez que juega, lo creamos
+            await set(userScoreRef, {
                 username: username,
                 score: scoreValue,
                 timestamp: Date.now()
             });
-        } else {
-            console.log("El puntaje actual es menor al récord. No se guarda.");
-            return Promise.resolve(); 
+            console.log("Primer puntaje guardado.");
         }
-    } else {
-        // Si el usuario no existe, creamos su primer récord
-        return set(userScoreRef, {
-            username: username,
-            score: scoreValue,
-            timestamp: Date.now()
-        });
+    } catch (error) {
+        console.error("Error al procesar el puntaje:", error);
     }
 }
 
