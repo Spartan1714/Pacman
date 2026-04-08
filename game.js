@@ -205,6 +205,9 @@ function gameLoop(timestamp) {
         gameOver = true;
         bgMusic.pause();
         const ui = document.getElementById("gameOverUI");
+        if (window.lastPlayer && score.value > 0) {
+        saveScoreRealtime(window.lastPlayer, score.value);
+    }
         if (ui) {
             ui.classList.remove("hidden");
             ui.style.display = "flex";
