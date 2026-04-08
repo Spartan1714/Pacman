@@ -1,52 +1,35 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Pacman Arcade</title>
+    <title>Pacman</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="game-container">
-    <button id="pauseBtn" class="hud-button">PAUSE</button>
-    <button id="menuBtn" class="hud-button">MENU</button>
+    <div class="game-container">
+        <button id="pauseBtn" class="hud-button">PAUSE</button>
+        <button id="menuBtn" class="hud-button">MENU</button>
 
-    <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
 
-    <div id="menuScreen" class="overlay hidden">
-        <h1 class="arcade-title">PAUSED</h1>
-        <button id="resumeBtn" style="font-family:'Press Start 2P'; padding:10px; cursor:pointer;">CONTINUE</button>
-        <button id="exitToLoginBtn" style="font-family:'Press Start 2P'; padding:10px; cursor:pointer; margin-top:10px; color:red;">EXIT</button>
+        <div id="menuScreen" class="overlay hidden">
+            <h1 style="color:yellow">PAUSED</h1>
+            <button onclick="location.reload()" style="margin-top:20px; font-family:'Press Start 2P'">RESTART</button>
+        </div>
+
+        <div id="gameOverScreen" class="overlay hidden">
+            <h1 style="color:red">GAME OVER</h1>
+            <button onclick="location.reload()" style="margin-top:20px; font-family:'Press Start 2P'">TRY AGAIN</button>
+        </div>
     </div>
 
-    <div id="gameOverScreen" class="overlay hidden">
-        <h1 class="arcade-title" style="color:red;">GAME OVER</h1>
-        <p style="color:white; font-family:'Press Start 2P';">SCORE: <span id="finalScore">0</span></p>
-        <button id="restartBtn" style="font-family:'Press Start 2P'; padding:10px; cursor:pointer; margin-top:20px;">RETRY</button>
-    </div>
-</div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        // ... (Tu config aquí)
+    </script>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-
-    // Tu configuración de Firebase (no la cambies)
-    const firebaseConfig = {
-        apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
-        authDomain: "pacman-game-e602a.firebaseapp.com",
-        projectId: "pacman-game-e602a",
-        storageBucket: "pacman-game-e602a.firebasestorage.app",
-        messagingSenderId: "316960307396",
-        appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    onAuthStateChanged(auth, (user) => { if (!user) window.location = "login.html"; });
-</script>
-
-<script type="module" src="game.js"></script>
-
+    <script type="module" src="game.js"></script>
 </body>
 </html>

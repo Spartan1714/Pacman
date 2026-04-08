@@ -1,64 +1,52 @@
-/* =========================
-    BASE & LAYOUT
-   ========================= */
-html, body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+/* Limpieza total */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: #000 !important;
     height: 100vh;
     width: 100vw;
-}
-
-/* El contenedor ahora tiene dimensiones mínimas obligatorias */
-.game-container {
-    position: relative;
-    background: #000;
-    /* Evita que el contenedor colapse a 0px */
-    min-width: 320px; 
-    min-height: 400px;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: hidden;
+    font-family: 'Press Start 2P', cursive;
+}
+
+/* El contenedor manda */
+.game-container {
+    position: relative;
+    width: fit-content;
+    height: fit-content;
+    border: 4px solid #ffe600; /* El borde amarillo va aquí */
+    line-height: 0; /* Elimina espacios fantasma bajo el canvas */
 }
 
 canvas {
-    display: block;
     background: #000;
-    border: 3px solid #ffe600;
-    box-shadow: 0 0 20px rgba(255, 230, 0, 0.4);
-    /* Tamaño máximo responsivo */
+    display: block;
     max-width: 95vw;
     max-height: 90vh;
+    /* Quitamos border y shadow de aquí para que no interfiera con el tamaño */
 }
 
-/* BOTONES HUD: Ahora usan coordenadas fijas respecto al contenedor */
+/* BOTONES HUD: Forzamos que se vean */
 .hud-button {
     position: absolute;
-    top: 15px;
-    z-index: 100; /* Asegura que estén por encima del canvas */
-    background: rgba(0, 0, 0, 0.7);
+    top: 10px;
+    z-index: 9999; /* Por encima de TODO */
+    background: rgba(0, 0, 0, 0.8);
     color: #ffe600;
-    border: 2px solid #ffe600;
+    border: 1px solid #ffe600;
     font-family: 'Press Start 2P', cursive;
-    font-size: 9px;
-    padding: 8px 12px;
+    font-size: 8px;
+    padding: 8px;
     cursor: pointer;
-    transition: 0.2s;
 }
 
-#pauseBtn { right: 110px; }
-#menuBtn { right: 15px; }
+#pauseBtn { right: 90px; }
+#menuBtn { right: 10px; }
 
-.hud-button:hover {
-    background: #ffe600;
-    color: #000;
-}
-
-/* OVERLAYS (MENÚS) */
+/* OVERLAYS */
 .overlay {
     position: absolute;
     top: 0;
@@ -70,14 +58,8 @@ canvas {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 200; /* Por encima de los botones HUD */
+    z-index: 10000;
+    color: white;
 }
 
 .hidden { display: none !important; }
-
-.arcade-title {
-    font-family: 'Press Start 2P';
-    color: #ffe600;
-    font-size: 30px;
-    margin-bottom: 20px;
-}
