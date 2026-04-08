@@ -250,3 +250,23 @@ leaderBtn.onclick = () => {
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
+// --- AL FINAL DE game.js ---
+
+// Usamos una pequeña validación para que no tire error si el botón es nulo
+const restartBtn = document.getElementById("restartBtn");
+const exitBtn = document.getElementById("exitBtn");
+
+if (restartBtn) {
+    restartBtn.onclick = () => {
+        console.log("Reiniciando juego...");
+        location.reload(); 
+    };
+} else {
+    console.error("No se encontró el botón con ID 'restartBtn' en el HTML.");
+}
+
+if (exitBtn) {
+    exitBtn.onclick = () => {
+        window.location = "login.html";
+    };
+}
