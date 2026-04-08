@@ -1,148 +1,123 @@
 /* =========================
-    BASE & LAYOUT (ACTUALIZADO)
+    BASE & LAYOUT (BLOQUEADO)
    ========================= */
 html, body {
     margin: 0;
     padding: 0;
-    overflow: hidden; /* Evita scroll bars al hacer zoom */
+    overflow: hidden;
     background: black;
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     width: 100vw;
+    font-family: 'Press Start 2P', cursive;
 }
 
-/* CONTENEDOR MAESTRO: Mantiene todo unido */
-.game-wrapper {
+/* CONTENEDOR GRID: Organiza Score, Juego y Botones */
+.game-layout {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* Esto evita que el juego se desparrame en pantallas grandes */
+    display: grid;
+    grid-template-areas: 
+        "header header"
+        "canvas controls";
+    grid-template-columns: auto 160px; /* Espacio fijo para botones derecha */
+    grid-template-rows: auto auto;
+    gap: 10px;
     max-width: 95vw;
     max-height: 95vh;
 }
 
-/* UI SUPERIOR: Siempre pegada al canvas */
+/* UI SUPERIOR */
 .top-ui {
+    grid-area: header;
     width: 100%;
     display: flex;
     justify-content: space-between;
-    align-items: center;
     padding: 10px 0;
-    font-family: 'Press Start 2P', cursive;
     color: white;
-    font-size: clamp(12px, 1.5vw, 18px); /* Tamaño responsivo pero controlado */
-    z-index: 5;
+    font-size: clamp(12px, 1.5vw, 18px);
 }
 
-/* =========================
-    GAME CANVAS (TU ESTILO VIEJO)
-   ========================= */
+/* CANVAS (TU ESTILO ARCADE) */
 canvas {
+    grid-area: canvas;
     background: #000;
     border: 3px solid #ffe600;
-
-    box-shadow:
-        0 0 10px #ffe600,
-        0 0 20px #ffe600,
-        0 0 40px #ffcc00;
-
+    box-shadow: 0 0 10px #ffe600, 0 0 20px #ffe600, 0 0 40px #ffcc00;
     display: block;
-    /* Bloqueamos el tamaño para que no se mueva con el zoom */
     max-width: 100%;
-    height: auto;
+    max-height: 80vh;
     object-fit: contain;
 }
 
+/* BOTONES LATERALES */
+.side-controls {
+    grid-area: controls;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-left: 10px;
+}
+
+.side-controls button {
+    font-family: 'Press Start 2P';
+    font-size: 10px;
+    padding: 15px 5px;
+    cursor: pointer;
+    background: #222;
+    color: #ffe600;
+    border: 2px solid #ffe600;
+    box-shadow: 0 4px 0 #000;
+}
+
+.side-controls button:active { transform: translateY(2px); box-shadow: 0 2px 0 #000; }
+
 /* =========================
-    GAME OVER SCREEN (ESTRUCTURA NUEVA)
+    OVERLAYS (MENÚS Y GAME OVER)
    ========================= */
-.game-over {
-    position: absolute; /* Ahora es absoluta respecto al wrapper, no al body */
+.overlay {
+    position: absolute; /* Se ajusta solo al tamaño del grid */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-
+    background: rgba(0, 0, 0, 0.92);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-
-    background: rgba(0, 0, 0, 0.92);
-    z-index: 10;
+    z-index: 100;
 }
 
-.hidden {
-    display: none;
-}
+.hidden { display: none !important; }
 
-/* =========================
-    TU ESTILO DE BOTONES Y TEXTO (INTACTO)
-   ========================= */
+/* ESTILOS DE TEXTO ARCADE (TUS ESTILOS) */
 .arcade-title {
-    font-family: 'Press Start 2P', cursive;
-    font-size: clamp(40px, 8vw, 100px); /* Ajustado un poco para no salirse */
+    font-size: clamp(30px, 5vw, 80px);
     color: #ffe600;
-    letter-spacing: 6px;
-    -webkit-text-stroke: 4px #000;
-    text-shadow:
-        4px 4px 0 #000,
-        0 0 10px #ffe600,
-        0 0 20px #ffe600,
-        0 0 40px #ffd000;
+    text-shadow: 4px 4px 0 #000, 0 0 20px #ffe600;
     animation: blink 1s infinite;
     text-align: center;
 }
 
 .score-text {
-    font-family: 'Press Start 2P';
     font-size: clamp(14px, 2vw, 24px);
     color: #00ffff;
-    margin-top: 35px;
-    text-shadow:
-        2px 2px 0 #000,
-        0 0 10px #00ffff;
+    margin-top: 20px;
+    text-shadow: 2px 2px 0 #000, 0 0 10px #00ffff;
 }
 
-.buttons {
-    margin-top: 60px;
-    display: flex;
-    gap: 40px;
-}
-
-.buttons button {
+.menu-btn {
     font-family: 'Press Start 2P';
-    font-size: 14px;
-    padding: 18px 40px;
-    border: 3px solid black;
+    padding: 15px;
+    width: 250px;
+    margin: 10px;
     cursor: pointer;
-    transition: all .1s ease;
-    box-shadow:
-        0 5px 0 #000,
-        0 0 10px rgba(255,255,255,0.25);
+    border: 3px solid black;
 }
 
-#restartBtn {
-    background: #00ff00;
-    text-shadow: 0 0 10px #00ff00;
-}
+#exitToLoginBtn, #exitBtn { background: #ff4444; color: white; }
+#restartBtn, #resumeBtn { background: #00ff00; }
 
-#exitBtn {
-    background: #ff4444;
-    color: white;
-    text-shadow: 0 0 10px #ff4444;
-}
-
-.buttons button:active {
-    transform: translateY(5px);
-    box-shadow: 0 0 0 #000;
-}
-
-@keyframes blink {
-    0% { opacity: 1; }
-    50% { opacity: .65; }
-    100% { opacity: 1; }
-}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
