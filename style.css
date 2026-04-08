@@ -1,61 +1,74 @@
-/* style.css */
-html, body {
-    margin: 0; padding: 0; overflow: hidden;
-    background: black;
-    display: flex; justify-content: center; align-items: center;
-    height: 100vh; width: 100vw;
-    font-family: 'Press Start 2P', cursive;
+/* style.css - DISEÑO ARCADE RECUPERADO */
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
 }
 
-.game-wrapper {
-    position: relative;
+body {
+    background-color: #000;
+    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px; /* Espacio para que los botones no tapen el mapa */
+    font-family: 'Press Start 2P', cursive;
+    overflow: hidden;
+}
+
+.game-wrapper {
+    display: flex; /* Alinea canvas y botones lado a lado */
+    align-items: center;
+    gap: 30px;
+}
+
+.game-area {
+    position: relative;
+    border: 5px solid #ffe600;
+    box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
+    background: #000;
+    width: 600px;
+    height: 800px;
 }
 
 canvas {
-    background: #000;
-    border: 3px solid #ffe600;
-    box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
-/* BOTONES LATERALES (Como en tu captura) */
+/* PANEL LATERAL DE BOTONES */
 .top-controls {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
 }
 
 .top-controls button {
+    background: #000;
+    color: #ffe600;
+    border: 2px solid #ffe600;
+    padding: 15px;
     font-family: 'Press Start 2P';
     font-size: 10px;
-    padding: 12px;
-    width: 100px;
     cursor: pointer;
-    background: #222;
-    color: white;
-    border: 2px solid #ffe600;
-    transition: 0.2s;
+    text-transform: uppercase;
+    width: 130px;
 }
 
 .top-controls button:hover {
     background: #ffe600;
-    color: black;
+    color: #000;
 }
 
 /* MENÚS OVERLAY */
 .menu-overlay {
-    display: none; 
-    position: absolute; 
-    top: 0; left: 0; 
-    width: 100%; height: 100%; 
-    background: rgba(0, 0, 0, 0.85); 
-    z-index: 2000; 
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    z-index: 1000;
 }
 
 .hidden { display: none !important; }
