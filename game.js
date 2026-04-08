@@ -64,6 +64,7 @@ if (lives.value <= 0 && !gameOver) {
     gameOver = true;
     bgMusic.pause();
     playSfx(sfx.gameover);
+    document.getElementById("gameOverUI").style.display = "flex";
 
     if (!scoreSaved) {
         scoreSaved = true;
