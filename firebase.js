@@ -25,38 +25,34 @@ onAuthStateChanged(auth, (user) => {
 
 // FUNCIÓN PARA GUARDAR EN REALTIME (Asegúrate de que el nombre coincida con tu import en game.js)
 export async function saveScoreRealtime(username, scoreValue) {
-    // Referencia al usuario específico: scores/javierrivera...
+    // IMPORTANTE: Aquí usamos el nombre de usuario como la ruta fija
+    // Esto evita que se creen IDs aleatorios como -Opek...
     const userScoreRef = ref(dbRealtime, `scores/${username}`);
 
     try {
-        // Consultamos si ya existe un puntaje para este usuario
         const snapshot = await get(userScoreRef);
         
         if (snapshot.exists()) {
             const data = snapshot.val();
-            // 🔥 Solo actualizamos si el nuevo score es mayor al récord actual
+            // Solo sobreescribimos si el nuevo puntaje es más alto
             if (scoreValue > data.score) {
                 await set(userScoreRef, {
                     username: username,
                     score: scoreValue,
                     timestamp: Date.now()
                 });
-                console.log("¡Nuevo récord personal actualizado!");
-            } else {
-                console.log("Puntaje actual menor al récord. No se actualiza.");
+                console.log("Récord actualizado");
             }
         } else {
-            // Si es la primera vez que juega, lo creamos
+            // Si es la primera vez que este usuario juega
             await set(userScoreRef, {
                 username: username,
                 score: scoreValue,
                 timestamp: Date.now()
             });
-            console.log("Primer puntaje guardado.");
         }
-    } catch (error) {
-        console.error("Error al procesar el puntaje:", error);
+    } catch (e) {
+        console.error("Error al guardar:", e);
     }
 }
-
 export { app };
