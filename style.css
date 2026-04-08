@@ -1,33 +1,110 @@
-html, body {
-    margin: 0; padding: 0; overflow: hidden;
-    background: black;
-    display: flex; justify-content: center; align-items: center;
-    height: 100vh; width: 100vw;
+/* --- style.css --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Press Start 2P', cursive;
+    overflow: hidden;
+    color: white;
 }
 
 .game-wrapper {
     position: relative;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    align-items: flex-start;
+    gap: 25px;
+}
+
+.game-area {
+    position: relative;
+    border: 5px solid #ffe600;
+    box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
+    background: #000;
+    /* Estas dimensiones deben coincidir con tu mapa */
+    width: 600px;
+    height: 800px;
+    overflow: hidden;
 }
 
 canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* BOTONES LATERALES ORIGINALES */
+.side-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 10;
+}
+
+.arcade-btn {
     background: #000;
-    border: 3px solid #ffe600;
-    box-shadow: 0 0 20px #ffe600;
-    max-width: 90vw;
-    max-height: 90vh;
+    color: #ffe600;
+    border: 2px solid #ffe600;
+    padding: 12px 20px;
+    font-family: 'Press Start 2P';
+    font-size: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.1s;
+}
+
+.arcade-btn:hover {
+    background: #ffe600;
+    color: #000;
+}
+
+/* MENÚS SOBREPUESTOS (RETRO) */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 .hidden {
     display: none !important;
 }
-#gameOverUI {
-    display: none; /* Se activa desde JS */
+
+/* UI DE GAME OVER */
+.menu-overlay {
     position: absolute;
-    top: 60%; /* Aparece un poco abajo del texto "GAME OVER" del canvas */
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 3000;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.menu-btn {
+    font-family: 'Press Start 2P';
+    padding: 15px 30px;
+    margin: 10px;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+    text-transform: uppercase;
 }

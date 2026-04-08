@@ -1,8 +1,8 @@
+/* --- game.js --- */
 import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
-// LÍNEA CORREGIDA: Solo una importación de firebase
 import { saveScoreRealtime, currentUser, dbRealtime } from "./firebase.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
@@ -18,7 +18,7 @@ const exitToLoginBtn = document.getElementById("exitToLoginBtn");
 const confirmModal = document.getElementById("confirmModal");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
-const restartBtn = document.getElementById("restartBtn"); 
+const restartBtn = document.getElementById("restartBtn");
 const exitBtn = document.getElementById("exitBtn");
 
 // 2. ESTADO DEL JUEGO
@@ -27,49 +27,63 @@ let lives = { value: 3 };
 let level = 1;
 let lastTime = 0;
 let paused = false;
-let dynamicTileSize = 32;
+let dynamicTileSize = 32; // Tamaño base, se ajusta en resize
 let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
 
-// 3. FUNCIONES DE CONTROL
+// 3. FUNCIONES DE CONTROL (Sección lógica)
 function abrirMenuPrincipal() {
     paused = true;
     bgMusic.pause();
     if (menuScreen) menuScreen.classList.remove("hidden");
-    if (pauseBtn) pauseBtn.innerText = "RESUME";
+    // Eliminamos el cambio de texto del botón lateral
 }
 
 function cerrarMenuPrincipal() {
     paused = false;
     if (menuScreen) menuScreen.classList.add("hidden");
-    if (pauseBtn) pauseBtn.innerText = "PAUSE";
     if (!gameOver) bgMusic.play().catch(() => {});
 }
 
 function resize() {
     if (!canvas) return;
-    canvas.width = window.innerWidth * 0.95;
-    canvas.height = window.innerHeight * 0.85;
+    // Mantenemos la resolución del canvas fija según el CSS para evitar estiramientos
+    canvas.width = 600;
+    canvas.height = 800;
+
+    // CALCULAMOS EL TAMAÑO DE TILE AUTOMÁTICO PARA QUE EL MAPA QUEPA
     const cols = map[0].length;
     const rows = map.length;
+    
+    // Dejamos espacio para el HUD arriba (ej. 100px)
+    const availableHeight = canvas.height - 120;
+    
     const tileW = Math.floor(canvas.width / cols);
-    const tileH = Math.floor((canvas.height - 100) / rows);
+    const tileH = Math.floor(availableHeight / rows);
+    
     dynamicTileSize = Math.min(tileW, tileH);
+
     ctx.imageSmoothingEnabled = false;
 }
 
 window.onresize = resize;
 
+// 🍒 dibujo de cereza
 function drawCherry(ctx, x, y, s) {
     let cx = x + s / 2;
     let cy = y + s / 2;
+
     ctx.save();
     ctx.fillStyle = "#ff0000";
+    ctx.shadowBlur = s * 0.2;
+    ctx.shadowColor = "red";
     ctx.beginPath();
     ctx.arc(cx - s * 0.18, cy + s * 0.15, s * 0.22, 0, Math.PI * 2);
     ctx.arc(cx + s * 0.18, cy - s * 0.05, s * 0.22, 0, Math.PI * 2);
     ctx.fill();
+
+    ctx.shadowBlur = 0;
     ctx.strokeStyle = "#00ff00";
     ctx.lineWidth = Math.max(1.5, s * 0.06);
     ctx.beginPath();
@@ -85,11 +99,13 @@ function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
 
+    // lógica
     if (!gameOver && !paused) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
     }
 
+    // 🔥 GAME OVER
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
         bgMusic.pause();
@@ -107,6 +123,7 @@ function gameLoop(timestamp) {
         }
     }
 
+    // 🔴 RENDER GAME OVER
     if (gameOver) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -121,6 +138,7 @@ function gameLoop(timestamp) {
         return;
     }
 
+    // 🔵 CAMBIO DE NIVEL
     if (!map.flat().includes(2) && !levelChanging) {
         levelChanging = true;
         bgMusic.pause();
@@ -136,17 +154,20 @@ function gameLoop(timestamp) {
         }, 800);
     }
 
+    // --- RENDER NORMAL ---
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Centramos el mapa
     const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
-    const HUD_HEIGHT = 80; 
-    const offsetY = Math.floor((canvas.height - (map.length * dynamicTileSize)) / 2) + HUD_HEIGHT / 2;
+    // Dejamos 100px de espacio arriba para el HUD
+    const offsetY = 100; 
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * dynamicTileSize;
             let ry = offsetY + y * dynamicTileSize;
+
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
                 ctx.lineWidth = 2;
@@ -163,39 +184,63 @@ function gameLoop(timestamp) {
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // HUD
+    // --- HUD (RECUPERADO) ---
+    const hudY = 45;
     ctx.fillStyle = "#00ffff";
     ctx.font = "16px 'Press Start 2P'";
     ctx.textAlign = "left";
-    ctx.fillText(`SCORE: ${score.value}`, 30, 40);
+    ctx.fillText(`SCORE: ${score.value}`, 25, hudY);
+    
     ctx.textAlign = "right";
-    ctx.fillText(`LVL: ${level}`, canvas.width - 30, 40);
+    ctx.fillStyle = "#ffff00";
+    ctx.fillText(`LVL: ${level}`, canvas.width - 25, hudY);
+
+    // CORAZONES ❤️
+    ctx.textAlign = "left";
+    for (let i = 0; i < lives.value; i++) {
+        // Usamos una fuente estándar para el emoji si la retro no lo tiene
+        ctx.font = "24px Arial"; 
+        ctx.fillText("❤️", 25 + i * 35, hudY + 35);
+    }
 
     requestAnimationFrame(gameLoop);
 }
 
-// Controles
+// controles
 document.onkeydown = (e) => {
+    // 1. Tecla ESC (Manejo de Pausa)
     if (e.key === "Escape" && !gameOver) {
-        paused ? cerrarMenuPrincipal() : abrirMenuPrincipal();
+        if (!paused) {
+            abrirMenuPrincipal();
+        } else {
+            cerrarMenuPrincipal();
+        }
         return;
     }
+
     if (paused || gameOver) return;
+
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
     if (e.key === "ArrowRight") setDirection(1, 0);
+
     if (bgMusic.paused && !gameOver) bgMusic.play().catch(() => {});
 };
 
 // Eventos Interfaz
-pauseBtn.onclick = () => paused ? cerrarMenuPrincipal() : abrirMenuPrincipal();
+// Los botones laterales solo ABREN el menú
+pauseBtn.onclick = () => abrirMenuPrincipal();
 menuBtn.onclick = () => abrirMenuPrincipal();
+
+// El botón CONTINUE dentro del menú es el que CIERRA
 resumeBtn.onclick = () => cerrarMenuPrincipal();
+
 exitToLoginBtn.onclick = () => confirmModal.classList.remove("hidden");
 confirmYes.onclick = () => window.location = "login.html";
 confirmNo.onclick = () => confirmModal.classList.add("hidden");
 
+if (leaderBtn) leaderBtn.onclick = () => window.location = "leaderboard.html";
 if (restartBtn) restartBtn.onclick = () => location.reload();
 if (exitBtn) exitBtn.onclick = () => window.location = "login.html";
 
