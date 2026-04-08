@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pacman - Setup</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body style="background: black; display: flex; justify-content: center; align-items: center; height: 100vh;">
+
+    <div style="text-align: center; border: 2px solid #00ffff; padding: 40px; box-shadow: 0 0 20px #00ffff;">
+        <h2 style="color: #00ffff; font-family: 'Press Start 2P'; font-size: 18px; margin-bottom: 30px;">READY PLAYER ONE?</h2>
+        <p style="color: white; font-family: 'Press Start 2P'; font-size: 10px; margin-bottom: 20px;">ENTER YOUR NICKNAME</p>
+        
+        <input type="text" id="nickInput" maxlength="10" placeholder="PAC-MAN" 
+               style="text-transform: uppercase; text-align: center; font-family: 'Press Start 2P'; padding: 15px; background: #222; color: white; border: 2px solid white; outline: none;">
+        <br><br>
+        <button id="startBtn" class="menu-btn" style="background: #ffe600; color: black; border: none; width: 100%; cursor: pointer;">START GAME</button>
+    </div>
+
+    <script type="module">
+        import { dbRealtime, auth } from "./firebase.js";
+        import { ref, set } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+        const startBtn = document.getElementById("startBtn");
+        const nickInput = document.getElementById("nickInput");
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) window.location.href = "login.html";
+
+            startBtn.onclick = async () => {
+                const name = nickInput.value.trim().toUpperCase() || "PAC-MAN";
+                
+                // Guardamos el nombre en Firebase asociado al UID del usuario
+                await set(ref(dbRealtime, `users/${user.uid}/username`), name);
+                
+                // ¡Y ahora sí, vamos al juego!
+                window.location.href = "index.html";
+            };
+        });
+    </script>
+</body>
+</html>

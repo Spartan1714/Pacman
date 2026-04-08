@@ -34,20 +34,30 @@ let scoreSaved = false;
 let playerName = "Guest";
 
 onAuthStateChanged(auth, async (user) => {
-    if (lastTime === 0) {
-        if (user) {
-            // Detenemos todo aquí hasta que checkUsername termine
-            playerName = await checkUsername(user);
-            window.lastPlayer = playerName; 
-            
-            // SOLO cuando ya tenemos el nombre, arrancamos el motor del juego
+    if (user) {
+        // Intentamos obtener el nombre que guardamos en la página setup.html
+        const userRef = ref(dbRealtime, `users/${user.uid}/username`);
+        const snapshot = await get(userRef);
+        
+        if (snapshot.exists()) {
+            playerName = snapshot.val();
+        } else {
+            // Si por algún error no tiene nombre, lo mandamos a que se registre
+            window.location.href = "setup.html";
+            return;
+        }
+        
+        window.lastPlayer = playerName;
+
+        // Arrancamos el juego directamente
+        if (lastTime === 0) {
             resize();
             spawnGhosts(level);
             spawnCherry(level);
             requestAnimationFrame(gameLoop);
-        } else {
-            window.location.href = "login.html"; // Si no hay usuario, fuera
         }
+    } else {
+        window.location.href = "login.html";
     }
 });
 
