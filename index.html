@@ -1,80 +1,71 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<meta charset="UTF-8">
-<title>Pacman</title>
-
-<link rel="stylesheet" href="style.css">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-<style>
-#logoutBtn {
-    position:absolute;
-    top:10px;
-    right:10px;
-    z-index:1000;
-    font-family:'Press Start 2P';
-    font-size:10px;
-}
-</style>
-
+    <meta charset="UTF-8">
+    <title>Pacman</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Estilo para los botones de la esquina */
+        .top-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        .top-controls button {
+            font-family: 'Press Start 2P';
+            font-size: 10px;
+            padding: 8px;
+            cursor: pointer;
+        }
+        /* Estilo general para botones del menú */
+        .menu-btn {
+            font-family: 'Press Start 2P';
+            padding: 15px;
+            width: 250px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #exitToLoginBtn { background: #ff3333; color: white; }
+    </style>
 </head>
 
 <body>
 
 <canvas id="gameCanvas"></canvas>
 
-
-<button id="pauseBtn" style="
-position:absolute;
-top:10px;
-right:10px;
-z-index:1000;
-font-family:'Press Start 2P';
-font-size:10px;
-">
-PAUSE
-</button>
-
-<div id="menuScreen" style="
-display:none;
-position:absolute;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-color:white;
-z-index:2000;
-text-align:center;
-font-family:'Press Start 2P';
-">
-
-<h1 style="margin-top:100px;">MENU</h1>
-
-<button id="resumeBtn">PLAY</button><br><br>
-<button id="leaderBtn">TOP 10</button><br><br>
-<button id="logoutBtn">LOGOUT</button>
-
+<div class="top-controls">
+    <button id="pauseBtn">PAUSE</button>
+    <button id="menuBtn">MENU</button>
 </div>
 
+<div id="menuScreen" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); color:white; z-index:2000; text-align:center; font-family:'Press Start 2P';">
+    <h1 style="margin-top:100px; color: yellow;">GAME MENU</h1>
+    <button id="resumeBtn" class="menu-btn">CONTINUE</button><br>
+    <button id="leaderBtn" class="menu-btn">TOP 10</button><br>
+    <button id="exitToLoginBtn" class="menu-btn">EXIT TO LOGIN</button>
+</div>
 
-
-<!-- BOTÓN LOGOUT -->
-<button id="logoutBtn">LOGOUT</button>
+<div id="confirmModal" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,0,0,0.2); z-index:3000; text-align:center; font-family:'Press Start 2P';">
+    <div style="background:black; border: 2px solid white; display:inline-block; margin-top:200px; padding:40px;">
+        <p>QUIT TO MAIN MENU?</p><br><br>
+        <button id="confirmYes" style="color:red; cursor:pointer; font-family:'Press Start 2P';">YES</button>
+        <button id="confirmNo" style="margin-left:30px; cursor:pointer; font-family:'Press Start 2P';">NO</button>
+    </div>
+</div>
 
 <div id="gameOverScreen" class="game-over hidden">
     <h1 class="arcade-title">GAME OVER</h1>
     <p class="score-text">Score: <span id="finalScore"></span></p>
-
     <div class="buttons">
         <button id="restartBtn">RESTART</button>
         <button id="exitBtn">EXIT</button>
     </div>
 </div>
 
-<!-- SOLO CONTROL DE SESIÓN -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";

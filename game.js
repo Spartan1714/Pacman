@@ -176,6 +176,9 @@ function gameLoop(timestamp) {
 
 // controles
 document.onkeydown = (e) => {
+    // Si el juego está pausado o en Game Over, ignoramos las flechas
+    if (paused || gameOver) return;
+
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
@@ -186,37 +189,66 @@ document.onkeydown = (e) => {
     }
 };
 
+// Referencias a los elementos del nuevo index.html
 const pauseBtn = document.getElementById("pauseBtn");
+const menuBtn = document.getElementById("menuBtn");
 const menu = document.getElementById("menuScreen");
 const resumeBtn = document.getElementById("resumeBtn");
-const logoutBtn = document.getElementById("logoutBtn");
 const leaderBtn = document.getElementById("leaderBtn");
+const exitToLoginBtn = document.getElementById("exitToLoginBtn");
 
-// PAUSE
+const confirmModal = document.getElementById("confirmModal");
+const confirmYes = document.getElementById("confirmYes");
+const confirmNo = document.getElementById("confirmNo");
+
+// 1. Botón PAUSE (Solo congela/descongela sin abrir el menú)
 pauseBtn.onclick = () => {
+    paused = !paused; // Alterna el estado
+    pauseBtn.innerText = paused ? "RESUME" : "PAUSE";
+    
+    if (paused) {
+        bgMusic.pause();
+    } else {
+        if (!gameOver) bgMusic.play().catch(() => {});
+    }
+};
+
+// 2. Botón MENU (Pausa automáticamente y abre el panel de opciones)
+menuBtn.onclick = () => {
     paused = true;
     menu.style.display = "block";
     bgMusic.pause();
 };
 
-// RESUME
+// 3. Botón CONTINUE (Dentro del menú)
 resumeBtn.onclick = () => {
     paused = false;
     menu.style.display = "none";
-    bgMusic.play().catch(()=>{});
+    pauseBtn.innerText = "PAUSE"; // Aseguramos que el botón de pausa diga PAUSE al volver
+    bgMusic.play().catch(() => {});
 };
 
-// LOGOUT
-logoutBtn.onclick = () => {
+// 4. Salir con Confirmación
+exitToLoginBtn.onclick = () => {
+    confirmModal.style.display = "block";
+};
+
+confirmYes.onclick = () => {
+    // Aquí puedes llamar a logout() de firebase si lo deseas, 
+    // o simplemente redirigir como tenías antes:
     window.location = "login.html";
 };
 
-// LEADERBOARD
+confirmNo.onclick = () => {
+    confirmModal.style.display = "none";
+};
+
+// 5. Ver Leaderboard
 leaderBtn.onclick = () => {
     window.location = "leaderboard.html";
 };
 
-// inicio
+// --- INICIO DEL JUEGO ---
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
