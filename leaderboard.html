@@ -43,38 +43,34 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        function loadScores() {
-            const listElement = document.getElementById("scoresList");
-            
-            // En Realtime, para el Top 10 de mayor a menor:
-            // 1. Ordenamos por el hijo "score"
-            // 2. Tomamos los últimos 10 (porque ordena de menor a mayor por defecto)
-            const scoresRef = query(ref(db, 'scores'), orderByChild('score'), limitToLast(10));
+async function loadScores() {
+    const scoresRef = query(ref(db, 'scores'), orderByChild('score'));
+    const snapshot = await get(scoresRef);
+    const list = document.getElementById("scoresList");
+    list.innerHTML = "";
 
-            onValue(scoresRef, (snapshot) => {
-                listElement.innerHTML = "";
-                const rawData = [];
+    if (snapshot.exists()) {
+        let uniqueScores = {}; // Objeto para filtrar duplicados
 
-                snapshot.forEach((childSnapshot) => {
-                    rawData.push(childSnapshot.val());
-                });
+        snapshot.forEach(child => {
+            const data = child.val();
+            // Si el usuario ya existe en nuestro objeto, solo dejamos el más alto
+            if (!uniqueScores[data.username] || data.score > uniqueScores[data.username].score) {
+                uniqueScores[data.username] = data;
+            }
+        });
 
-                // Como limitToLast nos da los más altos pero en orden ASC, 
-                // los invertimos para que el #1 esté arriba.
-                rawData.reverse().forEach(data => {
-                    const li = document.createElement("li");
-                    li.innerHTML = `<span>${data.username || "GUEST"}</span> <span class="score-val">${data.score}</span>`;
-                    listElement.appendChild(li);
-                });
-
-                if (rawData.length === 0) {
-                    listElement.innerHTML = "<li>NO SCORES YET</li>";
-                }
-            }, (error) => {
-                console.error(error);
-                listElement.innerHTML = "<li>ERROR LOADING DATA</li>";
+        // Convertir a array, ordenar de mayor a menor y mostrar top 10
+        Object.values(uniqueScores)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 10)
+            .forEach(data => {
+                const li = document.createElement("li");
+                li.innerHTML = `<span>${data.username}</span> <span class="score-val">${data.score}</span>`;
+                list.appendChild(li);
             });
-        }
+    }
+}
 
         loadScores();
     </script>
