@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Leaderboard</title>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIza...",
+  authDomain: "pacman-game-e602a.firebaseapp.com",
+  projectId: "pacman-game-e602a"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function loadScores() {
+    const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
+    const querySnapshot = await getDocs(q);
+
+    const list = document.getElementById("scores");
+
+    querySnapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement("li");
+        li.textContent = `${data.username} - ${data.score}`;
+        list.appendChild(li);
+    });
+}
+
+loadScores();
+
+</script>
+</head>
+
+<body style="background:black;color:white;font-family:'Press Start 2P';text-align:center;">
+
+<h1>TOP 10</h1>
+<ol id="scores"></ol>
+
+<br>
+<button onclick="window.location='index.html'">BACK</button>
+
+</body>
+</html>

@@ -25,6 +25,42 @@
 
 <canvas id="gameCanvas"></canvas>
 
+
+<button id="pauseBtn" style="
+position:absolute;
+top:10px;
+right:10px;
+z-index:1000;
+font-family:'Press Start 2P';
+font-size:10px;
+">
+PAUSE
+</button>
+
+<div id="menuScreen" style="
+display:none;
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+color:white;
+z-index:2000;
+text-align:center;
+font-family:'Press Start 2P';
+">
+
+<h1 style="margin-top:100px;">MENU</h1>
+
+<button id="resumeBtn">PLAY</button><br><br>
+<button id="leaderBtn">TOP 10</button><br><br>
+<button id="logoutBtn">LOGOUT</button>
+
+</div>
+
+
+
 <!-- BOTÓN LOGOUT -->
 <button id="logoutBtn">LOGOUT</button>
 

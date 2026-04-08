@@ -12,6 +12,7 @@ let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
 let lastTime = 0;
+let paused = false;
 
 let gameOver = false;
 let levelChanging = false;
@@ -54,7 +55,7 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
 
     // lógica
-    if (!gameOver) {
+    if (!gameOver && !paused) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
     }
@@ -183,6 +184,36 @@ document.onkeydown = (e) => {
     if (bgMusic.paused && !gameOver) {
         bgMusic.play().catch(() => {});
     }
+};
+
+const pauseBtn = document.getElementById("pauseBtn");
+const menu = document.getElementById("menuScreen");
+const resumeBtn = document.getElementById("resumeBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const leaderBtn = document.getElementById("leaderBtn");
+
+// PAUSE
+pauseBtn.onclick = () => {
+    paused = true;
+    menu.style.display = "block";
+    bgMusic.pause();
+};
+
+// RESUME
+resumeBtn.onclick = () => {
+    paused = false;
+    menu.style.display = "none";
+    bgMusic.play().catch(()=>{});
+};
+
+// LOGOUT
+logoutBtn.onclick = () => {
+    window.location = "login.html";
+};
+
+// LEADERBOARD
+leaderBtn.onclick = () => {
+    window.location = "leaderboard.html";
 };
 
 // inicio
