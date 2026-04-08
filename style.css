@@ -1,104 +1,76 @@
-/* 1. Reset y Base para escala 1:1 */
-html, body {
-    margin: 0; padding: 0;
-    width: 100vw; height: 100vh;
-    overflow: hidden; background: black;
-    display: flex; justify-content: center; align-items: center;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-/* 2. El Contenedor Arcade */
+body {
+    background-color: #000;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Press Start 2P', cursive;
+    overflow: hidden;
+}
+
 .game-wrapper {
+    display: flex; /* Ponemos el juego y los botones de lado */
+    align-items: flex-start;
+    gap: 30px;
+}
+
+.game-area {
     position: relative;
-    display: flex; justify-content: center; align-items: center;
-    width: 100%; height: 100%;
-}
-
-/* 3. EL TRUCO DEL ESCALADO AUTOMÁTICO */
-canvas {
+    border: 5px solid #ffe600;
+    box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
     background: #000;
-    border: 3px solid #ffe600;
-    box-shadow: 0 0 20px #ffe600;
-    /* Esto lo hace autoadaptable */
-    width: 95vw; 
-    height: 85vh; 
-    object-fit: contain;
-    image-rendering: pixelated;
+    /* Damos un tamaño base para que el juego aparezca sí o sí */
+    width: 600px;  
+    height: 800px;
 }
 
-/* 4. Controles laterales pegados al canvas */
-.side-controls {
-    position: absolute;
-    top: 50%;
-    right: 20px;
-    transform: translateY(-50%);
+canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.button-sidebar {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    z-index: 10;
 }
 
-.side-controls button, .arcade-btn {
+.arcade-btn {
+    background: #000;
+    color: #ffe600;
+    border: 3px solid #ffe600;
+    padding: 15px 25px;
     font-family: 'Press Start 2P';
-    font-size: 10px;
-    padding: 12px;
-    cursor: pointer;
-    background: #222;
-    color: white;
-    border: 2px solid #ffe600;
-    transition: 0.1s;
-}
-
-.side-controls button:hover, .arcade-btn:hover { background: #ffe600; color: black; }
-
-/* 5. UI de Game Over (Botones abajo) */
-#gameOverUI {
-    display: none; /* Se activa desde JS */
-    position: absolute;
-    bottom: 10%; /* Bajamos para no tapar el centro */
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    flex-direction: row;
-    gap: 20px;
-}
-
-.btn-large {
-    font-family: 'Press Start 2P';
-    padding: 15px 30px;
-    cursor: pointer;
-    border: none;
     font-size: 14px;
+    cursor: pointer;
+    text-transform: uppercase;
 }
-#restartBtn { background: #00ff00; color: black; box-shadow: 0 0 10px #00ff00; }
-#exitBtn { background: #ff3333; color: white; box-shadow: 0 0 10px #ff3333; }
 
-/* 6. Overlays (Pausa) */
+.arcade-btn:hover {
+    background: #ffe600;
+    color: #000;
+}
+
+/* OVERLAYS */
 .overlay {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    z-index: 20;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-.login-container.hidden {
-    display: none !important;
-}
-
-/* Esta clase la pondremos solo cuando confirmemos que NO hay usuario */
-.login-container.show {
-    display: flex !important; /* Mantiene tu diseño original */
-}
-
-/* El modal de Nickname también empieza oculto */
-#usernameModal.hidden {
-    display: none !important;
-}
-
-/* Solo se mostrará cuando el JS le añada esta clase específica */
-.auth-needed {
-    display: flex !important;
-}
 .hidden { display: none !important; }
