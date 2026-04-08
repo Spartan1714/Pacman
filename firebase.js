@@ -1,10 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+// 1. IMPORTAR REALTIME DATABASE
+import { getDatabase, ref, set, push } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
   authDomain: "pacman-game-e602a.firebaseapp.com",
+  databaseURL: "https://pacman-game-e602a-default-rtdb.firebaseio.com", // 2. TU URL DE REALTIME
   projectId: "pacman-game-e602a",
   storageBucket: "pacman-game-e602a.firebasestorage.app",
   messagingSenderId: "316960307396",
@@ -12,37 +15,24 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-const db = getFirestore(app);
+const dbFirestore = getFirestore(app);
+const dbRealtime = getDatabase(app); // 3. INICIALIZAR REALTIME
 
-// 👇 usuario persistente (clave para Google login)
 export let currentUser = null;
 
 onAuthStateChanged(auth, (user) => {
     currentUser = user;
-
-    if (user) {
-        console.log("LOGGED:", user.email);
-    }
 });
 
-// guardar score
-export async function saveScore(username, score) {
-    try {
-        await addDoc(collection(db, "scores"), {
-            username,
-            score,
-            date: new Date()
-        });
-    } catch (e) {
-        console.error(e);
-    }
+// 4. FUNCIÓN PARA GUARDAR EN REALTIME
+export async function saveScoreRealtime(username, scoreValue) {
+    const scoresRef = ref(dbRealtime, 'scores');
+    const newScoreRef = push(scoresRef); // Crea una clave única para el registro
+    
+    return set(newScoreRef, {
+        username: username,
+        score: scoreValue,
+        timestamp: Date.now()
+    });
 }
-
-// logout
-export function logout() {
-    return signOut(auth);
-}
-
-export { app };

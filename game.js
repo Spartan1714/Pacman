@@ -61,30 +61,29 @@ function gameLoop(timestamp) {
     }
 
     // 🔥 GAME OVER + FIREBASE
-    if (lives.value <= 0 && !gameOver) {
-        gameOver = true;
+if (lives.value <= 0 && !gameOver) {
+    gameOver = true;
+    bgMusic.pause();
+    playSfx(sfx.gameover);
 
-        bgMusic.pause();
-        bgMusic.currentTime = 0;
+    if (!scoreSaved) {
+        scoreSaved = true;
 
-        playSfx(sfx.gameover);
-
-        // 🔥 GUARDAR SCORE UNA SOLA VEZ
-        if (!scoreSaved) {
-            scoreSaved = true;
-
-            let username = "Guest";
-
-            if (currentUser && currentUser.email) {
-                username = currentUser.email.split("@")[0];
-            }
-
-            saveScore(username, score.value);
-            window.lastPlayer = username;
-
-            console.log("Guardado:", username, score.value);
+        // Extraemos el nombre del usuario logueado o ponemos "Guest"
+        let username = "Guest";
+        if (currentUser && currentUser.email) {
+            username = currentUser.email.split("@")[0]; // Usa la parte antes del @
         }
+
+        // --- AQUÍ ES EL MOMENTO ---
+        // Llamamos a la función de Realtime Database
+        saveScoreRealtime(username, score.value)
+            .then(() => console.log("Puntaje sincronizado en Realtime"))
+            .catch(err => console.error("Error al sincronizar:", err));
+
+        window.lastPlayer = username;
     }
+}
 
     // 🔴 RENDER GAME OVER
     if (gameOver) {
