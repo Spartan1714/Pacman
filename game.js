@@ -5,8 +5,7 @@ import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.j
 import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScoreRealtime, currentUser, dbRealtime } from "./firebase.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-import { checkUsername } from "./username.js"; // Nuevo import
-// 1. REFERENCIAS AL DOM
+import { checkUsername } from "./username.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const menuScreen = document.getElementById("menuScreen");
@@ -30,6 +29,25 @@ let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
 let playerName = "Guest";
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        // Usuario logeado: buscamos su nombre real
+        playerName = await checkUsername(user);
+        window.lastPlayer = playerName; 
+    } else {
+        // No hay nadie: es un invitado
+        playerName = "GUEST";
+        window.lastPlayer = "GUEST";
+    }
+    
+    // Una vez que tenemos el nombre, arrancamos el juego
+    if (lastTime === 0) { // Evita arrancar dos veces
+        resize();
+        spawnGhosts(level);
+        spawnCherry(level);
+        requestAnimationFrame(gameLoop);
+    }
+});
 
 // 3. FUNCIONES DE MENÚ
 function abrirMenuPrincipal() {

@@ -2,24 +2,22 @@
 import { dbRealtime, currentUser } from "./firebase.js";
 import { ref, get, set } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-export async function checkUsername() {
-    if (!currentUser) return "Guest";
+export async function checkUsername(user) {
+    if (!user) return "GUEST"; // Si no hay usuario, es invitado
 
-    const userRef = ref(dbRealtime, `users/${currentUser.uid}`);
+    const userRef = ref(dbRealtime, `users/${user.uid}`);
     
     try {
         const snapshot = await get(userRef);
-        
         if (snapshot.exists() && snapshot.val().username) {
-            // Si ya tiene nombre, lo devolvemos
-            return snapshot.val().username;
+            return snapshot.val().username.toUpperCase();
         } else {
-            // Si no tiene, mostramos el formulario
-            return await mostrarModalUsername();
+            // Si el usuario existe pero no tiene username en la BD, lo pedimos
+            return await mostrarModalUsername(user);
         }
     } catch (e) {
-        console.error("Error checking username:", e);
-        return "Guest";
+        console.error("Error al obtener nombre:", e);
+        return "GUEST";
     }
 }
 
