@@ -1,13 +1,13 @@
-/* --- game.js --- */
-
 import { map, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
-import { saveScoreRealtime, currentUser, dbRealtime } from "./firebase.js";
+// Agregamos 'auth' a la importación de firebase
+import { saveScoreRealtime, currentUser, dbRealtime, auth } from "./firebase.js"; 
+// Importamos la función necesaria de Firebase Auth
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-import { checkUsername } from "./username.js";
-const canvas = document.getElementById("gameCanvas");
+import { checkUsername } from "./username.js"
 const ctx = canvas.getContext("2d");
 const menuScreen = document.getElementById("menuScreen");
 const resumeBtn = document.getElementById("resumeBtn");
