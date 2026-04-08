@@ -25,34 +25,21 @@ onAuthStateChanged(auth, (user) => {
 
 // FUNCIÓN PARA GUARDAR EN REALTIME (Asegúrate de que el nombre coincida con tu import en game.js)
 export async function saveScoreRealtime(username, scoreValue) {
-    // IMPORTANTE: Aquí usamos el nombre de usuario como la ruta fija
-    // Esto evita que se creen IDs aleatorios como -Opek...
-    const userScoreRef = ref(dbRealtime, `scores/${username}`);
+    // 🔥 LIMPIEZA: Quitamos puntos o caracteres que Firebase no acepta como llaves
+    const cleanUsername = username.replace(/\./g, '_'); 
+    
+    // Usamos el nombre limpio como ID único
+    const userScoreRef = ref(dbRealtime, `scores/${cleanUsername}`);
 
     try {
         const snapshot = await get(userScoreRef);
-        
         if (snapshot.exists()) {
-            const data = snapshot.val();
-            // Solo sobreescribimos si el nuevo puntaje es más alto
-            if (scoreValue > data.score) {
-                await set(userScoreRef, {
-                    username: username,
-                    score: scoreValue,
-                    timestamp: Date.now()
-                });
-                console.log("Récord actualizado");
+            if (scoreValue > snapshot.val().score) {
+                await set(userScoreRef, { username, score: scoreValue });
             }
         } else {
-            // Si es la primera vez que este usuario juega
-            await set(userScoreRef, {
-                username: username,
-                score: scoreValue,
-                timestamp: Date.now()
-            });
+            await set(userScoreRef, { username, score: scoreValue });
         }
-    } catch (e) {
-        console.error("Error al guardar:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 export { app };
