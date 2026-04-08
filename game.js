@@ -66,121 +66,53 @@ function drawCherry(ctx, x, y) {
 }
 
 function gameLoop(timestamp) {
-
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
 
-    // lógica
     if (!gameOver && !paused) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
     }
 
-    // 🔥 GAME OVER + FIREBASE
-    if (lives.value <= 0 && !gameOver) {
-        gameOver = true;
-        bgMusic.pause();
-        playSfx(sfx.gameover);
-        document.getElementById("gameOverUI").style.display = "flex";
-        if (!scoreSaved) {
-            scoreSaved = true;
-            let username = "Guest";
-            if (currentUser && currentUser.email) {
-                username = currentUser.email.split("@")[0];
-            }
-            saveScoreRealtime(username, score.value)
-                .then(() => console.log("Puntaje sincronizado en Realtime"))
-                .catch(err => console.error("Error al sincronizar:", err));
-
-            window.lastPlayer = username;
-        }
-    }
-
-    // 🔴 RENDER GAME OVER
-    if (gameOver) {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#ff0033";
-        ctx.font = "28px 'Press Start 2P'";
-        ctx.textAlign = "center";
-        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px 'Press Start 2P'";
-        ctx.fillText(`PLAYER: ${window.lastPlayer || "UNKNOWN"}`, canvas.width / 2, canvas.height / 2 + 40);
-        ctx.fillText(`SCORE: ${score.value}`, canvas.width / 2, canvas.height / 2 + 70);
-        return;
-    }
-
-    // 🔵 CAMBIO DE NIVEL
-    if (!map.flat().includes(2) && !levelChanging) {
-        levelChanging = true;
-        bgMusic.pause();
-        playSfx(sfx.levelup);
-        setTimeout(() => {
-            level++;
-            generarMapaRandom();
-            resetPlayer();
-            spawnGhosts(level);
-            spawnCherry(level);
-            bgMusic.play().catch(() => {});
-            levelChanging = false;
-        }, 800);
-    }
-
-    // --- RENDER NORMAL (MODIFICADO PARA ADAPTARSE) ---
+    // --- RENDER ---
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Usamos dynamicTileSize para centrar el mapa perfectamente
+    // Centrado dinámico
     const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
     const HUD_HEIGHT = 80; 
     const offsetY = Math.floor((canvas.height - (map.length * dynamicTileSize)) / 2) + HUD_HEIGHT / 2;
 
+    // Dibujo del Mapa
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
-            // 2. Multiplicamos por dynamicTileSize en lugar de TILE_SIZE
             let rx = offsetX + x * dynamicTileSize;
             let ry = offsetY + y * dynamicTileSize;
 
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
-                ctx.lineWidth = 2;
-                // Dibujamos la pared ajustada al nuevo tamaño
+                ctx.lineWidth = Math.max(1, dynamicTileSize * 0.08); 
                 ctx.strokeRect(rx + 2, ry + 2, dynamicTileSize - 4, dynamicTileSize - 4);
             } 
             else if (tile === 2) {
                 ctx.fillStyle = "#ff00ff";
-                // Centramos el punto en el nuevo tamaño de celda
                 ctx.fillRect(rx + dynamicTileSize/2 - 2, ry + dynamicTileSize/2 - 2, 4, 4);
             } 
             else if (tile === 3) {
-                // Pasamos dynamicTileSize a la cereza
+                // AQUÍ: Pasamos el tamaño dinámico a la cereza
                 drawCherry(ctx, rx, ry, dynamicTileSize);
             }
         });
     });
 
-    // 3. Pasamos el tamaño dinámico a los personajes para que escalen
+    // AQUÍ ESTÁ EL TRUCO: Pasamos dynamicTileSize a los otros archivos
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // HUD adaptable
-    const hudY = 40;
-    ctx.fillStyle = "#00ffff";
-    ctx.font = "16px 'Press Start 2P'";
-    ctx.textAlign = "left";
-    ctx.fillText(`SCORE: ${score.value}`, 30, hudY);
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#ffff00";
-    ctx.fillText(`LVL: ${level}`, canvas.width - 30, hudY);
+    // HUD (Score y Vidas)
+    renderHUD();
 
-    ctx.textAlign = "left";
-    for (let i = 0; i < lives.value; i++) {
-        ctx.font = "24px Arial";
-        ctx.fillText("❤️", 30 + i * 35, hudY + 35);
-    }
-
-    requestAnimationFrame(gameLoop);
+    if (!gameOver) requestAnimationFrame(gameLoop);
 }
 
 // controles
