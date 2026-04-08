@@ -32,23 +32,22 @@ let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
 let playerName = "Guest";
+
 onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        // Usuario logeado: buscamos su nombre real
-        playerName = await checkUsername(user);
-        window.lastPlayer = playerName; 
-    } else {
-        // No hay nadie: es un invitado
-        playerName = "GUEST";
-        window.lastPlayer = "GUEST";
-    }
-    
-    // Una vez que tenemos el nombre, arrancamos el juego
-    if (lastTime === 0) { // Evita arrancar dos veces
-        resize();
-        spawnGhosts(level);
-        spawnCherry(level);
-        requestAnimationFrame(gameLoop);
+    if (lastTime === 0) {
+        if (user) {
+            // Detenemos todo aquí hasta que checkUsername termine
+            playerName = await checkUsername(user);
+            window.lastPlayer = playerName; 
+            
+            // SOLO cuando ya tenemos el nombre, arrancamos el motor del juego
+            resize();
+            spawnGhosts(level);
+            spawnCherry(level);
+            requestAnimationFrame(gameLoop);
+        } else {
+            window.location.href = "login.html"; // Si no hay usuario, fuera
+        }
     }
 });
 
