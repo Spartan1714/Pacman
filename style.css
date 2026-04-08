@@ -1,39 +1,102 @@
-* { margin: 0; padding: 0; box-sizing: border-box; }
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pacman Arcade</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+<div class="game-container">
+
+    <!-- BOTONES -->
+    <button id="pauseBtn" class="hud-button">PAUSE</button>
+    <button id="menuBtn" class="hud-button">MENU</button>
+
+    <!-- CANVAS (SIN TAMAÑO FIJO) -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- PAUSA -->
+    <div id="menuScreen" class="overlay hidden">
+        <h1 style="color: yellow;">PAUSED</h1>
+        <button id="resumeBtn" class="menu-btn">CONTINUE</button>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="gameOverScreen" class="overlay hidden">
+        <h1 style="color: red;">GAME OVER</h1>
+        <button id="restartBtn" class="menu-btn">RETRY</button>
+    </div>
+
+</div>
+
+<!-- 🔥 FIREBASE (NO TOCAR TU LOGIN) -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
+    authDomain: "pacman-game-e602a.firebaseapp.com",
+    projectId: "pacman-game-e602a",
+    storageBucket: "pacman-game-e602a.firebasestorage.app",
+    messagingSenderId: "316960307396",
+    appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+    if (!user) window.location = "login.html";
+});
+</script>
+
+<!-- GAME -->
+<script type="module" src="game.js"></script>
+
+</body>
+</html>* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
 body {
     background: #000;
     height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     overflow: hidden;
     font-family: 'Press Start 2P', cursive;
 }
 
+/* CONTENEDOR PRINCIPAL */
 .game-container {
     position: relative;
+    width: 100vw;
+    height: 100vh;
     border: 4px solid #ffe600;
     background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* Forzamos dimensiones si el canvas falla */
-    min-width: 320px;
-    min-height: 400px;
+    overflow: hidden;
 }
 
+/* CANVAS ARREGLADO */
 canvas {
-    max-width: 95vw;
-    max-height: 90vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: block;
-    z-index: 5; /* Fondo */
 }
 
 /* BOTONES HUD */
 .hud-button {
     position: absolute;
     top: 15px;
-    z-index: 9999; /* Valor máximo para que no los tape NADA */
+    z-index: 9999;
     background: rgba(0, 0, 0, 0.85);
     color: #ffe600;
     border: 2px solid #ffe600;
@@ -53,17 +116,23 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
+
     background: rgba(0, 0, 0, 0.95);
+
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
     z-index: 10000;
     color: white;
 }
 
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
 
+/* BOTONES MENU */
 .menu-btn {
     margin-top: 20px;
     padding: 10px 20px;
