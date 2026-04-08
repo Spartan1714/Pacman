@@ -3,6 +3,7 @@ import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScore, currentUser } from "./firebase.js";
+import { logout } from "./firebase.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -179,7 +180,14 @@ function gameLoop(timestamp) {
 
     requestAnimationFrame(gameLoop);
 }
+document.getElementById("logoutBtn").onclick = () => {
+    logout();
 
+    // opcional: limpiar usuario visible
+    window.lastPlayer = null;
+
+    alert("Sesión cerrada");
+};
 // controles
 document.onkeydown = (e) => {
     if (e.key === "ArrowUp") setDirection(0, -1);
