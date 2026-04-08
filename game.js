@@ -5,7 +5,7 @@ import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.j
 import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScoreRealtime, currentUser, dbRealtime } from "./firebase.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
-
+import { checkUsername } from "./username.js"; // Nuevo import
 // 1. REFERENCIAS AL DOM
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -29,6 +29,7 @@ let dynamicTileSize = 32;
 let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
+let playerName = "Guest";
 
 // 3. FUNCIONES DE MENÚ
 function abrirMenuPrincipal() {
@@ -117,18 +118,26 @@ function gameLoop(timestamp) {
     const offsetX = 0; 
     const offsetY = 110;
 
-    // --- HUD (SCORE Y NIVEL) ---
+   // --- HUD (SCORE, USERNAME Y NIVEL) ---
     const fontSizeHUD = Math.max(12, Math.floor(dynamicTileSize * 0.6));
     ctx.font = `${fontSizeHUD}px 'Press Start 2P'`;
     ctx.textBaseline = "top";
 
+    // 1. Score a la izquierda
     ctx.fillStyle = "#00ffff";
     ctx.textAlign = "left";
     ctx.fillText(`SCORE:${score.value}`, 20, 30);
 
+    // 2. Nivel a la derecha
     ctx.fillStyle = "#ffff00";
     ctx.textAlign = "right";
     ctx.fillText(`LVL:${level}`, canvas.width - 20, 30);
+
+    // 3. Username en el centro (ESTO ES LO NUEVO)
+    ctx.fillStyle = "#ffffff"; // Blanco para que resalte del resto
+    ctx.textAlign = "center";
+    //playerName es la variable que definimos al inicio con el checkUsername()
+    ctx.fillText(window.lastPlayer || "PLAYER", canvas.width / 2, 30);
 
     // --- VIDAS (CORAZONES ÚNICOS) ---
     const heartSize = Math.floor(dynamicTileSize * 0.8);
@@ -174,9 +183,24 @@ function gameLoop(timestamp) {
 
     requestAnimationFrame(gameLoop);
 }
+async function init() {
+    // 1. Esperamos a que Firebase detecte al usuario
+    // (Asegúrate de que currentUser ya esté cargado o usa una promesa)
+    
+    // 2. Revisamos el Username
+    playerName = await checkUsername();
+    window.lastPlayer = playerName; // Para que el Game Over lo use
+
+    // 3. Arrancamos el juego
+    resize();
+    spawnGhosts(level);
+    spawnCherry(level);
+    requestAnimationFrame(gameLoop);
+}
 
 // INICIO
 resize();
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
+init(); // Llamamos a la función de inicio
