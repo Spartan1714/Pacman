@@ -39,7 +39,7 @@ onAuthStateChanged(auth, async (user) => {
         } else {
             // Si ya tiene nickname y estamos en el login, lo mandamos al juego
             if (window.location.pathname.includes("index.html") || window.location.pathname === "/") {
-                window.location.href = "game.html";
+                window.location.href = "game.js"
             }
         }
     }
