@@ -127,9 +127,10 @@ document.getElementById("gameOverUI").style.display = "flex";
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
-    const HUD_HEIGHT = 60;
-    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + HUD_HEIGHT / 2;
+  // Ya no usamos window.innerWidth, usamos las dimensiones del CANVAS
+const offsetX = Math.floor((canvas.width - (20 * TILE_SIZE)) / 2);
+const HUD_HEIGHT = 60; 
+const offsetY = Math.floor((canvas.height - (15 * TILE_SIZE)) / 2) + HUD_HEIGHT;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
