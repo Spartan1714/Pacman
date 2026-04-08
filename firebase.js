@@ -16,13 +16,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// usuario global
+// 👇 usuario persistente (clave para Google login)
 export let currentUser = null;
 
-// escuchar login
 onAuthStateChanged(auth, (user) => {
     currentUser = user;
-    console.log("USER:", user?.email);
+
+    if (user) {
+        console.log("LOGGED:", user.email);
+    }
 });
 
 // guardar score
@@ -40,5 +42,7 @@ export async function saveScore(username, score) {
 
 // logout
 export function logout() {
-    signOut(auth);
+    return signOut(auth);
 }
+
+export { app };

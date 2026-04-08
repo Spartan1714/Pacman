@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 <meta charset="UTF-8">
 <title>Pacman</title>
@@ -24,10 +25,9 @@
 
 <canvas id="gameCanvas"></canvas>
 
-<!-- BOTÓN LOGOUT (FUERA de scripts) -->
+<!-- BOTÓN LOGOUT -->
 <button id="logoutBtn">LOGOUT</button>
 
-<!-- GAME OVER UI (opcional) -->
 <div id="gameOverScreen" class="game-over hidden">
     <h1 class="arcade-title">GAME OVER</h1>
     <p class="score-text">Score: <span id="finalScore"></span></p>
@@ -38,7 +38,7 @@
     </div>
 </div>
 
-<!-- FIREBASE AUTH CHECK -->
+<!-- SOLO CONTROL DE SESIÓN -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
@@ -62,7 +62,6 @@ onAuthStateChanged(auth, (user) => {
 });
 </script>
 
-<!-- GAME -->
 <script type="module" src="game.js"></script>
 
 </body>

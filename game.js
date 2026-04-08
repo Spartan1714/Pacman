@@ -13,9 +13,10 @@ let level = 1;
 let lastTime = 0;
 
 let gameOver = false;
+let levelChanging = false;
 let scoreSaved = false;
 
-// logout botón seguro
+// 🔥 FIX logout (evita error null)
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
     logoutBtn.onclick = () => {
@@ -55,17 +56,16 @@ function gameLoop(timestamp) {
         }
     }
 
-    // render game over
     if (gameOver) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        ctx.fillStyle = "red";
+        ctx.fillStyle = "#ff0033";
         ctx.font = "28px 'Press Start 2P'";
         ctx.textAlign = "center";
         ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
 
-        ctx.fillStyle = "white";
+        ctx.fillStyle = "#ffffff";
         ctx.font = "12px 'Press Start 2P'";
         ctx.fillText(`PLAYER: ${window.lastPlayer || "UNKNOWN"}`, canvas.width / 2, canvas.height / 2 + 40);
         ctx.fillText(`SCORE: ${score.value}`, canvas.width / 2, canvas.height / 2 + 70);
@@ -73,12 +73,31 @@ function gameLoop(timestamp) {
         return;
     }
 
-    // render normal
+    // nivel
+    if (!map.flat().includes(2) && !levelChanging) {
+        levelChanging = true;
+
+        bgMusic.pause();
+        playSfx(sfx.levelup);
+
+        setTimeout(() => {
+            level++;
+            generarMapaRandom();
+            resetPlayer();
+            spawnGhosts(level);
+            spawnCherry(level);
+
+            bgMusic.play().catch(() => {});
+            levelChanging = false;
+
+        }, 800);
+    }
+
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const offsetX = 50;
-    const offsetY = 80;
+    const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
+    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + 30;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
@@ -87,7 +106,11 @@ function gameLoop(timestamp) {
 
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
-                ctx.strokeRect(rx, ry, TILE_SIZE, TILE_SIZE);
+                ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+            } 
+            else if (tile === 2) {
+                ctx.fillStyle = "#ff00ff";
+                ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
             }
         });
     });
