@@ -1,67 +1,54 @@
 html, body {
-    margin: 0; padding: 0; overflow: hidden;
-    background: black;
-    display: flex; justify-content: center; align-items: center;
-    height: 100vh; width: 100vw;
-}
-
-.game-wrapper {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-canvas {
-    background: #000;
-    border: 3px solid #ffe600;
-    box-shadow: 0 0 20px #ffe600;
-    max-width: 90vw;
-    max-height: 90vh;
-}
-
-.hidden {
-    display: none !important;
-}
-#gameOverUI {
-    display: none; /* Se activa desde JS */
-    position: absolute;
-    top: 60%; /* Aparece un poco abajo del texto "GAME OVER" del canvas */
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 3000;
-}
-html, body {
-    margin: 0;
+    margin: 0; 
     padding: 0;
-    width: 100vw;
+    width: 100vw; 
     height: 100vh;
-    overflow: hidden; /* Evita que aparezcan barras de scroll */
+    overflow: hidden;
     background: black;
-    display: flex;
-    justify-content: center;
+    display: flex; 
+    justify-content: center; 
     align-items: center;
 }
 
 .game-wrapper {
     position: relative;
-    display: flex;
-    justify-content: center;
+    display: flex; 
+    justify-content: center; 
     align-items: center;
-    /* Esto obliga al contenedor a no ser más grande que la pantalla */
-    width: 100%;
+    width: 100%; 
     height: 100%;
 }
 
 canvas {
     background: #000;
     border: 3px solid #ffe600;
-    box-shadow: 0 0 15px #ffe600;
+    box-shadow: 0 0 20px #ffe600;
     
-    /* EL TRUCO ESTÁ AQUÍ: */
-    max-width: 95vw;  /* Máximo 95% del ancho de pantalla */
-    max-height: 80vh; /* Máximo 80% del alto para dejar espacio a los textos */
+    /* ESCALADO AUTOMÁTICO: Estira el juego sin usar el zoom del navegador */
+    max-width: 95vw;
+    max-height: 85vh;
     width: auto;
     height: auto;
-    object-fit: contain; /* Mantiene la proporción sin estirar feo */
+    object-fit: contain;
+    image-rendering: pixelated; /* Evita que se vea borroso al agrandarse */
+}
+
+#gameOverUI {
+    display: none; /* Se activa desde game.js */
+    position: absolute;
+    bottom: 15%; /* Ubicado abajo para no tapar el mapa ni el centro */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    flex-direction: row;
+    gap: 20px;
+}
+
+/* Clases de utilidad */
+.hidden { display: none !important; }
+.arcade-btn, .btn-large {
+    font-family: 'Press Start 2P';
+    cursor: pointer;
+    border: none;
+    padding: 15px 30px;
 }
