@@ -8,44 +8,27 @@
 </head>
 <body>
 
-<div class="game-layout">
-    
-    <div class="top-ui">
-        <div id="scoreDisplay">SCORE: 0</div>
-        <div id="livesDisplay">LIVES: 3</div>
-    </div>
+<div class="game-container">
+    <button id="pauseBtn" class="hud-button">PAUSE</button>
+    <button id="menuBtn" class="hud-button">MENU</button>
 
     <canvas id="gameCanvas"></canvas>
 
-    <div class="side-controls">
-        <button id="pauseBtn">PAUSE</button>
-        <button id="menuBtn">MENU</button>
-    </div>
-
     <div id="menuScreen" class="overlay hidden">
-        <h1 class="arcade-title" style="font-size: 40px; color: yellow;">GAME MENU</h1>
-        <button id="resumeBtn" class="menu-btn" style="background: #00ff00;">CONTINUE</button>
-        <button id="leaderBtn" class="menu-btn" style="background: white;">TOP 10</button>
-        <button id="exitToLoginBtn" class="menu-btn">EXIT TO LOGIN</button>
-    </div>
-
-    <div id="confirmModal" class="overlay hidden" style="background:rgba(255,0,0,0.1);">
-        <div style="background:black; border: 4px solid white; padding:40px; text-align:center;">
-            <p style="color:white; font-family:'Press Start 2P'; margin-bottom:30px;">QUIT TO MAIN MENU?</p>
-            <button id="confirmYes" style="color:red; background:none; border:none; font-family:'Press Start 2P'; cursor:pointer; font-size:16px;">YES</button>
-            <button id="confirmNo" style="color:white; background:none; border:none; font-family:'Press Start 2P'; cursor:pointer; font-size:16px; margin-left:30px;">NO</button>
-        </div>
+        <h1 class="arcade-title">PAUSED</h1>
+        <button id="resumeBtn" class="menu-btn">CONTINUE</button>
+        <button id="leaderBtn" class="menu-btn">TOP 10</button>
+        <button id="exitToLoginBtn" class="menu-btn" style="color:#ff4444; border-color:#ff4444;">EXIT</button>
     </div>
 
     <div id="gameOverScreen" class="overlay hidden">
-        <h1 class="arcade-title">GAME OVER</h1>
-        <p class="score-text">SCORE: <span id="finalScore">0</span></p>
-        <div style="display:flex; gap:20px; margin-top:30px;">
-            <button id="restartBtn" class="menu-btn" style="background: #00ff00; width:auto;">RESTART</button>
-            <button id="exitBtn" class="menu-btn" style="background: #ff4444; width:auto; color:white;">EXIT</button>
+        <h1 class="arcade-title" style="color: red; text-shadow: 0 0 10px red;">GAME OVER</h1>
+        <p style="color: #00ffff; font-size: 14px; margin-bottom: 20px;">SCORE: <span id="finalScore">0</span></p>
+        <div style="display:flex;">
+            <button id="restartBtn" class="menu-btn">RETRY</button>
+            <button id="exitBtn" class="menu-btn">QUIT</button>
         </div>
     </div>
-
 </div>
 
 <script type="module">
@@ -65,9 +48,7 @@
     const auth = getAuth(app);
 
     onAuthStateChanged(auth, (user) => {
-        if (!user) {
-            window.location = "login.html";
-        }
+        if (!user) window.location = "login.html";
     });
 </script>
 
