@@ -23,3 +23,11 @@ canvas {
 .hidden {
     display: none !important;
 }
+#gameOverUI {
+    display: none; /* Se activa desde JS */
+    position: absolute;
+    top: 60%; /* Aparece un poco abajo del texto "GAME OVER" del canvas */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3000;
+}
