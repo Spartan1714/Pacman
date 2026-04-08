@@ -13,48 +13,32 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// 🔥 AUTH
 const auth = getAuth(app);
-
-// 🔥 FIRESTORE
 const db = getFirestore(app);
 
-// 🔥 USUARIO GLOBAL
+// usuario global
 export let currentUser = null;
 
-// 🔥 escuchar usuario
+// escuchar login
 onAuthStateChanged(auth, (user) => {
-    if (user) {
-        currentUser = user;
-        console.log("Usuario listo:", user.email);
-    } else {
-        currentUser = null;
-    }
+    currentUser = user;
+    console.log("USER:", user?.email);
 });
 
-// 🔥 GUARDAR SCORE
+// guardar score
 export async function saveScore(username, score) {
     try {
         await addDoc(collection(db, "scores"), {
-            username: username,
-            score: score,
+            username,
+            score,
             date: new Date()
         });
-        console.log("Score guardado");
     } catch (e) {
-        console.error("Error guardando score:", e);
+        console.error(e);
     }
 }
 
-// 🔥 LOGOUT (ESTO TE FALTABA)
+// logout
 export function logout() {
-    signOut(auth)
-        .then(() => {
-            console.log("Sesión cerrada");
-        })
-        .catch((error) => {
-            console.error("Error logout:", error);
-        });
+    signOut(auth);
 }
-
-export { app };
