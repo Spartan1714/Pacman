@@ -23,13 +23,11 @@ onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     
     if (user) {
-        // Al iniciar sesión, verificamos si ya existe su perfil en la DB
         const userRef = ref(dbRealtime, `users/${user.uid}`);
         const snapshot = await get(userRef);
 
-        // Si no existe el registro del usuario (o no tiene username), mostramos el modal
-        // Pero SOLO si estamos en la página de login (index.html)
         if (!snapshot.exists() || !snapshot.val().username) {
+            // Caso A: Usuario logueado pero SIN nickname
             const modal = document.getElementById("usernameModal");
             if (modal) {
                 modal.classList.remove("hidden");
@@ -37,10 +35,9 @@ onAuthStateChanged(auth, async (user) => {
                 configurarBotonNickname(user);
             }
         } else {
-            // Si ya tiene nickname y estamos en el login, lo mandamos al juego
-            if (window.location.pathname.includes("index.html") || window.location.pathname === "/") {
-                window.location.href = "index.html"
-            }
+            // Caso B: Usuario logueado y YA TIENE nickname
+            // Simplemente ocultamos todo lo relacionado al login para que se vea el juego
+            ocultarInterfazLogin();
         }
     }
 });
@@ -55,21 +52,13 @@ function configurarBotonNickname(user) {
         if (nickname.length < 3) return alert("Nickname too short!");
 
         try {
-            // 1. Guardamos el nickname en la base de datos
             await set(ref(dbRealtime, `users/${user.uid}`), {
                 username: nickname,
                 email: user.email
             });
 
-            // 2. 🔥 EN LUGAR DE REDIRIGIR, OCULTAMOS EL MODAL Y EL LOGIN
-            const modal = document.getElementById("usernameModal");
-            const loginContainer = document.getElementById("loginContainer"); // Asegúrate de que este ID sea el de tu caja de login
-
-            if (modal) modal.style.display = "none";
-            if (loginContainer) loginContainer.style.display = "none";
-
-            // 3. Opcional: Si tienes una función que inicia el juego, llámala aquí
-            // iniciarJuego(); 
+            // Una vez guardado, ocultamos la interfaz
+            ocultarInterfazLogin();
 
         } catch (e) {
             console.error("Error saving nickname:", e);
