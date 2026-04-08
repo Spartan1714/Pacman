@@ -191,7 +191,15 @@ document.onkeydown = (e) => {
         bgMusic.play().catch(() => {});
     }
 };
-
+export function logout() {
+    signOut(auth)
+        .then(() => {
+            console.log("Sesión cerrada");
+        })
+        .catch((error) => {
+            console.error("Error al cerrar sesión:", error);
+        });
+}
 // inicio
 spawnGhosts(level);
 spawnCherry(level);
