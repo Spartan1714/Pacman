@@ -171,13 +171,15 @@ function elegirDireccion(g) {
     g.dirY = opciones[0].dy;
 }
 
-export function drawGhosts(ctx, ox, oy) {
+// Añadimos 'size' como cuarto parámetro
+export function drawGhosts(ctx, ox, oy, size) {
     ghosts.forEach(g => {
         if (g.dead) return;
 
-        let x = ox + g.x * TILE_SIZE;
-        let y = oy + g.y * TILE_SIZE;
-        let s = TILE_SIZE;
+        // CAMBIO CLAVE: Usamos 'size' (el dynamicTileSize) en lugar de TILE_SIZE
+        let x = ox + g.x * size;
+        let y = oy + g.y * size;
+        let s = size;
 
         ctx.save();
 
@@ -185,23 +187,23 @@ export function drawGhosts(ctx, ox, oy) {
         ctx.shadowBlur = 15;
         ctx.shadowColor = ctx.fillStyle;
 
-        // cabeza
+        // Cabeza proporcional al tamaño dinámico
         ctx.beginPath();
         ctx.arc(x + s/2, y + s/2, s/2.2, Math.PI, 0);
 
-        // base
-        ctx.lineTo(x + s*0.8, y + s*0.9);
-        ctx.lineTo(x + s*0.6, y + s*0.75);
-        ctx.lineTo(x + s*0.4, y + s*0.9);
-        ctx.lineTo(x + s*0.2, y + s*0.75);
+        // Base (patitas) proporcional al tamaño dinámico
+        ctx.lineTo(x + s*0.9, y + s*0.9);
+        ctx.lineTo(x + s*0.7, y + s*0.75); // Ajusté un poco los puntos para que se vea mejor
+        ctx.lineTo(x + s*0.5, y + s*0.9);
+        ctx.lineTo(x + s*0.3, y + s*0.75);
+        ctx.lineTo(x + s*0.1, y + s*0.9);
         ctx.closePath();
 
         ctx.fill();
 
-        // ojos
+        // Ojos proporcionales
         ctx.shadowBlur = 0;
         ctx.fillStyle = "white";
-
         ctx.beginPath();
         ctx.arc(x + s*0.35, y + s*0.45, s*0.12, 0, Math.PI*2);
         ctx.arc(x + s*0.65, y + s*0.45, s*0.12, 0, Math.PI*2);
