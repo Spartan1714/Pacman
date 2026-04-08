@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
   authDomain: "pacman-game-e602a.firebaseapp.com",
@@ -11,24 +12,66 @@ const firebaseConfig = {
   appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
 };
 
-// 🔥 EVITAR DUPLICADOS: Solo inicializa si no existe ninguna app
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
 const auth = getAuth(app);
 const dbRealtime = getDatabase(app);
 
 export let currentUser = null;
 
-onAuthStateChanged(auth, (user) => {
+// Observador del estado de autenticación
+onAuthStateChanged(auth, async (user) => {
     currentUser = user;
+    
+    if (user) {
+        // Al iniciar sesión, verificamos si ya existe su perfil en la DB
+        const userRef = ref(dbRealtime, `users/${user.uid}`);
+        const snapshot = await get(userRef);
+
+        // Si no existe el registro del usuario (o no tiene username), mostramos el modal
+        // Pero SOLO si estamos en la página de login (index.html)
+        if (!snapshot.exists() || !snapshot.val().username) {
+            const modal = document.getElementById("usernameModal");
+            if (modal) {
+                modal.classList.remove("hidden");
+                modal.style.display = "flex";
+                configurarBotonNickname(user);
+            }
+        } else {
+            // Si ya tiene nickname y estamos en el login, lo mandamos al juego
+            if (window.location.pathname.includes("index.html") || window.location.pathname === "/") {
+                window.location.href = "game.html";
+            }
+        }
+    }
 });
 
-// FUNCIÓN PARA GUARDAR EN REALTIME (Asegúrate de que el nombre coincida con tu import en game.js)
+// Función interna para guardar el Nickname inicial
+function configurarBotonNickname(user) {
+    const btn = document.getElementById("saveNicknameBtn");
+    const input = document.getElementById("nicknameInput");
+
+    btn.onclick = async () => {
+        const nickname = input.value.trim();
+        if (nickname.length < 3) return alert("Nickname too short!");
+
+        try {
+            // Guardamos la asociación UID -> Username
+            await set(ref(dbRealtime, `users/${user.uid}`), {
+                username: nickname,
+                email: user.email
+            });
+            window.location.href = "game.html";
+        } catch (e) {
+            console.error("Error saving nickname:", e);
+        }
+    };
+}
+
+// FUNCIÓN PARA GUARDAR PUNTAJES (Ahora usa el Nickname guardado)
 export async function saveScoreRealtime(username, scoreValue) {
-    // 🔥 LIMPIEZA: Quitamos puntos o caracteres que Firebase no acepta como llaves
+    // Si username viene como el email, lo limpiamos, 
+    // pero idealmente pasarás el Nickname desde game.js
     const cleanUsername = username.replace(/\./g, '_'); 
-    
-    // Usamos el nombre limpio como ID único
     const userScoreRef = ref(dbRealtime, `scores/${cleanUsername}`);
 
     try {
@@ -42,4 +85,5 @@ export async function saveScoreRealtime(username, scoreValue) {
         }
     } catch (e) { console.error(e); }
 }
-export { app };
+
+export { auth, dbRealtime, app };

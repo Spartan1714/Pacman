@@ -141,7 +141,18 @@
     onAuthStateChanged(auth, (user) => {
         if (!user) window.location = "login.html";
     });
+
+    
 </script>
+<div id="usernameModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:1000; display:flex; align-items:center; justify-content:center;">
+    <div style="background:#111; padding:30px; border:2px solid #ffff00; text-align:center; border-radius:10px; box-shadow: 0 0 20px #ffff00;">
+        <h2 style="color:#ffff00; font-family:'Press Start 2P', cursive; font-size:18px; margin-bottom:20px;">CHOOSE YOUR NICKNAME</h2>
+        <input type="text" id="nicknameInput" placeholder="PLAYER NAME" maxlength="12" 
+               style="background:#222; border:1px solid #555; color:white; padding:10px; width:80%; text-align:center; margin-bottom:20px; outline:none;">
+        <br>
+        <button id="saveNicknameBtn" style="background:#ffff00; color:black; border:none; padding:10px 20px; font-weight:bold; cursor:pointer; font-family:sans-serif;">START GAME</button>
+    </div>
+</div>
 
 <script type="module" src="game.js"></script>
 

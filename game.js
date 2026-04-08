@@ -132,19 +132,24 @@ function gameLoop(timestamp) {
         bgMusic.pause();
         playSfx(sfx.gameover);
         document.getElementById("gameOverUI").style.display = "flex";
-        if (!scoreSaved) {
-            scoreSaved = true;
-            let username = "Guest";
-            if (currentUser && currentUser.email) {
-                username = currentUser.email.split("@")[0];
-            }
-            saveScoreRealtime(username, score.value)
-                .then(() => console.log("Puntaje sincronizado en Realtime"))
-                .catch(err => console.error("Error al sincronizar:", err));
+if (!scoreSaved) {
+    scoreSaved = true;
 
-            window.lastPlayer = username;
+    // Buscamos el nickname en la tabla 'users' usando el UID
+    const userRef = ref(dbRealtime, `users/${currentUser.uid}`);
+    get(userRef).then((snapshot) => {
+        let finalName = "Guest";
+        
+        if (snapshot.exists()) {
+            finalName = snapshot.val().username; // <--- AQUÍ está tu Nickname
+        } else if (currentUser.email) {
+            finalName = currentUser.email.split("@")[0];
         }
-    }
+
+        saveScoreRealtime(finalName, score.value);
+        window.lastPlayer = finalName;
+    });
+}
 
     // 🔴 RENDER GAME OVER
     if (gameOver) {
