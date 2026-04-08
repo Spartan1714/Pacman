@@ -1,196 +1,148 @@
 /* =========================
-   BASE LAYOUT
-========================= */
+    BASE & LAYOUT (ACTUALIZADO)
+   ========================= */
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Evita scroll bars al hacer zoom */
+    background: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100vw;
+}
 
-html, body{
-margin:0;
-padding:0;
-overflow:hidden;
-background:black;
+/* CONTENEDOR MAESTRO: Mantiene todo unido */
+.game-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Esto evita que el juego se desparrame en pantallas grandes */
+    max-width: 95vw;
+    max-height: 95vh;
+}
 
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
+/* UI SUPERIOR: Siempre pegada al canvas */
+.top-ui {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    font-size: clamp(12px, 1.5vw, 18px); /* Tamaño responsivo pero controlado */
+    z-index: 5;
 }
 
 /* =========================
-   GAME CANVAS
-========================= */
+    GAME CANVAS (TU ESTILO VIEJO)
+   ========================= */
+canvas {
+    background: #000;
+    border: 3px solid #ffe600;
 
-canvas{
-background:#000;
-border:3px solid #ffe600;
+    box-shadow:
+        0 0 10px #ffe600,
+        0 0 20px #ffe600,
+        0 0 40px #ffcc00;
 
-box-shadow:
-0 0 10px #ffe600,
-0 0 20px #ffe600,
-0 0 40px #ffcc00;
-
-display:block;
+    display: block;
+    /* Bloqueamos el tamaño para que no se mueva con el zoom */
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
 /* =========================
-   GAME OVER SCREEN
-========================= */
+    GAME OVER SCREEN (ESTRUCTURA NUEVA)
+   ========================= */
+.game-over {
+    position: absolute; /* Ahora es absoluta respecto al wrapper, no al body */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 
-.game-over{
-position:absolute;
-top:0;
-left:0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 
-width:100%;
-height:100%;
-
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-
-background:rgba(0,0,0,0.92);
-
-z-index:10;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 10;
 }
 
-.hidden{
-display:none;
+.hidden {
+    display: none;
 }
 
 /* =========================
-   GAME OVER TITLE
-========================= */
-
-.arcade-title{
-
-font-family:'Press Start 2P', cursive;
-
-font-size:clamp(60px,8vw,110px);
-
-color:#ffe600;
-
-letter-spacing:6px;
-
-/* borde tipo arcade */
-
--webkit-text-stroke:4px #000;
-
-/* glow retro */
-
-text-shadow:
-4px 4px 0 #000,
-0 0 10px #ffe600,
-0 0 20px #ffe600,
-0 0 40px #ffd000,
-0 0 80px #ffae00;
-
-animation: blink 1s infinite;
-
+    TU ESTILO DE BOTONES Y TEXTO (INTACTO)
+   ========================= */
+.arcade-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(40px, 8vw, 100px); /* Ajustado un poco para no salirse */
+    color: #ffe600;
+    letter-spacing: 6px;
+    -webkit-text-stroke: 4px #000;
+    text-shadow:
+        4px 4px 0 #000,
+        0 0 10px #ffe600,
+        0 0 20px #ffe600,
+        0 0 40px #ffd000;
+    animation: blink 1s infinite;
+    text-align: center;
 }
 
-/* =========================
-   SCORE TEXT
-========================= */
-
-.score-text{
-
-font-family:'Press Start 2P';
-
-font-size:clamp(14px,2vw,24px);
-
-color:#00ffff;
-
-margin-top:35px;
-
-text-shadow:
-2px 2px 0 #000,
-0 0 10px #00ffff,
-0 0 20px #00ffff;
-
+.score-text {
+    font-family: 'Press Start 2P';
+    font-size: clamp(14px, 2vw, 24px);
+    color: #00ffff;
+    margin-top: 35px;
+    text-shadow:
+        2px 2px 0 #000,
+        0 0 10px #00ffff;
 }
 
-/* =========================
-   BUTTON CONTAINER
-========================= */
-
-.buttons{
-
-margin-top:60px;
-
-display:flex;
-gap:40px;
-
+.buttons {
+    margin-top: 60px;
+    display: flex;
+    gap: 40px;
 }
 
-/* =========================
-   BUTTON STYLE
-========================= */
-
-.buttons button{
-
-font-family:'Press Start 2P';
-
-font-size:14px;
-
-padding:18px 40px;
-
-border:3px solid black;
-
-cursor:pointer;
-
-transition:all .1s ease;
-
-box-shadow:
-0 5px 0 #000,
-0 0 10px rgba(255,255,255,0.25);
-
+.buttons button {
+    font-family: 'Press Start 2P';
+    font-size: 14px;
+    padding: 18px 40px;
+    border: 3px solid black;
+    cursor: pointer;
+    transition: all .1s ease;
+    box-shadow:
+        0 5px 0 #000,
+        0 0 10px rgba(255,255,255,0.25);
 }
 
-/* =========================
-   BUTTON COLORS
-========================= */
-
-#restartBtn{
-
-background:#00ff00;
-
-text-shadow:
-0 0 10px #00ff00,
-0 0 20px #00ff00;
-
+#restartBtn {
+    background: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
 }
 
-#exitBtn{
-
-background:#ff4444;
-color:white;
-
-text-shadow:
-0 0 10px #ff4444,
-0 0 20px #ff4444;
-
+#exitBtn {
+    background: #ff4444;
+    color: white;
+    text-shadow: 0 0 10px #ff4444;
 }
 
-/* =========================
-   BUTTON PRESS EFFECT
-========================= */
-
-.buttons button:active{
-
-transform:translateY(5px);
-
-box-shadow:
-0 0 0 #000;
-
+.buttons button:active {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 #000;
 }
 
-/* =========================
-   BLINK ANIMATION
-========================= */
-
-@keyframes blink{
-
-0%{opacity:1;}
-50%{opacity:.65;}
-100%{opacity:1;}
-
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: .65; }
+    100% { opacity: 1; }
 }
