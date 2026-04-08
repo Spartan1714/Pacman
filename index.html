@@ -8,44 +8,29 @@
 </head>
 <body>
 
-<div class="game-container">
-    <div class="canvas-area">
-        <canvas id="gameCanvas"></canvas>
-    </div>
-
-    <div class="side-panel">
-        <button id="pauseBtn" class="arcade-btn">PAUSE</button>
-        <button id="menuBtn" class="arcade-btn">MENU</button>
-    </div>
-
-    <div id="menuScreen" class="overlay hidden">
-        <h1>PAUSED</h1>
-        <button id="resumeBtn" class="menu-btn">CONTINUE</button>
-        <button id="leaderBtn" class="menu-btn">TOP 10</button>
-        <button id="exitToLoginBtn" class="menu-btn red">EXIT</button>
-    </div>
 <div class="game-wrapper">
     <canvas id="gameCanvas"></canvas>
 
-    <div id="menuScreen" class="menu-overlay">
+    <div id="menuScreen" class="menu-overlay hidden">
         <h1 style="color: yellow; margin-bottom: 30px;">PAUSED</h1>
         <button id="resumeBtn" class="menu-btn">CONTINUE</button>
         <button id="leaderBtn" class="menu-btn">TOP 10</button>
-        <button id="exitToLoginBtn" class="menu-btn">EXIT TO LOGIN</button>
+        <button id="exitToLoginBtn" class="menu-btn" style="color: #ff3333;">EXIT</button>
     </div>
 
-    <div id="confirmModal" class="menu-overlay" style="background: rgba(255,0,0,0.2);">
-        <div style="background: black; border: 2px solid white; padding: 40px;">
+    <div id="confirmModal" class="menu-overlay hidden" style="background: rgba(255,0,0,0.2);">
+        <div style="background: black; border: 2px solid white; padding: 40px; text-align: center;">
             <p>QUIT TO MAIN MENU?</p><br>
-            <button id="confirmYes" style="color: red; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none;">YES</button>
+            <button id="confirmYes" style="color: #ff3333; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none;">YES</button>
             <button id="confirmNo" style="margin-left: 30px; cursor: pointer; font-family: 'Press Start 2P'; background: none; border: none; color: white;">NO</button>
         </div>
     </div>
-</div>
 
-<div id="gameOverUI" class="menu-overlay">
-    <button id="btnRestart" class="menu-btn" style="background: #00ff00; color: black;">RESTART</button>
-    <button id="btnExit" class="menu-btn" style="background: #ff3333; color: white;">EXIT</button>
+    <div id="gameOverUI" class="menu-overlay hidden">
+        <h2 style="color: #ff0033; margin-bottom: 20px;">GAME OVER</h2>
+        <button id="btnRestart" class="menu-btn" style="background: #00ff00; color: black; border: none;">RESTART</button>
+        <button id="btnExit" class="menu-btn" style="background: #ff3333; color: white; border: none;">EXIT</button>
+    </div>
 </div>
 
 <script type="module" src="game.js"></script>

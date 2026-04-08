@@ -1,11 +1,12 @@
-/* --- game.js Actualizado --- */
-import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
+/* --- game.js --- */
+import { map, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScoreRealtime, currentUser, dbRealtime } from "./firebase.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
+// 1. REFERENCIAS AL DOM
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const menuScreen = document.getElementById("menuScreen");
@@ -15,9 +16,10 @@ const exitToLoginBtn = document.getElementById("exitToLoginBtn");
 const confirmModal = document.getElementById("confirmModal");
 const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
-const restartBtn = document.getElementById("restartBtn");
-const exitBtn = document.getElementById("exitBtn");
+const restartBtn = document.getElementById("btnRestart");
+const exitBtn = document.getElementById("btnExit");
 
+// 2. ESTADO DEL JUEGO
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
@@ -28,37 +30,69 @@ let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
 
+// 3. FUNCIONES DE MENÚ
 function abrirMenuPrincipal() {
     paused = true;
     bgMusic.pause();
-    if (menuScreen) menuScreen.classList.remove("hidden");
+    menuScreen.classList.remove("hidden");
 }
 
 function cerrarMenuPrincipal() {
     paused = false;
-    if (menuScreen) menuScreen.classList.add("hidden");
+    menuScreen.classList.add("hidden");
+    confirmModal.classList.add("hidden");
     if (!gameOver) bgMusic.play().catch(() => {});
 }
 
-// Configuración del canvas (Preparando el escalado)
+// 4. CONTROL DE TECLADO (ESCAPE)
+window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !gameOver) {
+        if (!paused) {
+            abrirMenuPrincipal();
+        } else if (confirmModal.classList.contains("hidden")) {
+            cerrarMenuPrincipal();
+        }
+        return;
+    }
+
+    if (paused || gameOver) return;
+
+    if (e.key === "ArrowUp") setDirection(0, -1);
+    if (e.key === "ArrowDown") setDirection(0, 1);
+    if (e.key === "ArrowLeft") setDirection(-1, 0);
+    if (e.key === "ArrowRight") setDirection(1, 0);
+
+    if (bgMusic.paused && !gameOver) bgMusic.play().catch(() => {});
+});
+
+// 5. EVENTOS DE INTERFAZ
+resumeBtn.onclick = () => cerrarMenuPrincipal();
+
+exitToLoginBtn.onclick = () => {
+    confirmModal.classList.remove("hidden");
+};
+
+confirmNo.onclick = () => {
+    confirmModal.classList.add("hidden");
+};
+
+confirmYes.onclick = () => {
+    window.location = "login.html";
+};
+
+if (leaderBtn) leaderBtn.onclick = () => window.location = "leaderboard.html";
+if (restartBtn) restartBtn.onclick = () => location.reload();
+if (exitBtn) exitBtn.onclick = () => window.location = "login.html";
+
+// 6. RENDERIZADO Y LÓGICA
 function resize() {
-    if (!canvas) return;
     canvas.width = 600;
     canvas.height = 800;
-
     const cols = map[0].length;
     const rows = map.length;
     const availableHeight = canvas.height - 120;
-    
-    const tileW = Math.floor(canvas.width / cols);
-    const tileH = Math.floor(availableHeight / rows);
-    
-    dynamicTileSize = Math.min(tileW, tileH);
-    ctx.imageSmoothingEnabled = false;
+    dynamicTileSize = Math.min(Math.floor(canvas.width / cols), Math.floor(availableHeight / rows));
 }
-
-window.addEventListener('resize', resize);
-resize();
 
 function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
@@ -69,14 +103,14 @@ function gameLoop(timestamp) {
         updateGhosts(lives, score, dt);
     }
 
-    // Renderizado de fondo
+    // Dibujo
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
-    const offsetY = 110; 
+    const offsetY = 110;
 
-    // Dibujar Mapa
+    // Mapa
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * dynamicTileSize;
@@ -95,55 +129,33 @@ function gameLoop(timestamp) {
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // HUD - SCORE Y VIDAS
+    // HUD
     ctx.fillStyle = "#00ffff";
     ctx.font = "16px 'Press Start 2P'";
     ctx.textAlign = "left";
     ctx.fillText(`SCORE: ${score.value}`, 25, 50);
-    
     ctx.textAlign = "right";
-    ctx.fillStyle = "#ffff00";
     ctx.fillText(`LVL: ${level}`, canvas.width - 25, 50);
 
-    // CORAZONES ❤️ con brillo
+    // Vidas con corazón brillante
     for (let i = 0; i < lives.value; i++) {
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = "red";
-        ctx.font = "24px Arial"; 
+        ctx.font = "24px Arial";
         ctx.textAlign = "left";
         ctx.fillText("❤️", 25 + i * 40, 90);
         ctx.shadowBlur = 0;
     }
 
-    if (!gameOver) requestAnimationFrame(gameLoop);
-}
-
-// CONTROL DE ESCAPE (Manejador único)
-window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-        if (!gameOver) {
-            paused ? cerrarMenuPrincipal() : abrirMenuPrincipal();
-        }
-        return;
+    if (lives.value <= 0 && !gameOver) {
+        gameOver = true;
+        document.getElementById("gameOverUI").classList.remove("hidden");
     }
 
-    if (paused || gameOver) return;
+    requestAnimationFrame(gameLoop);
+}
 
-    if (e.key === "ArrowUp") setDirection(0, -1);
-    if (e.key === "ArrowDown") setDirection(0, 1);
-    if (e.key === "ArrowLeft") setDirection(-1, 0);
-    if (e.key === "ArrowRight") setDirection(1, 0);
-
-    if (bgMusic.paused && !gameOver) bgMusic.play().catch(() => {});
-});
-
-// Eventos del Menú (Botones internos)
-if (resumeBtn) resumeBtn.onclick = () => cerrarMenuPrincipal();
-if (exitToLoginBtn) exitToLoginBtn.onclick = () => window.location = "login.html";
-if (leaderBtn) leaderBtn.onclick = () => window.location = "leaderboard.html";
-if (restartBtn) restartBtn.onclick = () => location.reload();
-
-// Inicio
+resize();
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
