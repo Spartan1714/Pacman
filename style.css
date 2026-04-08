@@ -1,108 +1,33 @@
-/* 1. RESET Y BASE: Forzamos escala 1:1 en el navegador */
 html, body {
-    margin: 0;
-    padding: 0;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden; /* Prohibido el scroll */
+    margin: 0; padding: 0; overflow: hidden;
     background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh; width: 100vw;
 }
 
-/* 2. CONTENEDOR: El centro de tu arcade */
 .game-wrapper {
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Esto permite que los elementos internos se escalen respecto a este contenedor */
-    width: fit-content;
-    height: fit-content;
 }
 
-/* 3. CANVAS: Escalado inteligente */
 canvas {
     background: #000;
     border: 3px solid #ffe600;
     box-shadow: 0 0 20px #ffe600;
-    display: block;
-
-    /* EL SECRETO DEL ESCALADO: 
-       Hacemos que el canvas ocupe casi toda la pantalla (90%) 
-       pero se detenga si llega al límite de ancho o alto */
-    max-width: 90vw; 
-    max-height: 85vh;
-    width: auto;
-    height: auto;
-    
-    /* Mantiene los píxeles nítidos sin desenfoque de navegador */
-    image-rendering: pixelated;
-    object-fit: contain;
+    max-width: 90vw;
+    max-height: 90vh;
 }
 
-/* 4. CONTROLES LATERALES: Ahora se pegan al borde del canvas escalado */
-.side-controls {
-    position: absolute;
-    top: 20px;
-    right: -140px; /* Ajustado para que no tape el canvas */
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    z-index: 10;
+.hidden {
+    display: none !important;
 }
-
-.side-controls button, .arcade-btn {
-    font-family: 'Press Start 2P';
-    font-size: 10px;
-    padding: 12px;
-    cursor: pointer;
-    background: #222;
-    color: white;
-    border: 2px solid #ffe600;
-    transition: 0.1s;
-}
-
-.side-controls button:hover, .arcade-btn:hover {
-    background: #ffe600;
-    color: black;
-}
-
-/* 5. INTERFAZ DE GAME OVER: Centrada y sobrepuesta */
 #gameOverUI {
-    display: none; /* Se activa desde game.js */
+    display: none; /* Se activa desde JS */
     position: absolute;
-    top: 65%; /* Posicionado para no tapar el texto 'GAME OVER' del dibujo */
+    top: 60%; /* Aparece un poco abajo del texto "GAME OVER" del canvas */
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 50;
-    flex-direction: row;
-    gap: 20px;
+    z-index: 3000;
 }
-
-.btn-large {
-    font-family: 'Press Start 2P';
-    padding: 15px 30px;
-    cursor: pointer;
-    border: none;
-    font-size: 14px;
-}
-
-#restartBtn { background: #00ff00; color: black; box-shadow: 0 0 10px #00ff00; }
-#exitBtn { background: #ff3333; color: white; box-shadow: 0 0 10px #ff3333; }
-
-/* 6. OVERLAYS (Menú de Pausa) */
-.overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 20;
-}
-
-.hidden { display: none !important; }
