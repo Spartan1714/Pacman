@@ -151,6 +151,28 @@
         if (!user) window.location = "login.html";
     });
 </script>
+<script type="module">
+        // Tu configuración de Firebase...
+    </script>
+
+    <script>
+        const usernameModal = document.getElementById('usernameModal');
+        const saveNicknameBtn = document.getElementById('saveNicknameBtn');
+        const nicknameInput = document.getElementById('nicknameInput');
+
+        saveNicknameBtn.addEventListener('click', () => {
+            const name = nicknameInput.value.trim();
+            if (name !== "") {
+                localStorage.setItem('pacmanNickname', name);
+                usernameModal.style.display = 'none'; // Esto cierra la pantalla negra
+                console.log("Iniciando juego para:", name);
+                window.dispatchEvent(new CustomEvent('gameStart'));
+            } else {
+                alert("Please enter a nickname!");
+                nicknameInput.style.border = "2px solid red";
+            }
+        });
+    </script>
 
 <script type="module" src="game.js"></script>
 
