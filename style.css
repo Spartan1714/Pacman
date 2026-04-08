@@ -1,76 +1,148 @@
-* {
+/* =========================
+    BASE & LAYOUT (ACTUALIZADO)
+   ========================= */
+html, body {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    background-color: #000;
-    height: 100vh;
+    overflow: hidden; /* Evita scroll bars al hacer zoom */
+    background: black;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-family: 'Press Start 2P', cursive;
-    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
 }
 
+/* CONTENEDOR MAESTRO: Mantiene todo unido */
 .game-wrapper {
-    display: flex; /* Ponemos el juego y los botones de lado */
-    align-items: flex-start;
-    gap: 30px;
-}
-
-.game-area {
     position: relative;
-    border: 5px solid #ffe600;
-    box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
-    background: #000;
-    /* Damos un tamaño base para que el juego aparezca sí o sí */
-    width: 600px;  
-    height: 800px;
-}
-
-canvas {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.button-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    align-items: center;
+    /* Esto evita que el juego se desparrame en pantallas grandes */
+    max-width: 95vw;
+    max-height: 95vh;
 }
 
-.arcade-btn {
+/* UI SUPERIOR: Siempre pegada al canvas */
+.top-ui {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    font-size: clamp(12px, 1.5vw, 18px); /* Tamaño responsivo pero controlado */
+    z-index: 5;
+}
+
+/* =========================
+    GAME CANVAS (TU ESTILO VIEJO)
+   ========================= */
+canvas {
     background: #000;
-    color: #ffe600;
     border: 3px solid #ffe600;
-    padding: 15px 25px;
-    font-family: 'Press Start 2P';
-    font-size: 14px;
-    cursor: pointer;
-    text-transform: uppercase;
+
+    box-shadow:
+        0 0 10px #ffe600,
+        0 0 20px #ffe600,
+        0 0 40px #ffcc00;
+
+    display: block;
+    /* Bloqueamos el tamaño para que no se mueva con el zoom */
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
 }
 
-.arcade-btn:hover {
-    background: #ffe600;
-    color: #000;
-}
-
-/* OVERLAYS */
-.overlay {
-    position: absolute;
+/* =========================
+    GAME OVER SCREEN (ESTRUCTURA NUEVA)
+   ========================= */
+.game-over {
+    position: absolute; /* Ahora es absoluta respecto al wrapper, no al body */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 10;
 }
 
-.hidden { display: none !important; }
+.hidden {
+    display: none;
+}
+
+/* =========================
+    TU ESTILO DE BOTONES Y TEXTO (INTACTO)
+   ========================= */
+.arcade-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(40px, 8vw, 100px); /* Ajustado un poco para no salirse */
+    color: #ffe600;
+    letter-spacing: 6px;
+    -webkit-text-stroke: 4px #000;
+    text-shadow:
+        4px 4px 0 #000,
+        0 0 10px #ffe600,
+        0 0 20px #ffe600,
+        0 0 40px #ffd000;
+    animation: blink 1s infinite;
+    text-align: center;
+}
+
+.score-text {
+    font-family: 'Press Start 2P';
+    font-size: clamp(14px, 2vw, 24px);
+    color: #00ffff;
+    margin-top: 35px;
+    text-shadow:
+        2px 2px 0 #000,
+        0 0 10px #00ffff;
+}
+
+.buttons {
+    margin-top: 60px;
+    display: flex;
+    gap: 40px;
+}
+
+.buttons button {
+    font-family: 'Press Start 2P';
+    font-size: 14px;
+    padding: 18px 40px;
+    border: 3px solid black;
+    cursor: pointer;
+    transition: all .1s ease;
+    box-shadow:
+        0 5px 0 #000,
+        0 0 10px rgba(255,255,255,0.25);
+}
+
+#restartBtn {
+    background: #00ff00;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+#exitBtn {
+    background: #ff4444;
+    color: white;
+    text-shadow: 0 0 10px #ff4444;
+}
+
+.buttons button:active {
+    transform: translateY(5px);
+    box-shadow: 0 0 0 #000;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: .65; }
+    100% { opacity: 1; }
+}

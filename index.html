@@ -1,52 +1,105 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Pacman Arcade</title>
+    <title>Pacman</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos adicionales que pediste mantener */
+        .top-controls {
+            position: absolute;
+            top: 10px;
+            right: -120px; /* Se posiciona fuera del canvas pero dentro del wrapper */
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .top-controls button {
+            font-family: 'Press Start 2P';
+            font-size: 10px;
+            padding: 12px;
+            cursor: pointer;
+            background: #222;
+            color: white;
+            border: 2px solid #ffe600;
+        }
+        .menu-btn {
+            font-family: 'Press Start 2P';
+            padding: 15px;
+            width: 250px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #exitToLoginBtn { background: #ff3333; color: white; }
+    </style>
 </head>
+
 <body>
 
 <div class="game-wrapper">
-    <div class="game-area">
-        <canvas id="gameCanvas"></canvas>
+    
+    <div class="top-ui">
+        <div id="scoreDisplay">SCORE: 0</div>
+        <div id="livesDisplay">LIVES: 3</div>
     </div>
 
-    <div class="button-sidebar">
-        <button id="pauseBtn" class="arcade-btn">PAUSE</button>
-        <button id="menuBtn" class="arcade-btn">MENU</button>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="top-controls">
+        <button id="pauseBtn">PAUSE</button>
+        <button id="menuBtn">MENU</button>
     </div>
-</div>
 
-<div id="menuScreen" class="overlay hidden">
-    <h1 style="color: yellow;">PAUSED</h1>
-    <button id="resumeBtn" class="arcade-btn">CONTINUE</button>
-</div>
+    <div id="menuScreen" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); color:white; z-index:2000; text-align:center; font-family:'Press Start 2P';">
+        <h1 style="margin-top:100px; color: yellow;">GAME MENU</h1>
+        <button id="resumeBtn" class="menu-btn">CONTINUE</button><br>
+        <button id="leaderBtn" class="menu-btn">TOP 10</button><br>
+        <button id="exitToLoginBtn" class="menu-btn">EXIT TO LOGIN</button>
+    </div>
 
-<div id="gameOverScreen" class="overlay hidden">
-    <h1 style="color: red;">GAME OVER</h1>
-    <button id="restartBtn" class="arcade-btn">RETRY</button>
-</div>
+    <div id="confirmModal" style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,0,0,0.2); z-index:3000; text-align:center; font-family:'Press Start 2P';">
+        <div style="background:black; border: 2px solid white; display:inline-block; margin-top:200px; padding:40px;">
+            <p>QUIT TO MAIN MENU?</p><br><br>
+            <button id="confirmYes" style="color:red; cursor:pointer; font-family:'Press Start 2P'; border:none; background:none;">YES</button>
+            <button id="confirmNo" style="margin-left:30px; cursor:pointer; font-family:'Press Start 2P'; border:none; background:none; color:white;">NO</button>
+        </div>
+    </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    <div id="gameOverScreen" class="game-over hidden">
+        <h1 class="arcade-title">GAME OVER</h1>
+        <p class="score-text">Score: <span id="finalScore">0</span></p>
+        <div class="buttons">
+            <button id="restartBtn">RESTART</button>
+            <button id="exitBtn">EXIT</button>
+        </div>
+    </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
-      authDomain: "pacman-game-e602a.firebaseapp.com",
-      projectId: "pacman-game-e602a",
-      storageBucket: "pacman-game-e602a.firebasestorage.app",
-      messagingSenderId: "316960307396",
-      appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
-    };
+</div> <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    onAuthStateChanged(auth, (user) => { if (!user) window.location = "login.html"; });
+const firebaseConfig = {
+  apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
+  authDomain: "pacman-game-e602a.firebaseapp.com",
+  projectId: "pacman-game-e602a",
+  storageBucket: "pacman-game-e602a.firebasestorage.app",
+  messagingSenderId: "316960307396",
+  appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location = "login.html";
+    }
+});
 </script>
 
 <script type="module" src="game.js"></script>
+
 </body>
 </html>
