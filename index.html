@@ -5,29 +5,35 @@
     <title>Pacman Arcade</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        html, body {
-            margin: 0; padding: 0; overflow: hidden;
-            background: black; display: flex;
-            justify-content: center; align-items: center;
-            height: 100vh; width: 100vw;
+        /* Diseño General */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: #000;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
             font-family: 'Press Start 2P', cursive;
         }
 
         .game-wrapper {
-            position: relative;
             display: flex;
-            align-items: flex-start; /* Alinea botones arriba a la derecha */
+            align-items: flex-start;
             gap: 20px;
         }
 
-        /* FUERZA EL TAMAÑO AQUÍ: Si tu juego no se ve, es porque el canvas mide 0 */
+        /* Área del Juego (Captura Original) */
         .canvas-container {
             position: relative;
             border: 4px solid #ffe600;
-            box-shadow: 0 0 20px #ffe600;
+            box-shadow: 0 0 20px rgba(255, 230, 0, 0.6);
             background: #000;
-            width: 600px;  /* Ajusta según el tamaño de tu laberinto */
-            height: 800px; /* Ajusta según el tamaño de tu laberinto */
+            /* Estas medidas deben coincidir con tu mapa en game.js */
+            width: 600px;
+            height: 800px;
         }
 
         canvas {
@@ -36,6 +42,7 @@
             display: block;
         }
 
+        /* Botones Laterales */
         .side-controls {
             display: flex;
             flex-direction: column;
@@ -43,16 +50,19 @@
         }
 
         .arcade-btn {
-            font-family: 'Press Start 2P';
-            font-size: 10px;
-            padding: 12px;
-            cursor: pointer;
             background: #000;
             color: #ffe600;
             border: 2px solid #ffe600;
+            padding: 15px;
+            font-family: 'Press Start 2P';
+            font-size: 10px;
+            cursor: pointer;
+            text-transform: uppercase;
         }
+
         .arcade-btn:hover { background: #ffe600; color: #000; }
 
+        /* Pantallas de Interfaz */
         .overlay {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
@@ -63,6 +73,34 @@
         }
 
         .hidden { display: none !important; }
+
+        /* Modal de Registro de Nickname */
+        #usernameModal {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            display: none; /* Se activa por JS */
+            align-items: center; justify-content: center;
+        }
+
+        .modal-content {
+            background: #111;
+            padding: 40px;
+            border: 3px solid #ffe600;
+            text-align: center;
+        }
+
+        input {
+            background: #222;
+            border: 1px solid #555;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-family: 'Press Start 2P';
+            width: 80%;
+        }
     </style>
 </head>
 <body>
@@ -83,45 +121,68 @@
     </div>
 </div>
 
-<div id="usernameModal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:1000; display:flex; align-items:center; justify-content:center;">
-    <div style="background:#111; padding:40px; border:3px solid #ffe600; text-align:center;">
-        <h2 style="color:#ffe600; font-size:16px; margin-bottom:20px;">ENTER NICKNAME</h2>
-        <input type="text" id="nicknameInput" maxlength="12" style="background:#222; border:1px solid #555; color:white; padding:10px; text-align:center; margin-bottom:20px; font-family:'Press Start 2P';">
+<div id="usernameModal">
+    <div class="modal-content">
+        <h2 style="color:#ffe600; font-size:14px; margin-bottom:20px;">ENTER NICKNAME</h2>
+        <input type="text" id="nicknameInput" maxlength="12" placeholder="...">
         <br>
         <button id="saveNicknameBtn" class="arcade-btn" style="background:#ffe600; color:black;">START GAME</button>
     </div>
 </div>
 
 <script type="module">
-    // --- Lógica del Botón ---
-    const modal = document.getElementById('usernameModal');
-    const btn = document.getElementById('saveNicknameBtn');
-    const input = document.getElementById('nicknameInput');
-
-    btn.onclick = () => {
-        if (input.value.trim() !== "") {
-            localStorage.setItem('pacmanNickname', input.value.trim());
-            modal.classList.add('hidden'); // Oculta el modal
-            
-            // Forzamos al juego a arrancar
-            window.dispatchEvent(new CustomEvent('gameStart'));
-        }
-    };
-</script>
-
-<script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-    
+
+    // Tu Configuración
     const firebaseConfig = {
         apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
         authDomain: "pacman-game-e602a.firebaseapp.com",
         projectId: "pacman-game-e602a",
         appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
     };
+
     initializeApp(firebaseConfig);
     const auth = getAuth();
-    onAuthStateChanged(auth, (user) => { if (!user) window.location = "login.html"; });
+
+    const modal = document.getElementById('usernameModal');
+    const btnSave = document.getElementById('saveNicknameBtn');
+    const inputNick = document.getElementById('nicknameInput');
+
+    // Función para arrancar el juego
+    function initGameFlow(nickname) {
+        localStorage.setItem('pacmanNickname', nickname);
+        modal.style.display = 'none';
+        console.log("Iniciando juego para:", nickname);
+        
+        // Disparamos el evento para game.js
+        setTimeout(() => {
+            window.dispatchEvent(new CustomEvent('gameStart', { detail: { nickname } }));
+        }, 100);
+    }
+
+    // Verificación de Usuario
+    onAuthStateChanged(auth, (user) => {
+        if (!user) {
+            window.location = "login.html";
+        } else {
+            const savedName = localStorage.getItem('pacmanNickname');
+            if (savedName) {
+                initGameFlow(savedName); // Ya tiene nombre, entra directo
+            } else {
+                modal.style.display = 'flex'; // No tiene nombre, pedirlo
+            }
+        }
+    });
+
+    // Evento del botón
+    btnSave.onclick = () => {
+        if (inputNick.value.trim() !== "") {
+            initGameFlow(inputNick.value.trim());
+        } else {
+            alert("Please enter a name");
+        }
+    };
 </script>
 
 <script type="module" src="game.js"></script>
