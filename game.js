@@ -272,15 +272,3 @@ if (exitBtn) {
     };
 }
 
-function resize() {
-    // Definimos una resolución interna fija (ejemplo: 800x600 o basada en tus tiles)
-    // Esto hace que el dibujo siempre se vea igual internamente
-    const aspect = 20 / 15; // Proporción de tu mapa (ancho/alto)
-    
-    // Asignamos un tamaño base "virtual"
-    canvas.width = 1200; 
-    canvas.height = canvas.width / aspect;
-    
-    // Esto asegura que el dibujo no se vea borroso al escalar
-    ctx.imageSmoothingEnabled = false;
-}
