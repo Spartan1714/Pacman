@@ -1,5 +1,5 @@
 /* --- game.js --- */
-import { dbRealtime, auth } from "./firebase.js";
+
 import { map, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
