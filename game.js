@@ -3,6 +3,8 @@ import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScoreRealtime, currentUser } from "./firebase.js";
+import { saveScoreRealtime, currentUser, dbRealtime } from "./firebase.js";
+import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
 // 1. REFERENCIAS AL DOM (Mantenlas todas aquí arriba)
 const canvas = document.getElementById("gameCanvas");
@@ -340,4 +342,8 @@ if (exitBtn) {
     };
 }
 }
+window.onload = () => {
+    resize();
+    requestAnimationFrame(gameLoop);
+};
 
