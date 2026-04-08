@@ -1,46 +1,13 @@
 html, body {
-    margin: 0; padding: 0; overflow: hidden;
+    margin: 0; 
+    padding: 0; 
+    overflow: hidden;
     background: black;
-    display: flex; justify-content: center; align-items: center;
-    height: 100vh; width: 100vw;
-}
-
-.game-wrapper {
-    position: relative;
-    display: flex;
-    justify-content: center;
+    display: flex; 
+    justify-content: center; 
     align-items: center;
-}
-
-canvas {
-    background: #000;
-    border: 3px solid #ffe600;
-    box-shadow: 0 0 20px #ffe600;
-    max-width: 90vw;
-    max-height: 90vh;
-}
-
-.hidden {
-    display: none !important;
-}
-#gameOverUI {
-    display: none; /* Se activa desde JS */
-    position: absolute;
-    top: 60%; /* Aparece un poco abajo del texto "GAME OVER" del canvas */
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 3000;
-}
-html, body {
-    margin: 0;
-    padding: 0;
+    height: 100vh; 
     width: 100vw;
-    height: 100vh;
-    overflow: hidden; /* Evita que aparezcan barras de scroll */
-    background: black;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 .game-wrapper {
@@ -48,7 +15,7 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Esto obliga al contenedor a no ser más grande que la pantalla */
+    /* Importante: el contenedor debe dejar que el canvas crezca */
     width: 100%;
     height: 100%;
 }
@@ -56,12 +23,27 @@ html, body {
 canvas {
     background: #000;
     border: 3px solid #ffe600;
-    box-shadow: 0 0 15px #ffe600;
-    
-    /* EL TRUCO ESTÁ AQUÍ: */
-    max-width: 95vw;  /* Máximo 95% del ancho de pantalla */
-    max-height: 80vh; /* Máximo 80% del alto para dejar espacio a los textos */
+    box-shadow: 0 0 20px #ffe600;
+    /* Esto escala la imagen sin usar el zoom del navegador */
+    max-width: 95vw;
+    max-height: 85vh;
     width: auto;
     height: auto;
-    object-fit: contain; /* Mantiene la proporción sin estirar feo */
+    object-fit: contain;
+    image-rendering: pixelated; /* Mantiene el estilo arcade nítido */
+}
+
+#gameOverUI {
+    display: none; 
+    position: absolute;
+    bottom: 10%; /* Lo bajamos para que no tape el centro */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3000;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.hidden {
+    display: none !important;
 }
