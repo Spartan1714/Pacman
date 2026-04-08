@@ -42,26 +42,49 @@ window.onresize = resize;
 resize();
 
 // 🍒 dibujo de cereza
-function drawCherry(ctx, x, y) {
-    let s = TILE_SIZE;
+function drawCherry(ctx, x, y, s) {
+    // 's' es el dynamicTileSize que recibe desde el loop
     let cx = x + s / 2;
     let cy = y + s / 2;
 
     ctx.save();
+
+    // --- Dibujo de las dos cerezas (Cuerpo Rojo) ---
     ctx.fillStyle = "#ff0000";
+    ctx.shadowBlur = s * 0.2; // Brillo proporcional
+    ctx.shadowColor = "red";
+
     ctx.beginPath();
-    ctx.arc(cx - s * 0.15, cy + s * 0.15, s * 0.2, 0, Math.PI * 2);
-    ctx.arc(cx + s * 0.15, cy - s * 0.10, s * 0.2, 0, Math.PI * 2);
+    // Cereza izquierda
+    ctx.arc(cx - s * 0.18, cy + s * 0.15, s * 0.22, 0, Math.PI * 2);
+    // Cereza derecha
+    ctx.arc(cx + s * 0.18, cy - s * 0.05, s * 0.22, 0, Math.PI * 2);
     ctx.fill();
 
+    // --- Dibujo de los tallos (Verdes) ---
+    ctx.shadowBlur = 0;
     ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = Math.max(1.5, s * 0.06); // Grosor del tallo adaptable
+    ctx.lineCap = "round";
+
     ctx.beginPath();
-    ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
-    ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.15, cy + s * 0.15);
-    ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
-    ctx.lineTo(cx + s * 0.15, cy - s * 0.10);
+    // Tallo de la cereza superior
+    ctx.moveTo(cx + s * 0.05, cy - s * 0.35);
+    ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.18, cy + s * 0.15);
+    
+    // Tallo de la cereza inferior
+    ctx.moveTo(cx + s * 0.05, cy - s * 0.35);
+    ctx.lineTo(cx + s * 0.18, cy - s * 0.05);
+    
     ctx.stroke();
+
+    // --- Detalle de brillo (Opcional, para que se vea más Pro) ---
+    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.beginPath();
+    ctx.arc(cx - s * 0.25, cy + s * 0.05, s * 0.05, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.10, cy - s * 0.15, s * 0.05, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.restore();
 }
 
