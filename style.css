@@ -1,5 +1,5 @@
 /* =========================
-    BASE & LAYOUT
+    BASE & LAYOUT (SIN DUPLICADOS)
    ========================= */
 html, body {
     margin: 0;
@@ -11,35 +11,21 @@ html, body {
     align-items: center;
     height: 100vh;
     width: 100vw;
-    font-family: 'Press Start 2P', cursive;
 }
 
-/* CONTENEDOR GRID: Prioridad absoluta al Canvas */
 .game-layout {
     position: relative;
     display: grid;
+    /* Ahora solo tenemos una fila para el juego y los controles */
     grid-template-areas: 
-        "header header"
         "canvas controls";
-    /* Reducimos la columna de controles a solo 120px */
     grid-template-columns: 1fr 120px; 
-    grid-template-rows: auto 1fr;
+    grid-template-rows: 1fr;
     gap: 15px;
-    width: 98vw; /* Usamos casi todo el ancho de la pantalla */
+    width: 98vw;
     height: 95vh;
 }
 
-/* UI SUPERIOR (SCORE/LIVES) */
-.top-ui {
-    grid-area: header;
-    display: flex;
-    justify-content: space-between;
-    color: white;
-    font-size: 18px; 
-    padding: 5px 20px;
-}
-
-/* CANVAS: El protagonista máximo */
 canvas {
     grid-area: canvas;
     background: #000;
@@ -48,32 +34,27 @@ canvas {
     
     width: 100%;
     height: 100%;
-    max-height: 85vh; /* Aumentamos el límite de altura */
+    max-height: 90vh; /* Un poco más alto ahora que no hay header */
     object-fit: contain;
 }
 
-/* BOTONES LATERALES: Ahora son pequeños y discretos */
 .side-controls {
     grid-area: controls;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    justify-content: flex-start; /* Alineados arriba junto al canvas */
-    padding-top: 5px;
+    justify-content: center; /* Centrados verticalmente respecto al mapa */
 }
 
 .side-controls button {
-    font-family: 'Press Start 2P';
-    font-size: 9px; /* Fuente pequeña estilo retro */
-    padding: 10px 5px; /* Menos espacio interno */
+    font-family: 'Press Start 2P', cursive;
+    font-size: 9px;
+    padding: 12px 5px;
     cursor: pointer;
     background: #111;
     color: #ffe600;
     border: 2px solid #ffe600;
-    text-transform: uppercase;
-    transition: 0.1s;
 }
-
 .side-controls button:hover {
     background: #ffe600;
     color: black;
