@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
-import { signOut } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
   authDomain: "pacman-game-e602a.firebaseapp.com",
@@ -19,10 +19,10 @@ const auth = getAuth(app);
 // 🔥 FIRESTORE
 const db = getFirestore(app);
 
-// 🔥 USUARIO GLOBAL (IMPORTANTE)
+// 🔥 USUARIO GLOBAL
 export let currentUser = null;
 
-// 🔥 ESCUCHAR LOGIN REAL
+// 🔥 escuchar usuario
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -32,7 +32,7 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// 👉 guardar score
+// 🔥 GUARDAR SCORE
 export async function saveScore(username, score) {
     try {
         await addDoc(collection(db, "scores"), {
@@ -44,6 +44,17 @@ export async function saveScore(username, score) {
     } catch (e) {
         console.error("Error guardando score:", e);
     }
+}
+
+// 🔥 LOGOUT (ESTO TE FALTABA)
+export function logout() {
+    signOut(auth)
+        .then(() => {
+            console.log("Sesión cerrada");
+        })
+        .catch((error) => {
+            console.error("Error logout:", error);
+        });
 }
 
 export { app };
