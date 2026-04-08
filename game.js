@@ -1,4 +1,4 @@
-/* --- game.js --- */
+/* --- game.js Actualizado --- */
 import { map, TILE_SIZE, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
@@ -6,12 +6,9 @@ import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScoreRealtime, currentUser, dbRealtime } from "./firebase.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-// 1. REFERENCIAS AL DOM
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const menuScreen = document.getElementById("menuScreen");
-const pauseBtn = document.getElementById("pauseBtn");
-const menuBtn = document.getElementById("menuBtn");
 const resumeBtn = document.getElementById("resumeBtn");
 const leaderBtn = document.getElementById("leaderBtn");
 const exitToLoginBtn = document.getElementById("exitToLoginBtn");
@@ -21,23 +18,20 @@ const confirmNo = document.getElementById("confirmNo");
 const restartBtn = document.getElementById("restartBtn");
 const exitBtn = document.getElementById("exitBtn");
 
-// 2. ESTADO DEL JUEGO
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
 let lastTime = 0;
 let paused = false;
-let dynamicTileSize = 32; // Tamaño base, se ajusta en resize
+let dynamicTileSize = 32;
 let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
 
-// 3. FUNCIONES DE CONTROL (Sección lógica)
 function abrirMenuPrincipal() {
     paused = true;
     bgMusic.pause();
     if (menuScreen) menuScreen.classList.remove("hidden");
-    // Eliminamos el cambio de texto del botón lateral
 }
 
 function cerrarMenuPrincipal() {
@@ -46,128 +40,47 @@ function cerrarMenuPrincipal() {
     if (!gameOver) bgMusic.play().catch(() => {});
 }
 
+// Configuración del canvas (Preparando el escalado)
 function resize() {
     if (!canvas) return;
-    // Mantenemos la resolución del canvas fija según el CSS para evitar estiramientos
     canvas.width = 600;
     canvas.height = 800;
 
-    // CALCULAMOS EL TAMAÑO DE TILE AUTOMÁTICO PARA QUE EL MAPA QUEPA
     const cols = map[0].length;
     const rows = map.length;
-    
-    // Dejamos espacio para el HUD arriba (ej. 100px)
     const availableHeight = canvas.height - 120;
     
     const tileW = Math.floor(canvas.width / cols);
     const tileH = Math.floor(availableHeight / rows);
     
     dynamicTileSize = Math.min(tileW, tileH);
-
     ctx.imageSmoothingEnabled = false;
 }
 
-window.onresize = resize;
-
-// 🍒 dibujo de cereza
-function drawCherry(ctx, x, y, s) {
-    let cx = x + s / 2;
-    let cy = y + s / 2;
-
-    ctx.save();
-    ctx.fillStyle = "#ff0000";
-    ctx.shadowBlur = s * 0.2;
-    ctx.shadowColor = "red";
-    ctx.beginPath();
-    ctx.arc(cx - s * 0.18, cy + s * 0.15, s * 0.22, 0, Math.PI * 2);
-    ctx.arc(cx + s * 0.18, cy - s * 0.05, s * 0.22, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = "#00ff00";
-    ctx.lineWidth = Math.max(1.5, s * 0.06);
-    ctx.beginPath();
-    ctx.moveTo(cx + s * 0.05, cy - s * 0.35);
-    ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.18, cy + s * 0.15);
-    ctx.moveTo(cx + s * 0.05, cy - s * 0.35);
-    ctx.lineTo(cx + s * 0.18, cy - s * 0.05);
-    ctx.stroke();
-    ctx.restore();
-}
+window.addEventListener('resize', resize);
+resize();
 
 function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
 
-    // lógica
     if (!gameOver && !paused) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
     }
 
-    // 🔥 GAME OVER
-    if (lives.value <= 0 && !gameOver) {
-        gameOver = true;
-        bgMusic.pause();
-        playSfx(sfx.gameover);
-        document.getElementById("gameOverUI").style.display = "flex";
-        
-        if (!scoreSaved && currentUser) {
-            scoreSaved = true;
-            const userRef = ref(dbRealtime, `users/${currentUser.uid}`);
-            get(userRef).then((snapshot) => {
-                let finalName = snapshot.exists() ? snapshot.val().username : (currentUser.email ? currentUser.email.split("@")[0] : "Guest");
-                saveScoreRealtime(finalName, score.value);
-                window.lastPlayer = finalName;
-            });
-        }
-    }
-
-    // 🔴 RENDER GAME OVER
-    if (gameOver) {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#ff0033";
-        ctx.font = "28px 'Press Start 2P'";
-        ctx.textAlign = "center";
-        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "12px 'Press Start 2P'";
-        ctx.fillText(`PLAYER: ${window.lastPlayer || "..."}`, canvas.width / 2, canvas.height / 2 + 40);
-        ctx.fillText(`SCORE: ${score.value}`, canvas.width / 2, canvas.height / 2 + 70);
-        return;
-    }
-
-    // 🔵 CAMBIO DE NIVEL
-    if (!map.flat().includes(2) && !levelChanging) {
-        levelChanging = true;
-        bgMusic.pause();
-        playSfx(sfx.levelup);
-        setTimeout(() => {
-            level++;
-            generarMapaRandom();
-            resetPlayer();
-            spawnGhosts(level);
-            spawnCherry(level);
-            bgMusic.play().catch(() => {});
-            levelChanging = false;
-        }, 800);
-    }
-
-    // --- RENDER NORMAL ---
+    // Renderizado de fondo
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Centramos el mapa
     const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
-    // Dejamos 100px de espacio arriba para el HUD
-    const offsetY = 100; 
+    const offsetY = 110; 
 
+    // Dibujar Mapa
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * dynamicTileSize;
             let ry = offsetY + y * dynamicTileSize;
-
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
                 ctx.lineWidth = 2;
@@ -175,8 +88,6 @@ function gameLoop(timestamp) {
             } else if (tile === 2) {
                 ctx.fillStyle = "#ff00ff";
                 ctx.fillRect(rx + dynamicTileSize/2 - 2, ry + dynamicTileSize/2 - 2, 4, 4);
-            } else if (tile === 3) {
-                drawCherry(ctx, rx, ry, dynamicTileSize);
             }
         });
     });
@@ -184,36 +95,34 @@ function gameLoop(timestamp) {
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // --- HUD (RECUPERADO) ---
-    const hudY = 45;
+    // HUD - SCORE Y VIDAS
     ctx.fillStyle = "#00ffff";
     ctx.font = "16px 'Press Start 2P'";
     ctx.textAlign = "left";
-    ctx.fillText(`SCORE: ${score.value}`, 25, hudY);
+    ctx.fillText(`SCORE: ${score.value}`, 25, 50);
     
     ctx.textAlign = "right";
     ctx.fillStyle = "#ffff00";
-    ctx.fillText(`LVL: ${level}`, canvas.width - 25, hudY);
+    ctx.fillText(`LVL: ${level}`, canvas.width - 25, 50);
 
-    // CORAZONES ❤️
-    ctx.textAlign = "left";
+    // CORAZONES ❤️ con brillo
     for (let i = 0; i < lives.value; i++) {
-        // Usamos una fuente estándar para el emoji si la retro no lo tiene
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = "red";
         ctx.font = "24px Arial"; 
-        ctx.fillText("❤️", 25 + i * 35, hudY + 35);
+        ctx.textAlign = "left";
+        ctx.fillText("❤️", 25 + i * 40, 90);
+        ctx.shadowBlur = 0;
     }
 
-    requestAnimationFrame(gameLoop);
+    if (!gameOver) requestAnimationFrame(gameLoop);
 }
 
-// controles
-document.onkeydown = (e) => {
-    // 1. Tecla ESC (Manejo de Pausa)
-    if (e.key === "Escape" && !gameOver) {
-        if (!paused) {
-            abrirMenuPrincipal();
-        } else {
-            cerrarMenuPrincipal();
+// CONTROL DE ESCAPE (Manejador único)
+window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        if (!gameOver) {
+            paused ? cerrarMenuPrincipal() : abrirMenuPrincipal();
         }
         return;
     }
@@ -226,26 +135,15 @@ document.onkeydown = (e) => {
     if (e.key === "ArrowRight") setDirection(1, 0);
 
     if (bgMusic.paused && !gameOver) bgMusic.play().catch(() => {});
-};
+});
 
-// Eventos Interfaz
-// Los botones laterales solo ABREN el menú
-pauseBtn.onclick = () => abrirMenuPrincipal();
-menuBtn.onclick = () => abrirMenuPrincipal();
-
-// El botón CONTINUE dentro del menú es el que CIERRA
-resumeBtn.onclick = () => cerrarMenuPrincipal();
-
-exitToLoginBtn.onclick = () => confirmModal.classList.remove("hidden");
-confirmYes.onclick = () => window.location = "login.html";
-confirmNo.onclick = () => confirmModal.classList.add("hidden");
-
+// Eventos del Menú (Botones internos)
+if (resumeBtn) resumeBtn.onclick = () => cerrarMenuPrincipal();
+if (exitToLoginBtn) exitToLoginBtn.onclick = () => window.location = "login.html";
 if (leaderBtn) leaderBtn.onclick = () => window.location = "leaderboard.html";
 if (restartBtn) restartBtn.onclick = () => location.reload();
-if (exitBtn) exitBtn.onclick = () => window.location = "login.html";
 
 // Inicio
-resize();
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
