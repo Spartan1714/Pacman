@@ -339,4 +339,5 @@ if (exitBtn) {
         window.location = "login.html";
     };
 }
+}
 
