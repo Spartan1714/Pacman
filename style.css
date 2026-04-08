@@ -5,7 +5,7 @@
 }
 
 body {
-    background-color: #000;
+    background-color: #000; /* Fondo negro como la captura */
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -15,17 +15,17 @@ body {
 }
 
 .game-wrapper {
-    display: flex; /* Ponemos el juego y los botones de lado */
+    display: flex; /* Alinea juego y botones horizontalmente */
     align-items: flex-start;
-    gap: 30px;
+    gap: 25px;
 }
 
 .game-area {
     position: relative;
-    border: 5px solid #ffe600;
+    border: 5px solid #ffe600; /* El marco amarillo de tu captura */
     box-shadow: 0 0 20px rgba(255, 230, 0, 0.5);
     background: #000;
-    /* Damos un tamaño base para que el juego aparezca sí o sí */
+    /* IMPORTANTE: Estas dimensiones deben ser suficientes para tu mapa */
     width: 600px;  
     height: 800px;
 }
@@ -45,10 +45,10 @@ canvas {
 .arcade-btn {
     background: #000;
     color: #ffe600;
-    border: 3px solid #ffe600;
-    padding: 15px 25px;
+    border: 2px solid #ffe600;
+    padding: 12px 20px;
     font-family: 'Press Start 2P';
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
     text-transform: uppercase;
 }
@@ -58,7 +58,7 @@ canvas {
     color: #000;
 }
 
-/* OVERLAYS */
+/* MENÚS SOBREPUESTOS */
 .overlay {
     position: absolute;
     top: 0;
