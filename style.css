@@ -1,69 +1,33 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    background-color: #000; /* Fondo negro como la captura */
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: 'Press Start 2P', cursive;
-    overflow: hidden;
+html, body {
+    margin: 0; padding: 0; overflow: hidden;
+    background: black;
+    display: flex; justify-content: center; align-items: center;
+    height: 100vh; width: 100vw;
 }
 
 .game-wrapper {
-    display: flex; /* Alinea juego y botones horizontalmente */
-    align-items: flex-start;
-    gap: 25px;
-}
-
-.game-area {
     position: relative;
-    width: 600px;  
-    height: 800px;
-}
-canvas {
-    width: 100%;
-    height: 100%;
-}
-.button-sidebar {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.arcade-btn {
-    background: #000;
-    color: #ffe600;
-    border: 2px solid #ffe600;
-    padding: 12px 20px;
-    font-family: 'Press Start 2P';
-    font-size: 12px;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-
-.arcade-btn:hover {
-    background: #ffe600;
-    color: #000;
-}
-
-/* MENÚS SOBREPUESTOS */
-.overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
 }
 
-.hidden { display: none !important; }
+canvas {
+    background: #000;
+    border: 3px solid #ffe600;
+    box-shadow: 0 0 20px #ffe600;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.hidden {
+    display: none !important;
+}
+#gameOverUI {
+    display: none; /* Se activa desde JS */
+    position: absolute;
+    top: 60%; /* Aparece un poco abajo del texto "GAME OVER" del canvas */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3000;
+}
