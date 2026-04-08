@@ -14,19 +14,19 @@ html, body {
     font-family: 'Press Start 2P', cursive;
 }
 
-/* CONTENEDOR GRID: Ajustado para que el canvas sea el protagonista */
+/* CONTENEDOR GRID: Prioridad absoluta al Canvas */
 .game-layout {
     position: relative;
     display: grid;
     grid-template-areas: 
         "header header"
         "canvas controls";
-    /* El canvas ocupa casi todo (1fr), los controles un ancho fijo pequeño (180px) */
-    grid-template-columns: 1fr 180px; 
+    /* Reducimos la columna de controles a solo 120px */
+    grid-template-columns: 1fr 120px; 
     grid-template-rows: auto 1fr;
-    gap: 20px;
-    width: 95vw;
-    height: 90vh;
+    gap: 15px;
+    width: 98vw; /* Usamos casi todo el ancho de la pantalla */
+    height: 95vh;
 }
 
 /* UI SUPERIOR (SCORE/LIVES) */
@@ -35,42 +35,43 @@ html, body {
     display: flex;
     justify-content: space-between;
     color: white;
-    font-size: 24px; /* Aumentado para que se vea mejor */
-    padding: 10px 0;
+    font-size: 18px; 
+    padding: 5px 20px;
 }
 
-/* CANVAS: Ahora se expande para llenar el espacio */
+/* CANVAS: El protagonista máximo */
 canvas {
     grid-area: canvas;
     background: #000;
-    border: 4px solid #ffe600;
-    box-shadow: 0 0 20px #ffe600;
+    border: 3px solid #ffe600;
+    box-shadow: 0 0 15px #ffe600;
     
-    /* Obligamos al canvas a ser lo más grande posible */
     width: 100%;
     height: 100%;
-    max-height: 75vh; 
-    object-fit: contain; /* Mantiene la proporción del juego sin deformar */
+    max-height: 85vh; /* Aumentamos el límite de altura */
+    object-fit: contain;
 }
 
-/* BOTONES LATERALES: Más compactos */
+/* BOTONES LATERALES: Ahora son pequeños y discretos */
 .side-controls {
     grid-area: controls;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    justify-content: center; /* Centrados verticalmente respecto al juego */
+    gap: 10px;
+    justify-content: flex-start; /* Alineados arriba junto al canvas */
+    padding-top: 5px;
 }
 
 .side-controls button {
     font-family: 'Press Start 2P';
-    font-size: 14px; /* Tamaño de letra legible pero no gigante */
-    padding: 20px 10px;
+    font-size: 9px; /* Fuente pequeña estilo retro */
+    padding: 10px 5px; /* Menos espacio interno */
     cursor: pointer;
-    background: #222;
+    background: #111;
     color: #ffe600;
-    border: 3px solid #ffe600;
-    transition: 0.2s;
+    border: 2px solid #ffe600;
+    text-transform: uppercase;
+    transition: 0.1s;
 }
 
 .side-controls button:hover {
@@ -85,7 +86,7 @@ canvas {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.95);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -94,3 +95,13 @@ canvas {
 }
 
 .hidden { display: none !important; }
+
+/* Títulos y botones de menú (Game Over/Pausa) */
+.arcade-title { font-size: 40px; color: yellow; margin-bottom: 20px; }
+.menu-btn {
+    font-family: 'Press Start 2P';
+    padding: 12px;
+    width: 220px;
+    margin: 8px;
+    cursor: pointer;
+}
