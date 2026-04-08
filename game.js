@@ -35,16 +35,19 @@ function abrirMenuPrincipal() {
     paused = true;
     bgMusic.pause();
     menuScreen.classList.remove("hidden");
+    menuScreen.style.display = "flex";
 }
 
 function cerrarMenuPrincipal() {
     paused = false;
     menuScreen.classList.add("hidden");
+    menuScreen.style.display = "none";
     confirmModal.classList.add("hidden");
+    confirmModal.style.display = "none";
     if (!gameOver) bgMusic.play().catch(() => {});
 }
 
-// 4. CONTROL DE TECLADO (ESCAPE)
+// 4. CONTROL DE TECLADO (ESCAPE Y MOVIMIENTO)
 window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !gameOver) {
         if (!paused) {
@@ -67,56 +70,35 @@ window.addEventListener("keydown", (e) => {
 
 // 5. EVENTOS DE INTERFAZ
 resumeBtn.onclick = () => cerrarMenuPrincipal();
-
-exitToLoginBtn.onclick = () => {
-    confirmModal.classList.remove("hidden");
-};
-
-confirmNo.onclick = () => {
-    confirmModal.classList.add("hidden");
-};
-
-confirmYes.onclick = () => {
-    window.location = "login.html";
-};
+exitToLoginBtn.onclick = () => confirmModal.classList.remove("hidden");
+confirmNo.onclick = () => confirmModal.classList.add("hidden");
+confirmYes.onclick = () => window.location = "login.html";
 
 if (leaderBtn) leaderBtn.onclick = () => window.location = "leaderboard.html";
 if (restartBtn) restartBtn.onclick = () => location.reload();
 if (exitBtn) exitBtn.onclick = () => window.location = "login.html";
 
-// 6. RENDERIZADO Y LÓGICA
+// 6. RENDERIZADO Y ESCALADO
 function resize() {
     if (!canvas) return;
 
-    // 1. Buscamos el tamaño de la ventana (ventana del navegador)
-    const padding = 40; // Margen para que no toque los bordes
+    const padding = 20; 
     const availableW = window.innerWidth - padding;
     const availableH = window.innerHeight - padding;
-
-    // 2. Definimos cuántas columnas y filas tiene tu mapa
     const cols = map[0].length;
     const rows = map.length;
+    const hudSpace = 120; // Espacio superior para el Score y Vidas
 
-    // 3. Calculamos cuánto espacio necesita el HUD (Score, Vidas)
-    const hudSpace = 120; 
-    const gameAreaH = availableH - hudSpace;
-
-    // 4. Calculamos el tamaño del Tile para que quepa a lo ancho y a lo alto
     const tileW = availableW / cols;
-    const tileH = gameAreaH / rows;
+    const tileH = (availableH - hudSpace) / rows;
 
-    // Usamos el más pequeño de los dos para mantener la proporción cuadrada
     dynamicTileSize = Math.floor(Math.min(tileW, tileH));
 
-    // 5. Ajustamos el tamaño REAL del canvas al mapa calculado
     canvas.width = cols * dynamicTileSize;
     canvas.height = (rows * dynamicTileSize) + hudSpace;
-
-    // Desactivamos el suavizado para mantener el estilo pixel-art
     ctx.imageSmoothingEnabled = false;
 }
 
-// Aseguramos que se llame al cambiar el tamaño de la ventana
 window.addEventListener('resize', resize);
 
 function gameLoop(timestamp) {
@@ -128,18 +110,38 @@ function gameLoop(timestamp) {
         updateGhosts(lives, score, dt);
     }
 
-    // Dibujo
+    // FONDO
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-const offsetX = Math.floor((canvas.width - (map[0].length * dynamicTileSize)) / 2);
-const offsetY = 110;
-for (let i = 0; i < lives.value; i++) {
-    ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`; 
-    ctx.fillText("❤️", 25 + i * (dynamicTileSize + 5), 90);
-}
+    const offsetX = 0; 
+    const offsetY = 110;
 
-    // Mapa
+    // --- HUD (SCORE Y NIVEL) ---
+    const fontSizeHUD = Math.max(12, Math.floor(dynamicTileSize * 0.6));
+    ctx.font = `${fontSizeHUD}px 'Press Start 2P'`;
+    ctx.textBaseline = "top";
+
+    ctx.fillStyle = "#00ffff";
+    ctx.textAlign = "left";
+    ctx.fillText(`SCORE:${score.value}`, 20, 30);
+
+    ctx.fillStyle = "#ffff00";
+    ctx.textAlign = "right";
+    ctx.fillText(`LVL:${level}`, canvas.width - 20, 30);
+
+    // --- VIDAS (CORAZONES ÚNICOS) ---
+    const heartSize = Math.floor(dynamicTileSize * 0.8);
+    ctx.font = `${heartSize}px Arial`;
+    ctx.textAlign = "left";
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "red";
+    for (let i = 0; i < lives.value; i++) {
+        ctx.fillText("❤️", 20 + i * (heartSize + 10), 65);
+    }
+    ctx.shadowBlur = 0;
+
+    // --- DIBUJO DEL MAPA ---
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * dynamicTileSize;
@@ -155,35 +157,25 @@ for (let i = 0; i < lives.value; i++) {
         });
     });
 
+    // --- FANTASMAS Y JUGADOR ---
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // HUD
-    ctx.fillStyle = "#00ffff";
-    ctx.font = "16px 'Press Start 2P'";
-    ctx.textAlign = "left";
-    ctx.fillText(`SCORE: ${score.value}`, 25, 50);
-    ctx.textAlign = "right";
-    ctx.fillText(`LVL: ${level}`, canvas.width - 25, 50);
-
-    // Vidas con corazón brillante
-    for (let i = 0; i < lives.value; i++) {
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = "red";
-        ctx.font = "24px Arial";
-        ctx.textAlign = "left";
-        ctx.fillText("❤️", 25 + i * 40, 90);
-        ctx.shadowBlur = 0;
-    }
-
+    // LOGICA DE GAME OVER
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
-        document.getElementById("gameOverUI").classList.remove("hidden");
+        bgMusic.pause();
+        const ui = document.getElementById("gameOverUI");
+        if (ui) {
+            ui.classList.remove("hidden");
+            ui.style.display = "flex";
+        }
     }
 
     requestAnimationFrame(gameLoop);
 }
 
+// INICIO
 resize();
 spawnGhosts(level);
 spawnCherry(level);
