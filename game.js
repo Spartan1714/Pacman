@@ -8,6 +8,8 @@ import { saveScoreRealtime, currentUser, dbRealtime, auth } from "./firebase.js"
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 import { checkUsername } from "./username.js"
+const canvas = document.getElementById("gameCanvas"); // Primero declaras el canvas
+
 const ctx = canvas.getContext("2d");
 const menuScreen = document.getElementById("menuScreen");
 const resumeBtn = document.getElementById("resumeBtn");
