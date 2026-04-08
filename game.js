@@ -18,13 +18,15 @@ let levelChanging = false;
 let scoreSaved = false; // 🔥 control firebase
 
 function resize() {
-    // Definimos el tamaño del tablero interno (esto no cambia nunca)
-    // Ajusta estos números al tamaño de tu mapa
-    canvas.width = 800;  // Ejemplo: 20 columnas * 40px
-    canvas.height = 680; // Ejemplo: 15 filas * 40px + HUD
-    
+    // Definimos una resolución interna grande para que al escalar se vea bien
+    // 1200x900 es una buena base para Arcade
+    canvas.width = 1200; 
+    canvas.height = 900; 
+
     ctx.imageSmoothingEnabled = false;
 }
+
+ctx.imageSmoothingEnabled = false;
 window.onresize = resize;
 resize();
 
@@ -219,37 +221,39 @@ pauseBtn.onclick = () => {
 // 2. Botón MENU (Pausa automáticamente y abre el panel de opciones)
 menuBtn.onclick = () => {
     paused = true;
-    menu.style.display = "block";
+    // Quitamos la clase que lo esconde
+    menuScreen.classList.remove("hidden"); 
     bgMusic.pause();
 };
 
 // 3. Botón CONTINUE (Dentro del menú)
 resumeBtn.onclick = () => {
     paused = false;
-    menu.style.display = "none";
-    pauseBtn.innerText = "PAUSE"; // Aseguramos que el botón de pausa diga PAUSE al volver
+    // Volvemos a poner la clase que lo esconde
+    menuScreen.classList.add("hidden"); 
+    pauseBtn.innerText = "PAUSE"; 
     bgMusic.play().catch(() => {});
 };
 
 // 4. Salir con Confirmación
 exitToLoginBtn.onclick = () => {
-    confirmModal.style.display = "block";
+    confirmModal.classList.remove("hidden");
 };
 
 confirmYes.onclick = () => {
-    // Aquí puedes llamar a logout() de firebase si lo deseas, 
-    // o simplemente redirigir como tenías antes:
     window.location = "login.html";
 };
 
 confirmNo.onclick = () => {
-    confirmModal.style.display = "none";
+    confirmModal.classList.add("hidden");
 };
 
 // 5. Ver Leaderboard
-leaderBtn.onclick = () => {
-    window.location = "leaderboard.html";
-};
+if (leaderBtn) {
+    leaderBtn.onclick = () => {
+        window.location = "leaderboard.html";
+    };
+}
 
 // --- INICIO DEL JUEGO ---
 spawnGhosts(level);
