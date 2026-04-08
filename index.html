@@ -2,13 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Pacman Arcade</title>
+    <title>Pacman Fix</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
 
-<div class="game-container">
     <button id="pauseBtn" class="hud-button">PAUSE</button>
     <button id="menuBtn" class="hud-button">MENU</button>
 
@@ -16,20 +15,29 @@
 
     <div id="menuScreen" class="overlay hidden">
         <h1 style="color: yellow;">PAUSED</h1>
-        <button id="resumeBtn" class="menu-btn">CONTINUE</button>
     </div>
 
     <div id="gameOverScreen" class="overlay hidden">
         <h1 style="color: red;">GAME OVER</h1>
-        <button id="restartBtn" class="menu-btn">RETRY</button>
     </div>
-</div>
 
-<script type="module">
-    // ... Tu código de Firebase se mantiene igual ...
-</script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 
-<script type="module" src="game.js"></script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDDjYUCgsPmifR0hNTaw3aD9Qg5dyjDdxM",
+            authDomain: "pacman-game-e602a.firebaseapp.com",
+            projectId: "pacman-game-e602a",
+            storageBucket: "pacman-game-e602a.firebasestorage.app",
+            messagingSenderId: "316960307396",
+            appId: "1:316960307396:web:2b33cecfd8b3dde621f191"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        onAuthStateChanged(auth, (user) => { if (!user) window.location = "login.html"; });
+    </script>
 
+    <script type="module" src="game.js"></script>
 </body>
 </html>

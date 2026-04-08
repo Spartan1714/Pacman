@@ -5,72 +5,49 @@
 }
 
 body {
-    background: #000;
+    background-color: #000;
     height: 100vh;
     width: 100vw;
-    display: flex; /* Centra el juego en la pantalla */
+    display: flex;
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    font-family: 'Press Start 2P', cursive;
 }
 
-/* CONTENEDOR PRINCIPAL */
-.game-container {
-    position: relative;
-    border: 4px solid #ffe600; /* El borde aquí actúa como el marco del arcade */
-    background: #000;
-    line-height: 0; /* Evita espacios extra debajo del canvas */
-}
-
-/* CANVAS: El JS le dará el tamaño, el CSS solo lo mantiene dentro */
+/* Forzamos que el canvas sea visible */
 canvas {
+    background: #000;
     display: block;
-    max-width: 95vw;
-    max-height: 90vh;
+    /* Quitamos restricciones de tamaño por ahora para ver si el JS lo dibuja */
+    border: 2px solid #fff; 
 }
 
-/* BOTONES HUD: Flotan sobre el canvas */
+/* Botones flotantes muy simples */
 .hud-button {
     position: absolute;
-    top: 15px;
-    z-index: 9999;
-    background: rgba(0, 0, 0, 0.85);
-    color: #ffe600;
-    border: 2px solid #ffe600;
+    top: 20px;
+    z-index: 999;
+    padding: 10px;
+    background: #333;
+    color: #fff;
     font-family: 'Press Start 2P', cursive;
-    font-size: 10px;
-    padding: 8px 12px;
     cursor: pointer;
 }
 
-#pauseBtn { right: 110px; }
-#menuBtn { right: 15px; }
+#pauseBtn { right: 120px; }
+#menuBtn { right: 20px; }
 
-/* OVERLAYS */
 .overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.95);
+    background: rgba(0,0,0,0.8);
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 10000;
-    color: white;
+    z-index: 1000;
 }
 
 .hidden { display: none !important; }
-
-.menu-btn {
-    margin-top: 20px;
-    padding: 10px 20px;
-    font-family: 'Press Start 2P';
-    cursor: pointer;
-    background: #ffe600;
-    border: none;
-    color: #000;
-}
