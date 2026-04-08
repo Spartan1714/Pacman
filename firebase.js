@@ -55,16 +55,22 @@ function configurarBotonNickname(user) {
         if (nickname.length < 3) return alert("Nickname too short!");
 
         try {
-            // Guardamos el nickname en la base de datos
+            // 1. Guardamos el nickname en la base de datos
             await set(ref(dbRealtime, `users/${user.uid}`), {
                 username: nickname,
                 email: user.email
             });
 
-            // 🔥 AQUÍ ES DONDE HACES EL CAMBIO:
-            // Asegúrate de que el nombre del archivo coincida con el tuyo (ej: game.html)
-            window.location.href = "./game.html"; 
-            
+            // 2. 🔥 EN LUGAR DE REDIRIGIR, OCULTAMOS EL MODAL Y EL LOGIN
+            const modal = document.getElementById("usernameModal");
+            const loginContainer = document.getElementById("loginContainer"); // Asegúrate de que este ID sea el de tu caja de login
+
+            if (modal) modal.style.display = "none";
+            if (loginContainer) loginContainer.style.display = "none";
+
+            // 3. Opcional: Si tienes una función que inicia el juego, llámala aquí
+            // iniciarJuego(); 
+
         } catch (e) {
             console.error("Error saving nickname:", e);
         }
