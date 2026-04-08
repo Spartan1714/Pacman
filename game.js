@@ -7,6 +7,7 @@ import { saveScore, currentUser, logout } from "./firebase.js";
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// estado del juego
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
@@ -16,7 +17,7 @@ let gameOver = false;
 let levelChanging = false;
 let scoreSaved = false;
 
-// 🔥 FIX logout (evita error null)
+// 🔥 FIX logout (sin romper si no existe)
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
     logoutBtn.onclick = () => {
@@ -25,37 +26,73 @@ if (logoutBtn) {
     };
 }
 
+// 🍒 dibujo de cereza (igual)
+function drawCherry(ctx, x, y) {
+    let s = TILE_SIZE;
+    let cx = x + s / 2;
+    let cy = y + s / 2;
+
+    ctx.save();
+    ctx.fillStyle = "#ff0000";
+
+    ctx.beginPath();
+    ctx.arc(cx - s * 0.15, cy + s * 0.15, s * 0.2, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.15, cy - s * 0.10, s * 0.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = "#00ff00";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
+    ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.1, cx - s * 0.15, cy + s * 0.15);
+    ctx.moveTo(cx + s * 0.05, cy - s * 0.3);
+    ctx.lineTo(cx + s * 0.15, cy - s * 0.10);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
 function gameLoop(timestamp) {
 
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
     lastTime = timestamp;
 
+    // lógica
     if (!gameOver) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
     }
 
-    // GAME OVER
+    // 🔥 GAME OVER + GUARDADO
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
 
         bgMusic.pause();
+        bgMusic.currentTime = 0;
+
         playSfx(sfx.gameover);
 
         if (!scoreSaved) {
             scoreSaved = true;
 
-            let username = "Guest";
+            try {
+                let username = "Guest";
 
-            if (currentUser && currentUser.email) {
-                username = currentUser.email.split("@")[0];
+                if (currentUser && currentUser.email) {
+                    username = currentUser.email.split("@")[0];
+                }
+
+                saveScore(username, score.value);
+                window.lastPlayer = username;
+
+            } catch (e) {
+                console.error("Firebase error:", e);
             }
-
-            saveScore(username, score.value);
-            window.lastPlayer = username;
         }
     }
 
+    // 🔴 GAME OVER RENDER
     if (gameOver) {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -73,7 +110,7 @@ function gameLoop(timestamp) {
         return;
     }
 
-    // nivel
+    // 🔵 CAMBIO DE NIVEL
     if (!map.flat().includes(2) && !levelChanging) {
         levelChanging = true;
 
@@ -82,6 +119,7 @@ function gameLoop(timestamp) {
 
         setTimeout(() => {
             level++;
+
             generarMapaRandom();
             resetPlayer();
             spawnGhosts(level);
@@ -93,34 +131,79 @@ function gameLoop(timestamp) {
         }, 800);
     }
 
+    // 🔥 RENDER (ESCALA CORREGIDA)
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const offsetX = Math.floor((canvas.width - 20 * TILE_SIZE) / 2);
-    const offsetY = Math.floor((canvas.height - 10 * TILE_SIZE) / 2) + 30;
+    const scale = Math.min(
+        canvas.width / (20 * TILE_SIZE),
+        (canvas.height - 80) / (10 * TILE_SIZE)
+    );
+
+    const scaledTile = TILE_SIZE * scale;
+
+    const offsetX = (canvas.width - 20 * scaledTile) / 2;
+    const offsetY = (canvas.height - 10 * scaledTile) / 2 + 40;
 
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
-            let rx = offsetX + x * TILE_SIZE;
-            let ry = offsetY + y * TILE_SIZE;
+
+            let rx = offsetX + x * scaledTile;
+            let ry = offsetY + y * scaledTile;
 
             if (tile === 1) {
                 ctx.strokeStyle = "#00ffff";
-                ctx.strokeRect(rx + 4, ry + 4, TILE_SIZE - 8, TILE_SIZE - 8);
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(rx + 4, ry + 4, scaledTile - 8, scaledTile - 8);
             } 
             else if (tile === 2) {
                 ctx.fillStyle = "#ff00ff";
-                ctx.fillRect(rx + TILE_SIZE/2 - 1, ry + TILE_SIZE/2 - 1, 2, 2);
+                ctx.fillRect(
+                    rx + scaledTile/2 - 1,
+                    ry + scaledTile/2 - 1,
+                    2, 2
+                );
+            } 
+            else if (tile === 3) {
+                drawCherry(ctx, rx, ry);
             }
         });
     });
 
     drawGhosts(ctx, offsetX, offsetY);
-    drawPlayer(ctx, TILE_SIZE, offsetX, offsetY);
+    drawPlayer(ctx, scaledTile, offsetX, offsetY);
+
+    // HUD
+    const hudY = 30;
+
+    ctx.fillStyle = "#00ffff";
+    ctx.font = "14px 'Press Start 2P'";
+    ctx.fillText(`SCORE: ${score.value}`, 20, hudY);
+
+    ctx.fillStyle = "#ffff00";
+    ctx.fillText(`LVL: ${level}`, canvas.width - 150, hudY);
+
+    for (let i = 0; i < lives.value; i++) {
+        ctx.font = "20px Arial";
+        ctx.fillText("❤️", 20 + i * 30, hudY + 25);
+    }
 
     requestAnimationFrame(gameLoop);
 }
 
+// controles (igual)
+document.onkeydown = (e) => {
+    if (e.key === "ArrowUp") setDirection(0, -1);
+    if (e.key === "ArrowDown") setDirection(0, 1);
+    if (e.key === "ArrowLeft") setDirection(-1, 0);
+    if (e.key === "ArrowRight") setDirection(1, 0);
+
+    if (bgMusic.paused && !gameOver) {
+        bgMusic.play().catch(() => {});
+    }
+};
+
+// inicio (igual)
 spawnGhosts(level);
 spawnCherry(level);
 requestAnimationFrame(gameLoop);
