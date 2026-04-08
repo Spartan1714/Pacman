@@ -3,22 +3,34 @@ import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
 import { saveScoreRealtime, currentUser } from "./firebase.js";
+
+// 1. REFERENCIAS AL DOM (Mantenlas todas aquí arriba)
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const menuScreen = document.getElementById("menuScreen");
+const pauseBtn = document.getElementById("pauseBtn");
+const menuBtn = document.getElementById("menuBtn");
+const resumeBtn = document.getElementById("resumeBtn");
+const leaderBtn = document.getElementById("leaderBtn");
+const exitToLoginBtn = document.getElementById("exitToLoginBtn");
+const confirmModal = document.getElementById("confirmModal");
+const confirmYes = document.getElementById("confirmYes");
+const confirmNo = document.getElementById("confirmNo");
+const restartBtn = document.getElementById("restartBtn"); // Ahora no dará error
+const exitBtn = document.getElementById("exitBtn");
 
-// estado del juego
+// 2. ESTADO DEL JUEGO
 let score = { value: 0 };
 let lives = { value: 3 };
 let level = 1;
 let lastTime = 0;
 let paused = false;
 let dynamicTileSize = 32;
-
 let gameOver = false;
 let levelChanging = false;
-let scoreSaved = false; // 🔥 control firebase
+let scoreSaved = false;
 
+// 3. FUNCIONES DE CONTROL (Sección lógica)
 function abrirMenuPrincipal() {
     paused = true;
     bgMusic.pause();
@@ -30,7 +42,6 @@ function cerrarMenuPrincipal() {
     paused = false;
     if (menuScreen) menuScreen.classList.add("hidden");
     if (pauseBtn) pauseBtn.innerText = "PAUSE";
-    // Solo reanudar música si el juego no ha terminado
     if (!gameOver) bgMusic.play().catch(() => {});
 }
 
@@ -249,17 +260,6 @@ document.onkeydown = (e) => {
     }
 };
 
-// Referencias a los elementos del nuevo index.html
-const pauseBtn = document.getElementById("pauseBtn");
-const menuBtn = document.getElementById("menuBtn");
-const menu = document.getElementById("menuScreen");
-const resumeBtn = document.getElementById("resumeBtn");
-const leaderBtn = document.getElementById("leaderBtn");
-const exitToLoginBtn = document.getElementById("exitToLoginBtn");
-
-const confirmModal = document.getElementById("confirmModal");
-const confirmYes = document.getElementById("confirmYes");
-const confirmNo = document.getElementById("confirmNo");
 
 // --- CONFIGURACIÓN DE EVENTOS DE INTERFAZ ---
 
@@ -318,9 +318,7 @@ spawnCherry(level);
 requestAnimationFrame(gameLoop);
 // --- AL FINAL DE game.js ---
 
-// Usamos una pequeña validación para que no tire error si el botón es nulo
-const restartBtn = document.getElementById("restartBtn");
-const exitBtn = document.getElementById("exitBtn");
+
 
 if (restartBtn) {
     restartBtn.onclick = () => {
