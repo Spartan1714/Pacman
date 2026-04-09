@@ -119,13 +119,14 @@ if (btnLeaderboardGameOver) {
 // 6. RENDERIZADO Y ESCALADO
 function resize() {
     if (!canvas) return;
-
     const padding = 20; 
     const availableW = window.innerWidth - padding;
     const availableH = window.innerHeight - padding;
     const cols = map[0].length;
     const rows = map.length;
-    const hudSpace = 160; // Espacio superior para el Score y Vidas
+
+    // CAMBIO: Aumenta esto a 180. Esto reserva casi 200px solo para el HUD.
+    const hudSpace = 180; 
 
     const tileW = availableW / cols;
     const tileH = (availableH - hudSpace) / rows;
@@ -153,7 +154,7 @@ function gameLoop(timestamp) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = 0; 
-    const offsetY = 160;
+    const offsetY = 180;
 
    // --- HUD (SCORE, USERNAME Y NIVEL) ---
     const fontSizeHUD = Math.max(12, Math.floor(dynamicTileSize * 0.6));
@@ -177,17 +178,16 @@ function gameLoop(timestamp) {
     ctx.fillText(window.lastPlayer || "PLAYER", canvas.width / 2, 30);
 
     // --- VIDAS (CORAZONES ÚNICOS) ---
-   const heartSize = Math.floor(dynamicTileSize * 0.6); // Bajamos de 0.8 a 0.6 para que sean más finos
+  const heartSize = 25; // Tamaño fijo en píxeles, no dinámico
 ctx.font = `${heartSize}px Arial`;
 ctx.textAlign = "left";
-ctx.shadowBlur = 10;
+ctx.shadowBlur = 8;
 ctx.shadowColor = "red";
 
 for (let i = 0; i < lives.value; i++) {
-    // Cambiamos 65 por 55 para subirlos un poco más hacia el Score
-    ctx.fillText("❤️", 20 + i * (heartSize + 10), 50); 
+    // 70 es una altura segura si el laberinto empieza en 180
+    ctx.fillText("❤️", 25 + i * (heartSize + 10), 75); 
 }
-ctx.shadowBlur = 0;
 
     // --- DIBUJO DEL MAPA ---
     map.forEach((row, y) => {
