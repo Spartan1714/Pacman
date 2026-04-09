@@ -249,15 +249,17 @@ if (window.currentCherry && window.player) {
 
     // 8. GAME OVER (Tu lógica de UI y Firebase)
     if (lives.value <= 0 && !gameOver) {
-        gameOver = true;
-        bgMusic.pause();
-        const ui = document.getElementById("gameOverUI");
-        if (window.lastPlayer && score.value > 0) saveScoreRealtime(window.lastPlayer, score.value);
-        if (ui) {
-            ui.classList.remove("hidden");
-            ui.style.display = "flex";
-        }
+    gameOver = true;
+    bgMusic.pause();        // Pausa la música de fondo
+    playSfx(sfx.gameover);  // 🔥 ESTE ES EL NOMBRE CORRECTO EN TU AUDIO.JS
+
+    const ui = document.getElementById("gameOverUI");
+    if (window.lastPlayer && score.value > 0) saveScoreRealtime(window.lastPlayer, score.value);
+    if (ui) {
+        ui.classList.remove("hidden");
+        ui.style.display = "flex";
     }
+}
 
     requestAnimationFrame(gameLoop);
 }
