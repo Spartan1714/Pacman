@@ -1,56 +1,36 @@
-// --- map.js ---
 export const TILE_SIZE = 30;
 export let map = [];
 
-// 1. DEFINICIÓN DE NIVELES (Estilo Arcade Real)
-// 1 = Muro, 2 = Punto, 0 = Vacío
-
-const nivel1 = [
+const baseMap = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1],
-    [1,2,1,1,2,1,1,2,2,2,2,1,1,2,1,1,2,1,1,2,1],
-    [1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,2,1],
-    [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,2,1],
-    [1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
-
-const nivel2 = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,2,1,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,1],
-    [1,1,2,1,2,1,1,2,1,1,1,1,2,1,1,1,2,1,2,1],
-    [1,1,2,2,2,1,1,2,2,2,2,1,2,2,1,1,2,2,2,1],
-    [1,2,2,1,2,2,2,2,1,1,2,2,2,1,2,2,2,1,2,1],
-    [1,1,2,1,2,1,1,2,1,1,1,1,2,1,1,1,2,1,2,1],
-    [1,2,2,1,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
-
-const nivel3 = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,1,2,1,1,2,1,1,2,1,1,2,1,1,1,2,1],
-    [1,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,1],
-    [1,1,1,1,1,2,1,1,1,1,1,1,1,1,2,1,1,1,1,1],
+    [1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,1,2,1,2,1,1,2,1,1,2,1,1,2,1],
+    [1,2,1,1,2,1,1,2,2,2,1,1,2,1,1,2,1,1,2,1],
+    [1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,2,1,1,1,2,1,2,1,1,2,1,1,2,1],
+    [1,2,2,2,2,1,2,2,1,2,2,1,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,1,2,1,2,1,1,2,1,1,2,1,1,2,1],
     [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
-
-const mundos = [nivel1, nivel2, nivel3];
 
 // Inicialización
-map = JSON.parse(JSON.stringify(nivel1));
+map = JSON.parse(JSON.stringify(baseMap));
 
-// 2. LÓGICA DE CEREZAS (Mantenida y funcional)
 export function spawnCherry(level) {
-    // Limpiar cerezas viejas
-    map.forEach((row, y) => row.forEach((c, x) => { if (c === 3) map[y][x] = 2; }));
+    // Limpiar cherries anteriores
+    map.forEach((row, y) =>
+        row.forEach((c, x) => {
+            if (c === 3) map[y][x] = 2;
+        })
+    );
 
     let emptyCells = [];
-    map.forEach((row, y) => row.forEach((c, x) => { if (c === 2) emptyCells.push({ x, y }); }));
+    map.forEach((row, y) =>
+        row.forEach((c, x) => {
+            if (c === 2) emptyCells.push({ x, y });
+        })
+    );
 
     if (emptyCells.length > 0) {
         let pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
@@ -61,16 +41,121 @@ export function spawnCherry(level) {
 
 export function resetMap() {
     map.length = 0;
-    nivel1.forEach(row => map.push([...row]));
+    baseMap.forEach(row => map.push([...row]));
 }
 
-// 3. CAMBIO DE NIVEL (Selección aleatoria de colección)
 export function generarMapaRandom() {
-    let nuevoNivel;
-    do {
-        nuevoNivel = mundos[Math.floor(Math.random() * mundos.length)];
-    } while (mundos.length > 1 && JSON.stringify(nuevoNivel) === JSON.stringify(map));
+    const width = 20;
+    const height = 10;
 
+    // 1. Llenar de muros
+    let nuevoMapa = Array.from({ length: height }, () =>
+        Array.from({ length: width }, () => 1)
+    );
+
+    function shuffle(arr) {
+        return arr.sort(() => Math.random() - 0.5);
+    }
+
+    // 2. Generar laberinto (DFS Backtracking)
+    function carve(x, y) {
+        const dirs = shuffle([[1,0],[-1,0],[0,1],[0,-1]]);
+
+        for (let [dx, dy] of dirs) {
+            let nx = x + dx * 2;
+            let ny = y + dy * 2;
+
+            if (ny > 0 && ny < height - 1 && nx > 0 && nx < width - 1) {
+                if (nuevoMapa[ny][nx] === 1) {
+                    nuevoMapa[y + dy][x + dx] = 2;
+                    nuevoMapa[ny][nx] = 2;
+                    carve(nx, ny);
+                }
+            }
+        }
+    }
+
+    carve(1, 1);
+
+    // 3. Conexiones extra CONTROLADAS
+    for (let i = 0; i < 6; i++) {
+        let rx = Math.floor(Math.random() * (width - 2)) + 1;
+        let ry = Math.floor(Math.random() * (height - 2)) + 1;
+
+        if (nuevoMapa[ry][rx] === 1) {
+            let vecinos = [
+                nuevoMapa[ry][rx + 1],
+                nuevoMapa[ry][rx - 1],
+                nuevoMapa[ry + 1]?.[rx],
+                nuevoMapa[ry - 1]?.[rx]
+            ];
+
+            let caminos = vecinos.filter(v => v === 2).length;
+
+            // solo abrir si conecta caminos existentes
+            if (caminos >= 2) {
+                nuevoMapa[ry][rx] = 2;
+            }
+        }
+    }
+
+    // 4. Bordes
+    for (let i = 0; i < width; i++) {
+        nuevoMapa[0][i] = 1;
+        nuevoMapa[height - 1][i] = 1;
+    }
+    for (let i = 0; i < height; i++) {
+        nuevoMapa[i][0] = 1;
+        nuevoMapa[i][width - 1] = 1;
+    }
+
+    // 5. Zona segura de spawn
+    nuevoMapa[1][1] = 2;
+    nuevoMapa[1][2] = 2;
+    nuevoMapa[2][1] = 2;
+
+    // 6. Validación de accesibilidad (Flood Fill)
+    function floodFill(x, y, visitado) {
+        let stack = [{ x, y }];
+        visitado[y][x] = true;
+
+        while (stack.length) {
+            let { x, y } = stack.pop();
+
+            let dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+            for (let [dx, dy] of dirs) {
+                let nx = x + dx;
+                let ny = y + dy;
+
+                if (
+                    nx >= 0 && nx < width &&
+                    ny >= 0 && ny < height &&
+                    !visitado[ny][nx] &&
+                    nuevoMapa[ny][nx] === 2
+                ) {
+                    visitado[ny][nx] = true;
+                    stack.push({ x: nx, y: ny });
+                }
+            }
+        }
+    }
+
+    let visitado = Array.from({ length: height }, () =>
+        Array.from({ length: width }, () => false)
+    );
+
+    floodFill(1, 1, visitado);
+
+    // 7. Eliminar zonas inaccesibles
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            if (nuevoMapa[y][x] === 2 && !visitado[y][x]) {
+                nuevoMapa[y][x] = 1;
+            }
+        }
+    }
+
+    // 8. Actualizar mapa global
     map.length = 0;
-    nuevoNivel.forEach(row => map.push([...row]));
+    nuevoMapa.forEach(row => map.push([...row]));
 }
