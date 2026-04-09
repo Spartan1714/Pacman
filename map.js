@@ -1,99 +1,104 @@
-// --- map.js ---
 export const TILE_SIZE = 30;
 export let map = [];
 
-// 1. DEFINICIÓN DE MAPAS ARCADE (Basados en bloques rectangulares y simetría)
-// 1 = Muro (Cian), 2 = Punto (Fucsia), 0 = Vacío
-
-const mapaArcade1 = [
+const baseMap = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1],
-    [1,2,1,1,2,1,1,2,2,2,2,1,1,2,1,1,2,1,1,2,1],
-    [1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,2,1],
+    [1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,1,2,1,2,1,1,2,1,1,2,1,1,2,1],
+    [1,2,1,1,2,1,1,2,2,2,1,1,2,1,1,2,1,1,2,1],
+    [1,2,2,2,2,2,2,2,1,2,2,2,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,2,1,1,1,2,1,2,1,1,2,1,1,2,1],
+    [1,2,2,2,2,1,2,2,1,2,2,1,2,2,2,2,2,2,2,1],
+    [1,2,1,1,2,1,1,2,1,2,1,1,2,1,1,2,1,1,2,1],
     [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,2,1],
-    [1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-const mapaArcade2 = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,2,1,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,1],
-    [1,1,2,1,2,1,1,2,1,1,1,1,2,1,1,1,2,1,2,1],
-    [1,1,2,2,2,1,1,2,2,2,2,1,2,2,1,1,2,2,2,1],
-    [1,2,2,1,2,2,2,2,1,1,2,2,2,1,2,2,2,1,2,1],
-    [1,2,1,1,1,1,2,1,1,1,1,2,1,1,1,1,1,1,2,1],
-    [1,2,2,1,2,2,2,2,1,1,2,2,2,1,2,2,2,1,2,1],
-    [1,1,2,2,2,1,1,2,2,2,2,1,2,2,1,1,2,2,2,1],
-    [1,1,2,1,2,1,1,2,2,2,2,1,2,1,1,1,2,1,2,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
+// Inicialización inicial
+map = JSON.parse(JSON.stringify(baseMap));
 
-const mapaArcade3 = [
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,1,2,1,1,2,1,1,2,1,1,2,1,1,1,2,1],
-    [1,2,1,1,1,2,1,1,2,2,2,2,1,1,2,1,1,1,2,1],
-    [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-    [1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1],
-    [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
-    [1,2,1,1,1,2,1,1,1,1,1,1,1,1,1,2,1,1,1,1],
-    [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-];
-
-const coleccionMapas = [mapaArcade1, mapaArcade2, mapaArcade3];
-
-// Inicializar con el primer diseño
-map = JSON.parse(JSON.stringify(mapaArcade1));
-
-// 2. LÓGICA DE CEREZAS (Integrada con window.currentCherry)
 export function spawnCherry(level) {
-    // Primero limpiamos cualquier cereza previa (valor 3) y la volvemos punto (2)
-    map.forEach((row, y) => {
-        row.forEach((tile, x) => {
-            if (tile === 3) map[y][x] = 2;
-        });
-    });
+    // Limpiar 3 antiguos
+    map.forEach((row, y) => row.forEach((c, x) => { if (c === 3) map[y][x] = 2; }));
 
-    // Buscamos todas las celdas que tengan puntos (camino libre)
     let emptyCells = [];
-    map.forEach((row, y) => {
-        row.forEach((tile, x) => {
-            if (tile === 2) emptyCells.push({ x, y });
-        });
-    });
+    map.forEach((row, y) => row.forEach((c, x) => { if (c === 2) emptyCells.push({ x, y }); }));
 
     if (emptyCells.length > 0) {
-        // Elegimos una posición al azar
-        const pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        
-        // Marcamos el 3 en el mapa para que sea visible
-        map[pos.y][pos.x] = 3; 
-        
-        // Sincronizamos con la variable global de game.js para la colisión
+        let pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        map[pos.y][pos.x] = 3;
         window.currentCherry = { x: pos.x, y: pos.y };
-        console.log("🍒 Cereza colocada en:", window.currentCherry);
     }
 }
 
 export function resetMap() {
     map.length = 0;
-    mapaArcade1.forEach(row => map.push([...row]));
+    baseMap.forEach(row => map.push([...row]));
 }
 
-// 3. CAMBIO DE NIVEL (Selecciona un mapa arcade de la lista)
 export function generarMapaRandom() {
-    let mapaElegido;
-    
-    // Evitamos repetir el mismo mapa que ya tenemos
-    do {
-        mapaElegido = coleccionMapas[Math.floor(Math.random() * coleccionMapas.length)];
-    } while (coleccionMapas.length > 1 && JSON.stringify(mapaElegido) === JSON.stringify(map));
+    const width = 20;
+    const height = 10;
 
-    // Actualizamos la variable exportada sin romper la referencia
+    // 1. Llenar todo de muros (1)
+    let nuevoMapa = Array.from({ length: height }, () => 
+        Array.from({ length: width }, () => 1)
+    );
+
+    function shuffle(arr) {
+        return arr.sort(() => Math.random() - 0.5);
+    }
+
+    // Algoritmo de excavación (Backtracking)
+    function carve(x, y) {
+        const dirs = shuffle([[1, 0], [-1, 0], [0, 1], [0, -1]]);
+
+        for (let [dx, dy] of dirs) {
+            let nx = x + dx * 2;
+            let ny = y + dy * 2;
+
+            // Mantenerse dentro de los bordes (dejando espacio para el muro exterior)
+            if (ny > 0 && ny < height - 1 && nx > 0 && nx < width - 1) {
+                if (nuevoMapa[ny][nx] === 1) {
+                    // Quitamos el muro intermedio y el destino
+                    nuevoMapa[y + dy][x + dx] = 2; 
+                    nuevoMapa[ny][nx] = 2;
+                    carve(nx, ny);
+                }
+            }
+        }
+    }
+
+    // 2. Empezar a excavar desde una posición impar para mantener la rejilla
+    carve(1, 1);
+
+    // 3. 🔥 CONEXIONES EXTRA (Solo pasillos, no hoyos)
+    // En lugar de romper muros al azar, solo rompemos algunos muros específicos
+    // para crear "ciclos" (caminos alternativos) y que no sea un solo camino largo.
+    for (let i = 0; i < 6; i++) { // Intentar 6 conexiones extra
+        let rx = Math.floor(Math.random() * (width - 2)) + 1;
+        let ry = Math.floor(Math.random() * (height - 2)) + 1;
+        if (nuevoMapa[ry][rx] === 1) {
+            nuevoMapa[ry][rx] = 2; // Convertimos un muro solitario en pasillo
+        }
+    }
+
+    // 4. ASEGURAR BORDES (Marco del juego)
+    for (let i = 0; i < width; i++) {
+        nuevoMapa[0][i] = 1;
+        nuevoMapa[height - 1][i] = 1;
+    }
+    for (let i = 0; i < height; i++) {
+        nuevoMapa[i][0] = 1;
+        nuevoMapa[i][width - 1] = 1;
+    }
+
+    // 5. ZONA DE SPAWN (Pacman necesita espacio al arrancar)
+    nuevoMapa[1][1] = 2;
+    nuevoMapa[1][2] = 2;
+    nuevoMapa[2][1] = 2;
+
+    // 6. Actualizar referencia global
     map.length = 0;
-    mapaElegido.forEach(row => map.push([...row]));
+    nuevoMapa.forEach(row => map.push([...row]));
 }
