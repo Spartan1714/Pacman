@@ -140,25 +140,25 @@ if (window.currentCherry && window.player) {
     const distance = Math.sqrt(dx * dx + dy * dy);
 
     // Si está a menos de 0.5 baldosas, se la come
-    if (distance < 0.6) { 
-        const cx = window.currentCherry.x;
-        const cy = window.currentCherry.y;
-
-        score.value += 100;
-        window.currentCherry = null; 
-
-        // Limpiamos el mapa usando las coordenadas guardadas de la cereza
-        if (map[cy] && map[cy][cx] === 3) {
-            map[cy][cx] = 0; 
+if (dist < 0.7) {
+    // 1. Matamos la referencia visual
+    window.currentCherry = null; 
+    
+    // 2. Limpiamos TODA la matriz por si acaso quedó un '3' huérfano
+    for (let y = 0; y < map.length; y++) {
+        for (let x = 0; x < map[y].length; x++) {
+            if (map[y][x] === 3) map[y][x] = 0;
         }
-
-        playSfx(sfx.cherry);
-        activatePower(); 
-        
-        setTimeout(() => { 
-            if(!gameOver) spawnCherry(level); 
-        }, 15000);
     }
+    
+    // 3. Forzamos la puntuación y el poder
+    score.value += 100;
+    activatePower();
+    playSfx(sfx.cherry);
+    
+    // 4. El temporizador debe estar CLARO
+    console.log("Cereza destruida");
+}
 }
     }
 
