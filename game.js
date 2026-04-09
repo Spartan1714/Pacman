@@ -185,7 +185,7 @@ ctx.shadowColor = "red";
 
 for (let i = 0; i < lives.value; i++) {
     // Cambiamos 65 por 55 para subirlos un poco más hacia el Score
-    ctx.fillText("❤️", 20 + i * (heartSize + 10), 55); 
+    ctx.fillText("❤️", 20 + i * (heartSize + 10), 50); 
 }
 ctx.shadowBlur = 0;
 
