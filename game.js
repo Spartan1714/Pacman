@@ -72,12 +72,20 @@ function abrirMenuPrincipal() {
 }
 
 function cerrarMenuPrincipal() {
-    paused = false;
+    paused = false; // 🔥 Aseguramos que el estado cambie
     menuScreen.classList.add("hidden");
     menuScreen.style.display = "none";
     confirmModal.classList.add("hidden");
     confirmModal.style.display = "none";
-    if (!gameOver) bgMusic.play().catch(() => {});
+
+    // 🔥 IMPORTANTE: Si usas una lógica donde el gameLoop se detiene, 
+    // debes reiniciarlo aquí:
+    requestAnimationFrame(gameLoop); 
+
+    // Reanudamos la música si ya se estaba moviendo
+    if (musicStarted && !gameOver) {
+        bgMusic.play().catch(() => {});
+    }
 }
 
 // 4. CONTROL DE TECLADO
