@@ -1,14 +1,15 @@
-/* --- game.js --- */
 import { map, spawnCherry, generarMapaRandom } from "./map.js";
 import { updatePlayer, drawPlayer, setDirection, resetPlayer } from "./player.js";
 import { updateGhosts, drawGhosts, spawnGhosts, activatePower } from "./ghosts.js";
 import { bgMusic, sfx, playSfx } from "./audio.js";
+// Agregamos 'auth' a la importación de firebase
 import { saveScoreRealtime, currentUser, dbRealtime, auth } from "./firebase.js"; 
+// Importamos la función necesaria de Firebase Auth
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import { ref, get } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+import { checkUsername } from "./username.js"
+const canvas = document.getElementById("gameCanvas"); // Primero declaras el canvas
 
-// 1. REFERENCIAS AL DOM
-const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const menuScreen = document.getElementById("menuScreen");
 const resumeBtn = document.getElementById("resumeBtn");
@@ -29,30 +30,31 @@ let lastTime = 0;
 let paused = false;
 let dynamicTileSize = 32;
 let gameOver = false;
+let levelChanging = false;
+let scoreSaved = false;
 let playerName = "Guest";
-window.currentCherry = null; // Variable global para la cereza
 
-// --- INICIO DEL JUEGO (Firebase) ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
+        // Intentamos obtener el nombre que guardamos en la página setup.html
         const userRef = ref(dbRealtime, `users/${user.uid}/username`);
         const snapshot = await get(userRef);
         
         if (snapshot.exists()) {
             playerName = snapshot.val();
         } else {
+            // Si por algún error no tiene nombre, lo mandamos a que se registre
             window.location.href = "setup.html";
             return;
         }
         
         window.lastPlayer = playerName;
 
-        // Solo arrancamos si no ha iniciado ya
+        // Arrancamos el juego directamente
         if (lastTime === 0) {
             resize();
             spawnGhosts(level);
-            // spawnCherry viene de map.js y debe asignar algo a window.currentCherry
-            spawnCherry(level); 
+            spawnCherry(level);
             requestAnimationFrame(gameLoop);
         }
     } else {
@@ -77,31 +79,44 @@ function cerrarMenuPrincipal() {
     if (!gameOver) bgMusic.play().catch(() => {});
 }
 
-// 4. CONTROL DE TECLADO
+// 4. CONTROL DE TECLADO (ESCAPE Y MOVIMIENTO)
 window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !gameOver) {
-        if (!paused) abrirMenuPrincipal();
-        else if (confirmModal.classList.contains("hidden")) cerrarMenuPrincipal();
+        if (!paused) {
+            abrirMenuPrincipal();
+        } else if (confirmModal.classList.contains("hidden")) {
+            cerrarMenuPrincipal();
+        }
         return;
     }
+
     if (paused || gameOver) return;
+
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
     if (e.key === "ArrowLeft") setDirection(-1, 0);
     if (e.key === "ArrowRight") setDirection(1, 0);
+
+    if (bgMusic.paused && !gameOver) bgMusic.play().catch(() => {});
 });
 
-// 5. EVENTOS DE BOTONES
+// 5. EVENTOS DE INTERFAZ
 resumeBtn.onclick = () => cerrarMenuPrincipal();
 exitToLoginBtn.onclick = () => confirmModal.classList.remove("hidden");
 confirmNo.onclick = () => confirmModal.classList.add("hidden");
-confirmYes.onclick = () => window.location.href = "login.html";
-if (leaderBtn) leaderBtn.onclick = () => window.location.href = "leaderboard.html";
-if (restartBtn) restartBtn.onclick = () => location.reload();
-if (exitBtn) exitBtn.onclick = () => window.location.href = "login.html";
-if (btnLeaderboardGameOver) btnLeaderboardGameOver.onclick = () => window.location.href = "leaderboard.html";
+confirmYes.onclick = () => window.location = "login.html";
 
-// 6. RENDERIZADO
+if (leaderBtn) leaderBtn.onclick = () => window.location = "leaderboard.html";
+if (restartBtn) restartBtn.onclick = () => location.reload();
+if (exitBtn) exitBtn.onclick = () => window.location = "login.html";
+if (btnLeaderboardGameOver) {
+    btnLeaderboardGameOver.onclick = () => {
+        window.location.href = "leaderboard.html";
+    };
+}
+
+
+// 6. RENDERIZADO Y ESCALADO
 function resize() {
     if (!canvas) return;
     const padding = 20; 
@@ -109,16 +124,22 @@ function resize() {
     const availableH = window.innerHeight - padding;
     const cols = map[0].length;
     const rows = map.length;
+
+    // CAMBIO: Aumenta esto a 180. Esto reserva casi 200px solo para el HUD.
     const hudSpace = 180; 
 
     const tileW = availableW / cols;
     const tileH = (availableH - hudSpace) / rows;
+
     dynamicTileSize = Math.floor(Math.min(tileW, tileH));
 
     canvas.width = cols * dynamicTileSize;
     canvas.height = (rows * dynamicTileSize) + hudSpace;
+    ctx.imageSmoothingEnabled = false;
 }
+
 window.addEventListener('resize', resize);
+
 
 function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
@@ -127,58 +148,49 @@ function gameLoop(timestamp) {
     if (!gameOver && !paused) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
-
-        // --- LÓGICA PARA COMER CEREZA ---
-        // Asumiendo que player.x y player.y son las coordenadas en el mapa
-        // Importante: player debe estar disponible o exportado
-        if (window.currentCherry) {
-            // Usamos Math.round para detectar la colisión en el centro del tile
-            const px = Math.round(window.playerX); // Ajusta según el nombre de tu variable de Pacman
-            const py = Math.round(window.playerY); 
-            
-            if (px === window.currentCherry.x && py === window.currentCherry.y) {
-                score.value += 100;
-                window.currentCherry = null;
-                playSfx(sfx.eatFruit);
-                // Reaparece en 15 segundos
-                setTimeout(() => spawnCherry(level), 15000);
-            }
-        }
     }
 
-    // DIBUJO
+    // FONDO
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = 0; 
     const offsetY = 180;
 
-    // HUD
+   // --- HUD (SCORE, USERNAME Y NIVEL) ---
     const fontSizeHUD = Math.max(12, Math.floor(dynamicTileSize * 0.6));
     ctx.font = `${fontSizeHUD}px 'Press Start 2P'`;
     ctx.textBaseline = "top";
 
+    // 1. Score a la izquierda
     ctx.fillStyle = "#00ffff";
     ctx.textAlign = "left";
     ctx.fillText(`SCORE:${score.value}`, 20, 30);
 
+    // 2. Nivel a la derecha
     ctx.fillStyle = "#ffff00";
     ctx.textAlign = "right";
     ctx.fillText(`LVL:${level}`, canvas.width - 20, 30);
 
-    ctx.fillStyle = "#ffffff";
+    // 3. Username en el centro (ESTO ES LO NUEVO)
+    ctx.fillStyle = "#ffffff"; // Blanco para que resalte del resto
     ctx.textAlign = "center";
+    //playerName es la variable que definimos al inicio con el checkUsername()
     ctx.fillText(window.lastPlayer || "PLAYER", canvas.width / 2, 30);
 
-    // VIDAS
-    const heartSize = 25;
-    ctx.font = `${heartSize}px Arial`;
-    ctx.textAlign = "left";
-    for (let i = 0; i < lives.value; i++) {
-        ctx.fillText("❤️", 25 + i * (heartSize + 10), 75); 
-    }
+    // --- VIDAS (CORAZONES ÚNICOS) ---
+  const heartSize = 25; // Tamaño fijo en píxeles, no dinámico
+ctx.font = `${heartSize}px Arial`;
+ctx.textAlign = "left";
+ctx.shadowBlur = 8;
+ctx.shadowColor = "red";
 
-    // MAPA
+for (let i = 0; i < lives.value; i++) {
+    // 70 es una altura segura si el laberinto empieza en 180
+    ctx.fillText("❤️", 25 + i * (heartSize + 10), 75); 
+}
+
+    // --- DIBUJO DEL MAPA ---
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * dynamicTileSize;
@@ -193,29 +205,55 @@ function gameLoop(timestamp) {
             }
         });
     });
+    if (typeof currentCherry !== 'undefined' && currentCherry) {
+    const rx = offsetX + currentCherry.x * dynamicTileSize;
+    const ry = offsetY + currentCherry.y * dynamicTileSize;
+    
+    ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    // Dibujamos el emoji de cereza centrado en su tile
+    ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
+}
 
-    // DIBUJAR CEREZA
-    if (window.currentCherry) {
-        const rx = offsetX + window.currentCherry.x * dynamicTileSize;
-        const ry = offsetY + window.currentCherry.y * dynamicTileSize;
-        ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
-    }
-
+    // --- FANTASMAS Y JUGADOR ---
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
+    // LOGICA DE GAME OVER
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
         bgMusic.pause();
+        const ui = document.getElementById("gameOverUI");
         if (window.lastPlayer && score.value > 0) {
-            saveScoreRealtime(window.lastPlayer, score.value);
+        saveScoreRealtime(window.lastPlayer, score.value);
+    }
+        if (ui) {
+            ui.classList.remove("hidden");
+            ui.style.display = "flex";
         }
-        document.getElementById("gameOverUI").classList.remove("hidden");
-        document.getElementById("gameOverUI").style.display = "flex";
     }
 
     requestAnimationFrame(gameLoop);
 }
+async function init() {
+    // 1. Esperamos a que Firebase detecte al usuario
+    // (Asegúrate de que currentUser ya esté cargado o usa una promesa)
+    
+    // 2. Revisamos el Username
+    playerName = await checkUsername();
+    window.lastPlayer = playerName; // Para que el Game Over lo use
+
+    // 3. Arrancamos el juego
+    resize();
+    spawnGhosts(level);
+    spawnCherry(level);
+    requestAnimationFrame(gameLoop);
+}
+
+// INICIO
+resize();
+spawnGhosts(level);
+spawnCherry(level);
+requestAnimationFrame(gameLoop);
+init(); // Llamamos a la función de inicio
