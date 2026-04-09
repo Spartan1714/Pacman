@@ -204,6 +204,16 @@ for (let i = 0; i < lives.value; i++) {
             }
         });
     });
+    if (typeof currentCherry !== 'undefined' && currentCherry) {
+    const rx = offsetX + currentCherry.x * dynamicTileSize;
+    const ry = offsetY + currentCherry.y * dynamicTileSize;
+    
+    ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    // Dibujamos el emoji de cereza centrado en su tile
+    ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
+}
 
     // --- FANTASMAS Y JUGADOR ---
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
