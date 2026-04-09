@@ -153,7 +153,7 @@ function gameLoop(timestamp) {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = 0; 
-    const offsetY = 110;
+    const offsetY = 160;
 
    // --- HUD (SCORE, USERNAME Y NIVEL) ---
     const fontSizeHUD = Math.max(12, Math.floor(dynamicTileSize * 0.6));
