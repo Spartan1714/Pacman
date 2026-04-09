@@ -48,7 +48,6 @@ export function generarMapaRandom() {
     const width = 20;
     const height = 10;
 
-    // 1. Llenar de muros
     let nuevoMapa = Array.from({ length: height }, () =>
         Array.from({ length: width }, () => 1)
     );
@@ -57,7 +56,7 @@ export function generarMapaRandom() {
         return arr.sort(() => Math.random() - 0.5);
     }
 
-    // 2. Generar laberinto (DFS Backtracking)
+    // DFS Backtracking
     function carve(x, y) {
         const dirs = shuffle([[1,0],[-1,0],[0,1],[0,-1]]);
 
@@ -77,7 +76,7 @@ export function generarMapaRandom() {
 
     carve(1, 1);
 
-    // 3. Conexiones extra CONTROLADAS
+    // Conexiones extra controladas
     for (let i = 0; i < 6; i++) {
         let rx = Math.floor(Math.random() * (width - 2)) + 1;
         let ry = Math.floor(Math.random() * (height - 2)) + 1;
@@ -92,14 +91,13 @@ export function generarMapaRandom() {
 
             let caminos = vecinos.filter(v => v === 2).length;
 
-            // solo abrir si conecta caminos existentes
             if (caminos >= 2) {
                 nuevoMapa[ry][rx] = 2;
             }
         }
     }
 
-    // 4. Bordes
+    // Bordes
     for (let i = 0; i < width; i++) {
         nuevoMapa[0][i] = 1;
         nuevoMapa[height - 1][i] = 1;
@@ -109,12 +107,12 @@ export function generarMapaRandom() {
         nuevoMapa[i][width - 1] = 1;
     }
 
-    // 5. Zona segura de spawn
+    // Spawn seguro
     nuevoMapa[1][1] = 2;
     nuevoMapa[1][2] = 2;
     nuevoMapa[2][1] = 2;
 
-    // 6. Validación de accesibilidad (Flood Fill)
+    // Flood Fill (accesibilidad)
     function floodFill(x, y, visitado) {
         let stack = [{ x, y }];
         visitado[y][x] = true;
@@ -146,7 +144,7 @@ export function generarMapaRandom() {
 
     floodFill(1, 1, visitado);
 
-    // 7. Eliminar zonas inaccesibles
+    // Eliminar inaccesibles
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             if (nuevoMapa[y][x] === 2 && !visitado[y][x]) {
@@ -155,7 +153,39 @@ export function generarMapaRandom() {
         }
     }
 
-    // 8. Actualizar mapa global
+    // 🔥 Eliminar callejones sin salida
+    function eliminarDeadEnds(mapa) {
+        let cambios = true;
+
+        while (cambios) {
+            cambios = false;
+
+            for (let y = 1; y < mapa.length - 1; y++) {
+                for (let x = 1; x < mapa[0].length - 1; x++) {
+
+                    if (mapa[y][x] !== 2) continue;
+
+                    let vecinos = [
+                        mapa[y][x+1],
+                        mapa[y][x-1],
+                        mapa[y+1][x],
+                        mapa[y-1][x]
+                    ];
+
+                    let caminos = vecinos.filter(v => v === 2).length;
+
+                    if (caminos <= 1) {
+                        mapa[y][x] = 1;
+                        cambios = true;
+                    }
+                }
+            }
+        }
+    }
+
+    eliminarDeadEnds(nuevoMapa);
+
+    // Actualizar global
     map.length = 0;
     nuevoMapa.forEach(row => map.push([...row]));
 }
