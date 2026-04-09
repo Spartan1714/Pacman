@@ -32,6 +32,11 @@ let gameOver = false;
 let playerName = "Guest";
 window.currentCherry = null; // Variable global para la cereza
 
+export function spawnCherry(level) {
+    // ... tu lógica de buscar espacio ...
+    window.currentCherry = { x: chosenX, y: chosenY }; // Forzamos que sea global
+}
+
 // --- INICIO DEL JUEGO (Firebase) ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
