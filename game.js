@@ -131,48 +131,47 @@ function gameLoop(timestamp) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
 
-        // --- LÓGICA PARA COMER CEREZA ---
+        // --- LÓGICA PARA COMER CEREZA (Manteniendo el poder) ---
         if (window.currentCherry && window.player) {
-            // Comprobamos si Pacman (redondeando su posición) está en la misma celda
             const px = Math.round(window.player.x);
             const py = Math.round(window.player.y);
-            
             if (px === window.currentCherry.x && py === window.currentCherry.y) {
                 score.value += 100;
-                window.currentCherry = null; // ¡Comida!
-                playSfx(sfx.eatFruit); 
-                // Programar que salga otra en 15 segundos
+                window.currentCherry = null; 
+                if (map[py] && map[py][px] === 3) map[py][px] = 0; 
+                playSfx(sfx.cherry);
+                activatePower(); // Esto activa el diseño "Grande" de Pacman
                 setTimeout(() => { if(!gameOver) spawnCherry(level); }, 15000);
             }
         }
     }
 
-    // FONDO
+    // 1. FONDO (Tu diseño original)
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = 0; 
     const offsetY = 180;
-    let dotsRemaining = 0; // <--- Variable para detectar victoria
+    let dotsRemaining = 0;
 
-    // --- HUD (SCORE, USERNAME Y NIVEL) ---
+    // 2. HUD (Tu diseño de Score, Nivel y Username)
     const fontSizeHUD = Math.max(12, Math.floor(dynamicTileSize * 0.6));
     ctx.font = `${fontSizeHUD}px 'Press Start 2P'`;
     ctx.textBaseline = "top";
 
-    ctx.fillStyle = "#00ffff";
+    ctx.fillStyle = "#00ffff"; // Cian
     ctx.textAlign = "left";
     ctx.fillText(`SCORE:${score.value}`, 20, 30);
 
-    ctx.fillStyle = "#ffff00";
+    ctx.fillStyle = "#ffff00"; // Amarillo
     ctx.textAlign = "right";
     ctx.fillText(`LVL:${level}`, canvas.width - 20, 30);
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = "#ffffff"; // Blanco
     ctx.textAlign = "center";
     ctx.fillText(window.lastPlayer || "PLAYER", canvas.width / 2, 30);
 
-    // --- VIDAS ---
+    // 3. VIDAS (Tus corazones con sombra roja)
     const heartSize = 25;
     ctx.font = `${heartSize}px Arial`;
     ctx.textAlign = "left";
@@ -181,9 +180,9 @@ function gameLoop(timestamp) {
     for (let i = 0; i < lives.value; i++) {
         ctx.fillText("❤️", 25 + i * (heartSize + 10), 75); 
     }
-    ctx.shadowBlur = 0;
+    ctx.shadowBlur = 0; // Quitamos sombra para no afectar al mapa
 
-    // --- DIBUJO DEL MAPA Y CONTEO DE PUNTOS ---
+    // 4. MAPA (Tus paredes de neón y puntos fucsia)
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * dynamicTileSize;
@@ -193,62 +192,47 @@ function gameLoop(timestamp) {
                 ctx.lineWidth = 2;
                 ctx.strokeRect(rx + 2, ry + 2, dynamicTileSize - 4, dynamicTileSize - 4);
             } else if (tile === 2) {
-                ctx.fillStyle = "#ff00ff";
+                ctx.fillStyle = "#ff00ff"; // Fucsia
                 ctx.fillRect(rx + dynamicTileSize/2 - 2, ry + dynamicTileSize/2 - 2, 4, 4);
-                dotsRemaining++; // <--- Contamos los puntos que faltan
+                dotsRemaining++; 
             }
         });
     });
 
-    // --- LÓGICA DE SIGUIENTE NIVEL ---
-if (dotsRemaining === 0 && !gameOver && !levelChanging) {
+    // 5. LÓGICA DE SIGUIENTE NIVEL (Laberinto Random)
+    if (dotsRemaining === 0 && !gameOver && !levelChanging) {
         levelChanging = true;
         level++;
-        console.log("¡Nivel completado! Cargando nivel:", level);
-
         setTimeout(() => {
-            // 1. Generamos el nuevo mapa
             generarMapaRandom(); 
-            
-            // 2. IMPORTANTÍSIMO: Recalcular el tamaño de los tiles para el nuevo mapa
             resize(); 
-
-            // 3. Resetear posiciones de personajes
-            resetPlayer(); 
+            resetPlayer();
             spawnGhosts(level);
-            
-            // 4. Asegurar que la cereza se asigne a la ventana global
-            if (typeof spawnCherry === "function") {
-                spawnCherry(level);
-            }
-            
+            spawnCherry(level);
             levelChanging = false;
         }, 1500);
     }
 
-    // --- DIBUJO DE LA CEREZA ---
+    // 6. DIBUJO DE CEREZA (Tu emoji centrado)
     if (window.currentCherry) {
         const rx = offsetX + window.currentCherry.x * dynamicTileSize;
         const ry = offsetY + window.currentCherry.y * dynamicTileSize;
-        
         ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
     }
 
-    // --- FANTASMAS Y JUGADOR ---
+    // 7. FANTASMAS Y PACMAN (Tus dibujos arcade)
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // LOGICA DE GAME OVER
+    // 8. GAME OVER (Tu lógica de UI y Firebase)
     if (lives.value <= 0 && !gameOver) {
         gameOver = true;
         bgMusic.pause();
         const ui = document.getElementById("gameOverUI");
-        if (window.lastPlayer && score.value > 0) {
-            saveScoreRealtime(window.lastPlayer, score.value);
-        }
+        if (window.lastPlayer && score.value > 0) saveScoreRealtime(window.lastPlayer, score.value);
         if (ui) {
             ui.classList.remove("hidden");
             ui.style.display = "flex";
