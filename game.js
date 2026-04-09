@@ -134,33 +134,37 @@ function gameLoop(timestamp) {
         // --- LÓGICA PARA COMER CEREZA (Manteniendo el poder) ---
 // --- LÓGICA PARA COMER CEREZA (Versión mejorada) ---
 if (window.currentCherry && window.player) {
-    // Calculamos la distancia entre Pacman y la Cereza
-    const dx = window.player.x - window.currentCherry.x;
-    const dy = window.player.y - window.currentCherry.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+    const px = window.player.x;
+    const py = window.player.y;
+    const cx = window.currentCherry.x;
+    const cy = window.currentCherry.y;
 
-    // Si está a menos de 0.5 baldosas, se la come
-if (dist < 0.7) {
-    // 1. Matamos la referencia visual
-    window.currentCherry = null; 
-    
-    // 2. Limpiamos TODA la matriz por si acaso quedó un '3' huérfano
-    for (let y = 0; y < map.length; y++) {
-        for (let x = 0; x < map[y].length; x++) {
-            if (map[y][x] === 3) map[y][x] = 0;
+    // Calculamos la distancia real
+    const distance = Math.sqrt(Math.pow(px - cx, 2) + Math.pow(py - cy, 2));
+
+    // Usamos "distance" (el mismo nombre que arriba)
+    if (distance < 0.7) { 
+        console.log("🍒 Cereza comida en:", cx, cy);
+        
+        // 1. Borramos la variable global
+        window.currentCherry = null; 
+
+        // 2. Limpiamos el mapa (Barrido total para asegurar)
+        for (let y = 0; y < map.length; y++) {
+            for (let x = 0; x < map[y].length; x++) {
+                if (map[y][x] === 3) map[y][x] = 0;
+            }
         }
+
+        // 3. Efectos
+        score.value += 100;
+        playSfx(sfx.cherry);
+        activatePower(); 
+
+        // 4. Respawn
+        setTimeout(() => { if(!gameOver) spawnCherry(level); }, 15000);
     }
-    
-    // 3. Forzamos la puntuación y el poder
-    score.value += 100;
-    activatePower();
-    playSfx(sfx.cherry);
-    
-    // 4. El temporizador debe estar CLARO
-    console.log("Cereza destruida");
 }
-}
-    }
 
     // 1. FONDO (Tu diseño original)
     ctx.fillStyle = "black";
@@ -256,4 +260,5 @@ if (dist < 0.7) {
     }
 
     requestAnimationFrame(gameLoop);
+}
 }
