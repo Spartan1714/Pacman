@@ -132,18 +132,34 @@ function gameLoop(timestamp) {
         updateGhosts(lives, score, dt);
 
         // --- LÓGICA PARA COMER CEREZA (Manteniendo el poder) ---
-        if (window.currentCherry && window.player) {
-            const px = Math.round(window.player.x);
-            const py = Math.round(window.player.y);
-            if (px === window.currentCherry.x && py === window.currentCherry.y) {
-                score.value += 100;
-                window.currentCherry = null; 
-                if (map[py] && map[py][px] === 3) map[py][px] = 0; 
-                playSfx(sfx.cherry);
-                activatePower(); // Esto activa el diseño "Grande" de Pacman
-                setTimeout(() => { if(!gameOver) spawnCherry(level); }, 15000);
-            }
+// --- LÓGICA PARA COMER CEREZA (Versión mejorada) ---
+if (window.currentCherry && window.player) {
+    // Calculamos la distancia entre Pacman y la Cereza
+    const dx = window.player.x - window.currentCherry.x;
+    const dy = window.player.y - window.currentCherry.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Si está a menos de 0.5 baldosas, se la come
+    if (distance < 0.6) { 
+        const cx = window.currentCherry.x;
+        const cy = window.currentCherry.y;
+
+        score.value += 100;
+        window.currentCherry = null; 
+
+        // Limpiamos el mapa usando las coordenadas guardadas de la cereza
+        if (map[cy] && map[cy][cx] === 3) {
+            map[cy][cx] = 0; 
         }
+
+        playSfx(sfx.cherry);
+        activatePower(); 
+        
+        setTimeout(() => { 
+            if(!gameOver) spawnCherry(level); 
+        }, 15000);
+    }
+}
     }
 
     // 1. FONDO (Tu diseño original)
