@@ -20,6 +20,7 @@ const confirmYes = document.getElementById("confirmYes");
 const confirmNo = document.getElementById("confirmNo");
 const restartBtn = document.getElementById("btnRestart");
 const exitBtn = document.getElementById("btnExit");
+const btnLeaderboardGameOver = document.getElementById("btnLeaderboardGameOver");
 
 // 2. ESTADO DEL JUEGO
 let score = { value: 0 };
@@ -108,6 +109,12 @@ confirmYes.onclick = () => window.location = "login.html";
 if (leaderBtn) leaderBtn.onclick = () => window.location = "leaderboard.html";
 if (restartBtn) restartBtn.onclick = () => location.reload();
 if (exitBtn) exitBtn.onclick = () => window.location = "login.html";
+if (btnLeaderboardGameOver) {
+    btnLeaderboardGameOver.onclick = () => {
+        window.location.href = "leaderboard.html";
+    };
+}
+
 
 // 6. RENDERIZADO Y ESCALADO
 function resize() {
