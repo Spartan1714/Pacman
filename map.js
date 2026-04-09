@@ -40,7 +40,7 @@ export function generarMapaRandom() {
     const width = 20;
     const height = 10;
 
-    // 1. Iniciar todo como MURO absoluto
+    // 1. Llenar todo de muros (1)
     let nuevoMapa = Array.from({ length: height }, () => 
         Array.from({ length: width }, () => 1)
     );
@@ -49,6 +49,7 @@ export function generarMapaRandom() {
         return arr.sort(() => Math.random() - 0.5);
     }
 
+    // Algoritmo de excavación (Backtracking)
     function carve(x, y) {
         const dirs = shuffle([[1, 0], [-1, 0], [0, 1], [0, -1]]);
 
@@ -56,54 +57,48 @@ export function generarMapaRandom() {
             let nx = x + dx * 2;
             let ny = y + dy * 2;
 
-            // Mantenerse dentro del marco (bordes de seguridad)
+            // Mantenerse dentro de los bordes (dejando espacio para el muro exterior)
             if (ny > 0 && ny < height - 1 && nx > 0 && nx < width - 1) {
                 if (nuevoMapa[ny][nx] === 1) {
-                    nuevoMapa[y + dy][x + dx] = 2; // Camino con punto
-                    nuevoMapa[ny][nx] = 2;         // Camino con punto
+                    // Quitamos el muro intermedio y el destino
+                    nuevoMapa[y + dy][x + dx] = 2; 
+                    nuevoMapa[ny][nx] = 2;
                     carve(nx, ny);
                 }
             }
         }
     }
 
-    // 2. Generar laberinto principal
+    // 2. Empezar a excavar desde una posición impar para mantener la rejilla
     carve(1, 1);
 
-    // 3. SEGUNDO PASO: Romper muros aislados para evitar puntos encerrados
-    // Esto garantiza que el laberinto sea más abierto y conectado
-    for (let y = 1; y < height - 1; y++) {
-        for (let x = 1; x < width - 1; x++) {
-            if (nuevoMapa[y][x] === 1) {
-                // Si un muro tiene camino a la izquierda y derecha, o arriba y abajo
-                // hay una probabilidad de romperlo para conectar secciones
-                const hasPathH = nuevoMapa[y][x-1] === 2 && nuevoMapa[y][x+1] === 2;
-                const hasPathV = nuevoMapa[y-1][x] === 2 && nuevoMapa[y+1][x] === 2;
-                
-                if ((hasPathH || hasPathV) && Math.random() < 0.3) {
-                    nuevoMapa[y][x] = 2;
-                }
-            }
+    // 3. 🔥 CONEXIONES EXTRA (Solo pasillos, no hoyos)
+    // En lugar de romper muros al azar, solo rompemos algunos muros específicos
+    // para crear "ciclos" (caminos alternativos) y que no sea un solo camino largo.
+    for (let i = 0; i < 6; i++) { // Intentar 6 conexiones extra
+        let rx = Math.floor(Math.random() * (width - 2)) + 1;
+        let ry = Math.floor(Math.random() * (height - 2)) + 1;
+        if (nuevoMapa[ry][rx] === 1) {
+            nuevoMapa[ry][rx] = 2; // Convertimos un muro solitario en pasillo
         }
     }
 
-    // 4. LIMPIEZA DE SEGURIDAD: Asegurar que los bordes sean SIEMPRE muros
-    // Esto evita que Pacman se salga o que aparezcan puntos en el borde
+    // 4. ASEGURAR BORDES (Marco del juego)
     for (let i = 0; i < width; i++) {
-        nuevoMapa[0][i] = 1;          // Techo
-        nuevoMapa[height - 1][i] = 1; // Suelo
+        nuevoMapa[0][i] = 1;
+        nuevoMapa[height - 1][i] = 1;
     }
     for (let i = 0; i < height; i++) {
-        nuevoMapa[i][0] = 1;         // Pared izquierda
-        nuevoMapa[i][width - 1] = 1; // Pared derecha
+        nuevoMapa[i][0] = 1;
+        nuevoMapa[i][width - 1] = 1;
     }
 
-    // 5. Garantizar zona de inicio libre
+    // 5. ZONA DE SPAWN (Pacman necesita espacio al arrancar)
     nuevoMapa[1][1] = 2;
     nuevoMapa[1][2] = 2;
     nuevoMapa[2][1] = 2;
 
-    // 6. Actualizar la referencia global 'map'
+    // 6. Actualizar referencia global
     map.length = 0;
     nuevoMapa.forEach(row => map.push([...row]));
 }
