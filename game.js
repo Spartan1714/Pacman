@@ -183,7 +183,7 @@ function gameLoop(timestamp) {
     ctx.shadowBlur = 10;
     ctx.shadowColor = "red";
     for (let i = 0; i < lives.value; i++) {
-        ctx.fillText("❤️", 20 + i * (heartSize + 8),55);
+        ctx.fillText("❤️", 20 + i * (heartSize + 8),52);
     }
     ctx.shadowBlur = 0;
 
