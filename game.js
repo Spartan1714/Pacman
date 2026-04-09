@@ -248,14 +248,9 @@ if (window.currentCherry && window.player) {
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
     // 8. GAME OVER (Tu lógica de UI y Firebase)
-if (lives.value <= 0 && !gameOver) {
+    if (lives.value <= 0 && !gameOver) {
         gameOver = true;
-        
-        // 🔥 SONIDOS AQUÍ
         bgMusic.pause();
-        bgMusic.currentTime = 0; // Opcional: para que empiece de cero la próxima vez
-        playSfx(sfx.die);        // Sonido de perder
-        
         const ui = document.getElementById("gameOverUI");
         if (window.lastPlayer && score.value > 0) saveScoreRealtime(window.lastPlayer, score.value);
         if (ui) {
@@ -263,5 +258,7 @@ if (lives.value <= 0 && !gameOver) {
             ui.style.display = "flex";
         }
     }
+
+    requestAnimationFrame(gameLoop);
 }
 }
