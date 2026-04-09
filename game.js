@@ -177,15 +177,17 @@ function gameLoop(timestamp) {
     ctx.fillText(window.lastPlayer || "PLAYER", canvas.width / 2, 30);
 
     // --- VIDAS (CORAZONES ÚNICOS) ---
-    const heartSize = Math.floor(dynamicTileSize * 0.8);
-    ctx.font = `${heartSize}px Arial`;
-    ctx.textAlign = "left";
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "red";
-    for (let i = 0; i < lives.value; i++) {
-        ctx.fillText("❤️", 20 + i * (heartSize + 8),40);
-    }
-    ctx.shadowBlur = 0;
+   const heartSize = Math.floor(dynamicTileSize * 0.6); // Bajamos de 0.8 a 0.6 para que sean más finos
+ctx.font = `${heartSize}px Arial`;
+ctx.textAlign = "left";
+ctx.shadowBlur = 10;
+ctx.shadowColor = "red";
+
+for (let i = 0; i < lives.value; i++) {
+    // Cambiamos 65 por 55 para subirlos un poco más hacia el Score
+    ctx.fillText("❤️", 20 + i * (heartSize + 10), 55); 
+}
+ctx.shadowBlur = 0;
 
     // --- DIBUJO DEL MAPA ---
     map.forEach((row, y) => {
