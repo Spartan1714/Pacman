@@ -125,7 +125,7 @@ function resize() {
     const availableH = window.innerHeight - padding;
     const cols = map[0].length;
     const rows = map.length;
-    const hudSpace = 120; // Espacio superior para el Score y Vidas
+    const hudSpace = 160; // Espacio superior para el Score y Vidas
 
     const tileW = availableW / cols;
     const tileH = (availableH - hudSpace) / rows;
