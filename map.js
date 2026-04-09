@@ -2,10 +2,10 @@
 export const TILE_SIZE = 30;
 export let map = [];
 
-// 1. DEFINICIÓN DE MAPAS CON ESTÉTICA ARCADE (SIMÉTRICOS Y CON BLOQUES)
-// 1 = Muro, 2 = Punto, 0 = Pasillo vacío
+// 1. DEFINICIÓN DE MAPAS ARCADE (Basados en bloques rectangulares y simetría)
+// 1 = Muro (Cian), 2 = Punto (Fucsia), 0 = Vacío
 
-const mapa1 = [
+const mapaArcade1 = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,1],
     [1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1,1,2,1],
@@ -18,7 +18,7 @@ const mapa1 = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-const mapa2 = [
+const mapaArcade2 = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,2,2,1,2,2,2,2,2,2,2,2,2,2,2,1,2,2,2,1],
     [1,1,2,1,2,1,1,2,1,1,1,1,2,1,1,1,2,1,2,1],
@@ -31,7 +31,7 @@ const mapa2 = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-const mapa3 = [
+const mapaArcade3 = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,1],
     [1,2,1,1,1,2,1,1,2,1,1,2,1,1,2,1,1,1,2,1],
@@ -44,44 +44,56 @@ const mapa3 = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-const coleccionMapas = [mapa1, mapa2, mapa3];
+const coleccionMapas = [mapaArcade1, mapaArcade2, mapaArcade3];
 
-// Inicialización con el primer mapa
-map = JSON.parse(JSON.stringify(mapa1));
+// Inicializar con el primer diseño
+map = JSON.parse(JSON.stringify(mapaArcade1));
 
-// 2. LÓGICA DE CEREZAS (Se mantiene intacta)
+// 2. LÓGICA DE CEREZAS (Integrada con window.currentCherry)
 export function spawnCherry(level) {
-    // Limpiar 3 antiguos y convertirlos a puntos
-    map.forEach((row, y) => row.forEach((c, x) => { 
-        if (c === 3) map[y][x] = 2; 
-    }));
+    // Primero limpiamos cualquier cereza previa (valor 3) y la volvemos punto (2)
+    map.forEach((row, y) => {
+        row.forEach((tile, x) => {
+            if (tile === 3) map[y][x] = 2;
+        });
+    });
 
+    // Buscamos todas las celdas que tengan puntos (camino libre)
     let emptyCells = [];
-    map.forEach((row, y) => row.forEach((c, x) => { 
-        if (c === 2) emptyCells.push({ x, y }); 
-    }));
+    map.forEach((row, y) => {
+        row.forEach((tile, x) => {
+            if (tile === 2) emptyCells.push({ x, y });
+        });
+    });
 
     if (emptyCells.length > 0) {
-        let pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        map[pos.y][pos.x] = 3; // Marcamos la cereza en el mapa
-        window.currentCherry = { x: pos.x, y: pos.y }; // Referencia para colisión en game.js
+        // Elegimos una posición al azar
+        const pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        
+        // Marcamos el 3 en el mapa para que sea visible
+        map[pos.y][pos.x] = 3; 
+        
+        // Sincronizamos con la variable global de game.js para la colisión
+        window.currentCherry = { x: pos.x, y: pos.y };
+        console.log("🍒 Cereza colocada en:", window.currentCherry);
     }
 }
 
 export function resetMap() {
     map.length = 0;
-    mapa1.forEach(row => map.push([...row]));
+    mapaArcade1.forEach(row => map.push([...row]));
 }
 
-// 3. SELECCIÓN DE MAPA ARCADE (Cambia la forma del laberinto)
+// 3. CAMBIO DE NIVEL (Selecciona un mapa arcade de la lista)
 export function generarMapaRandom() {
-    // Elegimos un mapa de la colección al azar que no sea igual al actual
     let mapaElegido;
+    
+    // Evitamos repetir el mismo mapa que ya tenemos
     do {
         mapaElegido = coleccionMapas[Math.floor(Math.random() * coleccionMapas.length)];
     } while (coleccionMapas.length > 1 && JSON.stringify(mapaElegido) === JSON.stringify(map));
 
-    // Actualizamos la referencia global 'map' sin romperla
+    // Actualizamos la variable exportada sin romper la referencia
     map.length = 0;
     mapaElegido.forEach(row => map.push([...row]));
 }
