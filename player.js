@@ -44,17 +44,27 @@ export function updatePlayer(score, onPowerUp, dt) {
     pacman.vX = pacman.x;
     pacman.vY = pacman.y;
 
+    // 🔥 VITAL: Compartir la posición con game.js para que las distancias funcionen
+    window.player = pacman; 
+
     let mx = Math.round(pacman.x);
     let my = Math.round(pacman.y);
+
     if (map[my]?.[mx] === 2) {
         map[my][mx] = 0;
         score.value += 10;
-        //playSfx(sfx.eat); // 🔥 sonido masticar
-    } else if (map[my]?.[mx] === 3) {
-        map[my][mx] = 0;
-            playSfx(sfx.cherry); // puedes cambiar luego por otro sonido
+    } 
+    // --- BLOQUE DE LA CEREZA CORREGIDO ---
+    else if (map[my]?.[mx] === 3) {
+        map[my][mx] = 0; // Borra el dato del mapa
+        
+        // 🔥 ESTA ES LA LÍNEA QUE TE FALTA:
+        window.currentCherry = null; // Borra la imagen de la pantalla
+        
+        playSfx(sfx.cherry);
+        score.value += 100;
 
-        if (onPowerUp) onPowerUp(); 
+        if (onPowerUp) onPowerUp(); // Activa el modo grande
     }
 }
 
