@@ -18,7 +18,7 @@ const baseMap = [
 map = JSON.parse(JSON.stringify(baseMap));
 
 export function spawnCherry(level) {
-    // limpiar cerezas
+    // 1. Limpiar cerezas anteriores en el array del mapa
     map.forEach((row, y) =>
         row.forEach((c, x) => {
             if (c === 3) map[y][x] = 2;
@@ -26,7 +26,6 @@ export function spawnCherry(level) {
     );
 
     let emptyCells = [];
-
     map.forEach((row, y) =>
         row.forEach((c, x) => {
             if (c === 2) emptyCells.push({ x, y });
@@ -35,7 +34,11 @@ export function spawnCherry(level) {
 
     if (emptyCells.length > 0) {
         let pos = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        map[pos.y][pos.x] = 3;
+        map[pos.y][pos.x] = 3; // Mantenemos el 3 en el mapa
+        
+        // 🔥 ESTA ES LA LÍNEA QUE TE FALTA:
+        window.currentCherry = { x: pos.x, y: pos.y };
+        console.log("Cereza enviada a window:", window.currentCherry);
     }
 }
 
