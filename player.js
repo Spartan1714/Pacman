@@ -50,12 +50,12 @@ export function updatePlayer(score, onPowerUp, dt) {
         map[my][mx] = 0;
         score.value += 10;
         //playSfx(sfx.eat); // 🔥 sonido masticar
-   } else if (map[my]?.[mx] === 3) {
-    map[my][mx] = 0; // <--- ESTO BORRA LA CEREZA DEL MAPA
-    score.value += 100; // O los puntos que quieras dar
-    window.currentCherry = null; // <--- ESTO BORRA EL DIBUJO DEL EMOJI
-    playSfx(sfx.cherry); 
-}
+    } else if (map[my]?.[mx] === 3) {
+        map[my][mx] = 0;
+            playSfx(sfx.cherry); // puedes cambiar luego por otro sonido
+
+        if (onPowerUp) onPowerUp(); 
+    }
 }
 
 export function drawPlayer(ctx, size, ox, oy) {
