@@ -40,57 +40,70 @@ export function generarMapaRandom() {
     const width = 20;
     const height = 10;
 
-    // 1. Llenar todo de muros (1)
-    let nuevoMapa = Array.from({ length: height }, () => Array.from({ length: width }, () => 1));
+    // 1. Iniciar todo como MURO absoluto
+    let nuevoMapa = Array.from({ length: height }, () => 
+        Array.from({ length: width }, () => 1)
+    );
 
-    function shuffle(arr) { return arr.sort(() => Math.random() - 0.5); }
+    function shuffle(arr) {
+        return arr.sort(() => Math.random() - 0.5);
+    }
 
     function carve(x, y) {
         const dirs = shuffle([[1, 0], [-1, 0], [0, 1], [0, -1]]);
+
         for (let [dx, dy] of dirs) {
             let nx = x + dx * 2;
             let ny = y + dy * 2;
 
-            // Mantenerse dentro de los bordes (índices 1 a width-2)
+            // Mantenerse dentro del marco (bordes de seguridad)
             if (ny > 0 && ny < height - 1 && nx > 0 && nx < width - 1) {
                 if (nuevoMapa[ny][nx] === 1) {
-                    nuevoMapa[y + dy][x + dx] = 2; // Camino
-                    nuevoMapa[ny][nx] = 2;         // Camino
+                    nuevoMapa[y + dy][x + dx] = 2; // Camino con punto
+                    nuevoMapa[ny][nx] = 2;         // Camino con punto
                     carve(nx, ny);
                 }
             }
         }
     }
 
-    // 2. Empezar laberinto
+    // 2. Generar laberinto principal
     carve(1, 1);
 
-    // 3. 🔥 SOLUCIÓN AL BUG: Abrir caminos extra SIN tocar los bordes
+    // 3. SEGUNDO PASO: Romper muros aislados para evitar puntos encerrados
+    // Esto garantiza que el laberinto sea más abierto y conectado
     for (let y = 1; y < height - 1; y++) {
         for (let x = 1; x < width - 1; x++) {
-            // Si es un muro interno, probabilidad de convertirlo en camino
-            if (nuevoMapa[y][x] === 1 && Math.random() < 0.2) {
-                nuevoMapa[y][x] = 2;
+            if (nuevoMapa[y][x] === 1) {
+                // Si un muro tiene camino a la izquierda y derecha, o arriba y abajo
+                // hay una probabilidad de romperlo para conectar secciones
+                const hasPathH = nuevoMapa[y][x-1] === 2 && nuevoMapa[y][x+1] === 2;
+                const hasPathV = nuevoMapa[y-1][x] === 2 && nuevoMapa[y+1][x] === 2;
+                
+                if ((hasPathH || hasPathV) && Math.random() < 0.3) {
+                    nuevoMapa[y][x] = 2;
+                }
             }
         }
     }
 
-    // 4. Asegurar bordes exteriores (Muros indestructibles)
+    // 4. LIMPIEZA DE SEGURIDAD: Asegurar que los bordes sean SIEMPRE muros
+    // Esto evita que Pacman se salga o que aparezcan puntos en el borde
     for (let i = 0; i < width; i++) {
-        nuevoMapa[0][i] = 1;
-        nuevoMapa[height - 1][i] = 1;
+        nuevoMapa[0][i] = 1;          // Techo
+        nuevoMapa[height - 1][i] = 1; // Suelo
     }
     for (let i = 0; i < height; i++) {
-        nuevoMapa[i][0] = 1;
-        nuevoMapa[i][width - 1] = 1;
+        nuevoMapa[i][0] = 1;         // Pared izquierda
+        nuevoMapa[i][width - 1] = 1; // Pared derecha
     }
 
-    // 5. Spawn seguro para Pacman
+    // 5. Garantizar zona de inicio libre
     nuevoMapa[1][1] = 2;
     nuevoMapa[1][2] = 2;
     nuevoMapa[2][1] = 2;
 
-    // 6. Actualizar la referencia global
+    // 6. Actualizar la referencia global 'map'
     map.length = 0;
     nuevoMapa.forEach(row => map.push([...row]));
 }
