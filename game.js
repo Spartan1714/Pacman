@@ -87,6 +87,10 @@ window.addEventListener("keydown", (e) => {
         else if (confirmModal.classList.contains("hidden")) cerrarMenuPrincipal();
         return;
     }
+    const teclas = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
+    if (teclas.includes(e.key)) {
+        bgMusic.play().catch(() => {}); 
+    }
     if (paused || gameOver) return;
     if (e.key === "ArrowUp") setDirection(0, -1);
     if (e.key === "ArrowDown") setDirection(0, 1);
