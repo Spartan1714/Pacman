@@ -139,6 +139,14 @@ function resize() {
 }
 
 window.addEventListener('resize', resize);
+if (currentCherry && player.x === currentCherry.x && player.y === currentCherry.y) {
+    score.value += 100; // Puntos extra
+    currentCherry = null; // Desaparece
+    playSfx(sfx.eatFruit); // Sonido opcional
+    
+    // Programar que salga otra en 10 segundos
+    setTimeout(() => spawnCherry(level), 10000);
+}
 
 function gameLoop(timestamp) {
     const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
