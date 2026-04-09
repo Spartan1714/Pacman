@@ -232,8 +232,13 @@ if (window.currentCherry && window.player) {
     });
 
     // 5. LÓGICA DE SIGUIENTE NIVEL (Laberinto Random)
-    if (dotsRemaining === 0 && !gameOver && !levelChanging) {
+ if (dotsRemaining === 0 && !gameOver && !levelChanging) {
         levelChanging = true;
+
+        // 🔥 EFECTOS DE SONIDO AQUÍ
+        bgMusic.pause();        // Pausamos el fondo para que se luzca la victoria
+        playSfx(sfx.levelup);   // ¡Suena levelup.wav!
+
         level++;
         setTimeout(() => {
             generarMapaRandom(); 
@@ -241,8 +246,13 @@ if (window.currentCherry && window.player) {
             resetPlayer();
             spawnGhosts(level);
             spawnCherry(level);
+
+            // 🔥 REANUDAR MÚSICA
+            // La música vuelve a sonar cuando el nuevo laberinto aparece
+            bgMusic.play().catch(() => {}); 
+
             levelChanging = false;
-        }, 1500);
+        }, 0.5); // 1.5 segundos de pausa para celebrar
     }
 
     // 6. DIBUJO DE CEREZA (Tu emoji centrado)
