@@ -32,10 +32,7 @@ let gameOver = false;
 let playerName = "Guest";
 window.currentCherry = null; // Variable global para la cereza
 
-export function spawnCherry(level) {
-    // ... tu lógica de buscar espacio ...
-    window.currentCherry = { x: chosenX, y: chosenY }; // Forzamos que sea global
-}
+
 
 // --- INICIO DEL JUEGO (Firebase) ---
 onAuthStateChanged(auth, async (user) => {
@@ -203,15 +200,27 @@ function gameLoop(timestamp) {
     });
 
     // --- LÓGICA DE SIGUIENTE NIVEL ---
-    if (dotsRemaining === 0 && !gameOver && !levelChanging) {
+if (dotsRemaining === 0 && !gameOver && !levelChanging) {
         levelChanging = true;
         level++;
-        // Pausa breve antes del siguiente mapa
+        console.log("¡Nivel completado! Cargando nivel:", level);
+
         setTimeout(() => {
+            // 1. Generamos el nuevo mapa
             generarMapaRandom(); 
-            resetPlayer();
+            
+            // 2. IMPORTANTÍSIMO: Recalcular el tamaño de los tiles para el nuevo mapa
+            resize(); 
+
+            // 3. Resetear posiciones de personajes
+            resetPlayer(); 
             spawnGhosts(level);
-            spawnCherry(level);
+            
+            // 4. Asegurar que la cereza se asigne a la ventana global
+            if (typeof spawnCherry === "function") {
+                spawnCherry(level);
+            }
+            
             levelChanging = false;
         }, 1500);
     }
