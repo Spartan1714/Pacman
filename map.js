@@ -18,7 +18,6 @@ const baseMap = [
 map = JSON.parse(JSON.stringify(baseMap));
 
 export function spawnCherry(level) {
-    // Limpiar cherries anteriores
     map.forEach((row, y) =>
         row.forEach((c, x) => {
             if (c === 3) map[y][x] = 2;
@@ -56,7 +55,7 @@ export function generarMapaRandom() {
         return arr.sort(() => Math.random() - 0.5);
     }
 
-    // DFS Backtracking
+    // DFS base (estructura principal)
     function carve(x, y) {
         const dirs = shuffle([[1,0],[-1,0],[0,1],[0,-1]]);
 
@@ -76,8 +75,8 @@ export function generarMapaRandom() {
 
     carve(1, 1);
 
-    // Conexiones extra controladas
-    for (let i = 0; i < 6; i++) {
+    // 🔥 MÁS loops (clave para complejidad)
+    for (let i = 0; i < 20; i++) {
         let rx = Math.floor(Math.random() * (width - 2)) + 1;
         let ry = Math.floor(Math.random() * (height - 2)) + 1;
 
@@ -91,10 +90,21 @@ export function generarMapaRandom() {
 
             let caminos = vecinos.filter(v => v === 2).length;
 
-            if (caminos >= 2) {
+            if (caminos >= 2 && caminos <= 3) {
                 nuevoMapa[ry][rx] = 2;
             }
         }
+    }
+
+    // 🔥 ZONAS ABIERTAS (rompe monotonía)
+    for (let i = 0; i < 3; i++) {
+        let rx = Math.floor(Math.random() * (width - 4)) + 2;
+        let ry = Math.floor(Math.random() * (height - 4)) + 2;
+
+        nuevoMapa[ry][rx] = 2;
+        nuevoMapa[ry][rx + 1] = 2;
+        nuevoMapa[ry + 1][rx] = 2;
+        nuevoMapa[ry + 1][rx + 1] = 2;
     }
 
     // Bordes
@@ -112,7 +122,7 @@ export function generarMapaRandom() {
     nuevoMapa[1][2] = 2;
     nuevoMapa[2][1] = 2;
 
-    // Flood Fill (accesibilidad)
+    // Flood Fill
     function floodFill(x, y, visitado) {
         let stack = [{ x, y }];
         visitado[y][x] = true;
@@ -153,37 +163,31 @@ export function generarMapaRandom() {
         }
     }
 
-    // 🔥 Eliminar callejones sin salida
-    function eliminarDeadEnds(mapa) {
-        let cambios = true;
+    // 🔥 Reducir dead-ends (no eliminarlos todos)
+    function suavizarDeadEnds(mapa) {
+        for (let y = 1; y < mapa.length - 1; y++) {
+            for (let x = 1; x < mapa[0].length - 1; x++) {
 
-        while (cambios) {
-            cambios = false;
+                if (mapa[y][x] !== 2) continue;
 
-            for (let y = 1; y < mapa.length - 1; y++) {
-                for (let x = 1; x < mapa[0].length - 1; x++) {
+                let vecinos = [
+                    mapa[y][x+1],
+                    mapa[y][x-1],
+                    mapa[y+1][x],
+                    mapa[y-1][x]
+                ];
 
-                    if (mapa[y][x] !== 2) continue;
+                let caminos = vecinos.filter(v => v === 2).length;
 
-                    let vecinos = [
-                        mapa[y][x+1],
-                        mapa[y][x-1],
-                        mapa[y+1][x],
-                        mapa[y-1][x]
-                    ];
-
-                    let caminos = vecinos.filter(v => v === 2).length;
-
-                    if (caminos <= 1) {
-                        mapa[y][x] = 1;
-                        cambios = true;
-                    }
+                // solo eliminar los completamente aislados
+                if (caminos === 0) {
+                    mapa[y][x] = 1;
                 }
             }
         }
     }
 
-    eliminarDeadEnds(nuevoMapa);
+    suavizarDeadEnds(nuevoMapa);
 
     // Actualizar global
     map.length = 0;
