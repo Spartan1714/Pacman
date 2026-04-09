@@ -230,14 +230,14 @@ if (window.currentCherry && window.player) {
     }
 
     // 6. DIBUJO DE CEREZA (Tu emoji centrado)
-    if (window.currentCherry) {
-        const rx = offsetX + window.currentCherry.x * dynamicTileSize;
-        const ry = offsetY + window.currentCherry.y * dynamicTileSize;
-        ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
-    }
+  if (window.currentCherry) {
+    const rx = offsetX + window.currentCherry.x * dynamicTileSize;
+    const ry = offsetY + window.currentCherry.y * dynamicTileSize;
+    ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
+}
 
     // 7. FANTASMAS Y PACMAN (Tus dibujos arcade)
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
