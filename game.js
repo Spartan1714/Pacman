@@ -31,10 +31,9 @@ let dynamicTileSize = 32;
 let gameOver = false;
 let playerName = "Guest";
 let levelChanging = false;
-window.currentCherry = null; 
+window.currentCherry = null; // Variable global para la cereza
 
-// Configuración inicial de música
-bgMusic.loop = true;
+
 
 // --- INICIO DEL JUEGO (Firebase) ---
 onAuthStateChanged(auth, async (user) => {
@@ -51,9 +50,11 @@ onAuthStateChanged(auth, async (user) => {
         
         window.lastPlayer = playerName;
 
+        // Solo arrancamos si no ha iniciado ya
         if (lastTime === 0) {
             resize();
             spawnGhosts(level);
+            // spawnCherry viene de map.js y debe asignar algo a window.currentCherry
             spawnCherry(level); 
             requestAnimationFrame(gameLoop);
         }
@@ -76,7 +77,6 @@ function cerrarMenuPrincipal() {
     menuScreen.style.display = "none";
     confirmModal.classList.add("hidden");
     confirmModal.style.display = "none";
-    // Iniciar música al cerrar el menú (interacción del usuario)
     if (!gameOver) bgMusic.play().catch(() => {});
 }
 
@@ -131,76 +131,67 @@ function gameLoop(timestamp) {
         updatePlayer(score, () => activatePower(), dt);
         updateGhosts(lives, score, dt);
 
-        // --- LÓGICA PARA COMER CEREZA ---
-        if (window.currentCherry && window.player) {
-            const px = window.player.x;
-            const py = window.player.y;
-            const cx = window.currentCherry.x;
-            const cy = window.currentCherry.y;
+        // --- LÓGICA PARA COMER CEREZA (Manteniendo el poder) ---
+// --- LÓGICA PARA COMER CEREZA (Versión mejorada) ---
+if (window.currentCherry && window.player) {
+    const px = window.player.x;
+    const py = window.player.y;
+    const cx = window.currentCherry.x;
+    const cy = window.currentCherry.y;
 
-            const distance = Math.sqrt(Math.pow(px - cx, 2) + Math.pow(py - cy, 2));
+    // Calculamos la distancia real
+    const distance = Math.sqrt(Math.pow(px - cx, 2) + Math.pow(py - cy, 2));
 
-            if (distance < 0.7) { 
-                console.log("🍒 Cereza comida en:", cx, cy);
-                window.currentCherry = null; 
+    // Usamos "distance" (el mismo nombre que arriba)
+    if (distance < 0.7) { 
+        console.log("🍒 Cereza comida en:", cx, cy);
+        
+        // 1. Borramos la variable global
+        window.currentCherry = null; 
 
-                for (let y = 0; y < map.length; y++) {
-                    for (let x = 0; x < map[y].length; x++) {
-                        if (map[y][x] === 3) map[y][x] = 0;
-                    }
-                }
-
-                score.value += 100;
-                playSfx(sfx.cherry); // 🍒 Sonido cereza
-                activatePower(); 
-
-                setTimeout(() => { if(!gameOver) spawnCherry(level); }, 15000);
+        // 2. Limpiamos el mapa (Barrido total para asegurar)
+        for (let y = 0; y < map.length; y++) {
+            for (let x = 0; x < map[y].length; x++) {
+                if (map[y][x] === 3) map[y][x] = 0;
             }
         }
 
-        // --- LÓGICA DE SIGUIENTE NIVEL ---
-        let dotsRemaining = 0;
-        map.forEach(row => row.forEach(tile => { if (tile === 2) dotsRemaining++; }));
+        // 3. Efectos
+        score.value += 100;
+        playSfx(sfx.cherry);
+        activatePower(); 
 
-        if (dotsRemaining === 0 && !levelChanging) {
-            levelChanging = true;
-            bgMusic.pause();     // Pausa música de fondo
-            playSfx(sfx.win);    // 🎉 Sonido victoria
-            level++;
-            setTimeout(() => {
-                generarMapaRandom(); 
-                resize(); 
-                resetPlayer();
-                spawnGhosts(level);
-                spawnCherry(level);
-                bgMusic.play().catch(() => {}); // Reanuda música
-                levelChanging = false;
-            }, 1500);
-        }
+        // 4. Respawn
+        setTimeout(() => { if(!gameOver) spawnCherry(level); }, 15000);
     }
+}
 
-    // 1. FONDO
+    // 1. FONDO (Tu diseño original)
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const offsetX = 0; 
     const offsetY = 180;
+    let dotsRemaining = 0;
 
-    // 2. HUD
+    // 2. HUD (Tu diseño de Score, Nivel y Username)
     const fontSizeHUD = Math.max(12, Math.floor(dynamicTileSize * 0.6));
     ctx.font = `${fontSizeHUD}px 'Press Start 2P'`;
     ctx.textBaseline = "top";
-    ctx.fillStyle = "#00ffff"; 
+
+    ctx.fillStyle = "#00ffff"; // Cian
     ctx.textAlign = "left";
     ctx.fillText(`SCORE:${score.value}`, 20, 30);
-    ctx.fillStyle = "#ffff00"; 
+
+    ctx.fillStyle = "#ffff00"; // Amarillo
     ctx.textAlign = "right";
     ctx.fillText(`LVL:${level}`, canvas.width - 20, 30);
-    ctx.fillStyle = "#ffffff"; 
+
+    ctx.fillStyle = "#ffffff"; // Blanco
     ctx.textAlign = "center";
     ctx.fillText(window.lastPlayer || "PLAYER", canvas.width / 2, 30);
 
-    // 3. VIDAS
+    // 3. VIDAS (Tus corazones con sombra roja)
     const heartSize = 25;
     ctx.font = `${heartSize}px Arial`;
     ctx.textAlign = "left";
@@ -209,9 +200,9 @@ function gameLoop(timestamp) {
     for (let i = 0; i < lives.value; i++) {
         ctx.fillText("❤️", 25 + i * (heartSize + 10), 75); 
     }
-    ctx.shadowBlur = 0; 
+    ctx.shadowBlur = 0; // Quitamos sombra para no afectar al mapa
 
-    // 4. MAPA
+    // 4. MAPA (Tus paredes de neón y puntos fucsia)
     map.forEach((row, y) => {
         row.forEach((tile, x) => {
             let rx = offsetX + x * dynamicTileSize;
@@ -221,31 +212,50 @@ function gameLoop(timestamp) {
                 ctx.lineWidth = 2;
                 ctx.strokeRect(rx + 2, ry + 2, dynamicTileSize - 4, dynamicTileSize - 4);
             } else if (tile === 2) {
-                ctx.fillStyle = "#ff00ff"; 
+                ctx.fillStyle = "#ff00ff"; // Fucsia
                 ctx.fillRect(rx + dynamicTileSize/2 - 2, ry + dynamicTileSize/2 - 2, 4, 4);
+                dotsRemaining++; 
             }
         });
     });
 
-    // 6. DIBUJO DE CEREZA
-    if (window.currentCherry) {
-        const rx = offsetX + window.currentCherry.x * dynamicTileSize;
-        const ry = offsetY + window.currentCherry.y * dynamicTileSize;
-        ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
+    // 5. LÓGICA DE SIGUIENTE NIVEL (Laberinto Random)
+    if (dotsRemaining === 0 && !gameOver && !levelChanging) {
+        levelChanging = true;
+        level++;
+        setTimeout(() => {
+            generarMapaRandom(); 
+            resize(); 
+            resetPlayer();
+            spawnGhosts(level);
+            spawnCherry(level);
+            levelChanging = false;
+        }, 1500);
     }
 
-    // 7. FANTASMAS Y PACMAN
+    // 6. DIBUJO DE CEREZA (Tu emoji centrado)
+  if (window.currentCherry) {
+    const rx = offsetX + window.currentCherry.x * dynamicTileSize;
+    const ry = offsetY + window.currentCherry.y * dynamicTileSize;
+    ctx.font = `${Math.floor(dynamicTileSize * 0.8)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🍒", rx + dynamicTileSize / 2, ry + dynamicTileSize / 2);
+}
+
+    // 7. FANTASMAS Y PACMAN (Tus dibujos arcade)
     drawGhosts(ctx, offsetX, offsetY, dynamicTileSize);
     drawPlayer(ctx, dynamicTileSize, offsetX, offsetY);
 
-    // 8. GAME OVER
-    if (lives.value <= 0 && !gameOver) {
+    // 8. GAME OVER (Tu lógica de UI y Firebase)
+if (lives.value <= 0 && !gameOver) {
         gameOver = true;
-        bgMusic.pause();      // Pausa música
-        playSfx(sfx.die);     // 💀 Sonido muerte
+        
+        // 🔥 SONIDOS AQUÍ
+        bgMusic.pause();
+        bgMusic.currentTime = 0; // Opcional: para que empiece de cero la próxima vez
+        playSfx(sfx.die);        // Sonido de perder
+        
         const ui = document.getElementById("gameOverUI");
         if (window.lastPlayer && score.value > 0) saveScoreRealtime(window.lastPlayer, score.value);
         if (ui) {
@@ -253,6 +263,5 @@ function gameLoop(timestamp) {
             ui.style.display = "flex";
         }
     }
-
-    requestAnimationFrame(gameLoop);
+}
 }
