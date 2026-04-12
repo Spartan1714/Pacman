@@ -31,7 +31,7 @@ let dynamicTileSize = 32;
 let gameOver = false;
 let playerName = "Guest"
 let levelChanging = false;
-window.currentCherry = null; 
+window.currentCherry = null;//Thanos 
 
 
 
