@@ -29,7 +29,7 @@ let lastTime = 0;
 let paused = false;
 let dynamicTileSize = 32;
 let gameOver = false;
-let playerName = "Guest";
+let playerName = "Guest"
 let levelChanging = false;
 window.currentCherry = null; // Variable global para la cereza
 
