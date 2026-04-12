@@ -15,7 +15,7 @@ const resumeBtn = document.getElementById("resumeBtn");
 const leaderBtn = document.getElementById("leaderBtn");
 const exitToLoginBtn = document.getElementById("exitToLoginBtn");
 const confirmModal = document.getElementById("confirmModal");
-const confirmYes = document.getElementById("confirmYes");
+const confirmYes = document.getElementById("confirmYes");                               
 const confirmNo = document.getElementById("confirmNo");
 const restartBtn = document.getElementById("btnRestart");
 const exitBtn = document.getElementById("btnExit");
@@ -31,7 +31,7 @@ let dynamicTileSize = 32;
 let gameOver = false;
 let playerName = "Guest"
 let levelChanging = false;
-window.currentCherry = null; // Variable global para la cereza
+window.currentCherry = null; 
 
 
 
